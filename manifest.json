@@ -2,21 +2,21 @@
   "name": "TRCKNG SSTM",
   "short_name": "TRCKNG",
   "description": "Modular weekly habit tracking system",
-  "start_url": "/tracking-system/",
-  "scope": "/tracking-system/",
+  "start_url": "/TRCKNG-SSTM/",
+  "scope": "/TRCKNG-SSTM/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/tracking-system/icons/icon-192.png",
+      "src": "/TRCKNG-SSTM/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/tracking-system/icons/icon-512.png",
+      "src": "/TRCKNG-SSTM/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
