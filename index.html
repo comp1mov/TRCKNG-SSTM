@@ -1,0 +1,491 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>TRCKNG SSTM</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background: #000000;
+      color: #ffffff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 16px;
+    }
+    .container {
+      max-width: 480px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .header {
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 28px 20px;
+    }
+    .version {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+    .week-display {
+      font-size: 52px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      margin-bottom: 12px;
+    }
+    .date-display {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.65);
+    }
+    .buttons-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .btn-habit {
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      background: #000000;
+      color: #ffffff;
+      padding: 22px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn-habit:last-child {
+      border-bottom: none;
+    }
+    .btn-habit:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .btn-habit:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .btn-habit.decrease-mode {
+      background: rgba(255, 79, 106, 0.15);
+      border-bottom-color: rgba(255, 79, 106, 0.5);
+    }
+    .btn-label {
+      font-size: 12px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+    .btn-count {
+      font-size: 26px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 300;
+      opacity: 0.7;
+    }
+    .controls {
+      display: flex;
+      gap: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .btn-control {
+      flex: 1;
+      border: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+      background: #000000;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 12px 8px;
+      cursor: pointer;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-control:last-child {
+      border-right: none;
+    }
+    .btn-control:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .btn-control:active {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .btn-control.active {
+      background: rgba(255, 79, 106, 0.3);
+      color: #ff4f6a;
+      border-color: rgba(255, 79, 106, 0.5);
+    }
+    .stats {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 16px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.65);
+      line-height: 1.6;
+      text-align: left;
+      letter-spacing: 0.04em;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="version">TRCKNG SSTM · v0.02</div>
+      <div class="week-display" id="weekDisplay">2026W1</div>
+      <div class="date-display" id="dateDisplay">Jan 1–7, 2026</div>
+    </div>
+
+    <div class="buttons-grid" id="habitsGrid"></div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="controls">
+      <button class="btn-control" id="btnCopyPrev">COPY</button>
+      <button class="btn-control" id="btnExport">EXPORT</button>
+      <button class="btn-control" id="btnImport">IMPORT</button>
+      <button class="btn-control" id="btnDecrease">DECREASE</button>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept=".json,.txt" style="display:none">
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    }
+
+    (function () {
+      // ===== КОНФИГУРАЦИЯ =====
+      // Порядок и список привычек (можешь менять порядок, добавлять, удалять)
+      const habits = [
+        "sport",
+        "cig", 
+        "want",
+        "vitamins",
+        "weed",
+        "post",
+        "alcohol",
+        "adhd",
+        "vuse"
+      ];
+
+      const habitLabels = {
+        "sport": "Sport",
+        "cig": "Cig",
+        "want": "Want but not",
+        "vitamins": "Vitamins",
+        "weed": "Weed",
+        "post": "Post",
+        "alcohol": "Alco",
+        "adhd": "ADHD",
+        "vuse": "Vuse Pod"
+      };
+
+      const STORAGE_KEY = "trckng_sstm_data";
+      const WEEKS_TO_KEEP = 52; // 1 год
+
+      let currentWeekKey = getWeekKey();
+      let data = loadData();
+      let decreaseMode = false;
+
+      // ===== НЕДЕЛЯ =====
+      function getWeekKey() {
+        const now = new Date();
+        const jan4 = new Date(now.getFullYear(), 0, 4);
+        const weekOne = new Date(jan4.getFullYear(), jan4.getMonth(), jan4.getDate() - jan4.getDay());
+        const diff = now - weekOne;
+        const weekNum = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+        return `${now.getFullYear()}W${String(weekNum).padStart(2, "0")}`;
+      }
+
+      function getWeekDateRange(weekKey) {
+        const [yearStr, weekStr] = weekKey.split("W");
+        const year = parseInt(yearStr);
+        const week = parseInt(weekStr);
+        const jan4 = new Date(year, 0, 4);
+        const weekOne = new Date(jan4.getFullYear(), jan4.getMonth(), jan4.getDate() - jan4.getDay());
+        const startDate = new Date(weekOne);
+        startDate.setDate(weekOne.getDate() + (week - 1) * 7);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        return { start: startDate, end: endDate };
+      }
+
+      function formatDateRange(start, end) {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const startStr = `${months[start.getMonth()]} ${start.getDate()}`;
+        const endStr = `${months[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+        return `${startStr}–${endStr}`;
+      }
+
+      // ===== ДАННЫЕ =====
+      function loadData() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : {};
+      }
+
+      function saveData() {
+        const keys = Object.keys(data).sort().reverse();
+        if (keys.length > WEEKS_TO_KEEP) {
+          keys.slice(WEEKS_TO_KEEP).forEach(k => delete data[k]);
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+
+      function ensureWeekExists() {
+        if (!data[currentWeekKey]) {
+          data[currentWeekKey] = {};
+        }
+        // Инициализируем только те привычки которые есть в конфиге
+        habits.forEach(h => {
+          if (data[currentWeekKey][h] === undefined) {
+            data[currentWeekKey][h] = 0;
+          }
+        });
+        saveData();
+      }
+
+      // ===== ПРИВЫЧКИ =====
+      function incrementHabit(habitName) {
+        ensureWeekExists();
+        if (decreaseMode) {
+          data[currentWeekKey][habitName] = Math.max(0, (data[currentWeekKey][habitName] || 0) - 1);
+        } else {
+          data[currentWeekKey][habitName] = (data[currentWeekKey][habitName] || 0) + 1;
+        }
+        saveData();
+        updateUI();
+      }
+
+      function updateUI() {
+        ensureWeekExists();
+        const weekData = data[currentWeekKey];
+
+        habits.forEach(h => {
+          const count = weekData[h] || 0;
+          const countEl = document.getElementById(`count-${h}`);
+          if (countEl) countEl.textContent = count;
+        });
+
+        const weekEl = document.getElementById("weekDisplay");
+        const dateEl = document.getElementById("dateDisplay");
+        if (weekEl) weekEl.textContent = currentWeekKey;
+        if (dateEl) {
+          const range = getWeekDateRange(currentWeekKey);
+          dateEl.textContent = formatDateRange(range.start, range.end);
+        }
+
+        updateStats();
+      }
+
+      function updateStats() {
+        const statsEl = document.getElementById("stats");
+        let html = "";
+
+        const allWeeks = Object.keys(data).sort().reverse().slice(0, 3);
+        allWeeks.forEach(week => {
+          const weekData = data[week];
+          let weekLine = `<strong>${week}</strong> · `;
+          
+          habits.forEach((habit, index) => {
+            const count = weekData[habit] || 0;
+            const label = habitLabels[habit] || habit;
+            weekLine += `${label}: ${count}`;
+            if (index < habits.length - 1) {
+              weekLine += " | ";
+            }
+          });
+          
+          html += `<div style="margin-bottom: 6px; word-break: break-word; line-height: 1.6;">${weekLine}</div>`;
+        });
+
+        statsEl.innerHTML = html || '<div style="opacity: 0.5;">No data yet</div>';
+      }
+
+      function getPreviousWeekKey() {
+        const now = new Date();
+        const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const jan4 = new Date(lastWeek.getFullYear(), 0, 4);
+        const weekOne = new Date(jan4.getFullYear(), jan4.getMonth(), jan4.getDate() - jan4.getDay());
+        const diff = lastWeek - weekOne;
+        const weekNum = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+        return `${lastWeek.getFullYear()}W${String(weekNum).padStart(2, "0")}`;
+      }
+
+      // ===== ЭКСПОРТ/ИМПОРТ =====
+      function copyPreviousWeek() {
+        const prevWeek = getPreviousWeekKey();
+        const weekData = data[prevWeek] || {};
+        
+        let text = `${prevWeek}\n`;
+        habits.forEach(habit => {
+          const count = weekData[habit] || 0;
+          const label = habitLabels[habit] || habit;
+          text += `${label}: ${count}\n`;
+        });
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            alert("✓ Prev week copied");
+          }).catch(() => {
+            fallbackCopy(text);
+          });
+        } else {
+          fallbackCopy(text);
+        }
+      }
+
+      function exportAllData() {
+        const exportText = JSON.stringify(data, null, 2);
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(exportText).then(() => {
+            alert("✓ Full history copied");
+          }).catch(() => {
+            fallbackCopy(exportText);
+          });
+        } else {
+          fallbackCopy(exportText);
+        }
+      }
+
+      function fallbackCopy(text) {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        temp.style.position = "fixed";
+        temp.style.left = "-9999px";
+        document.body.appendChild(temp);
+        temp.select();
+        try {
+          document.execCommand("copy");
+          alert("✓ Copied to clipboard");
+        } catch (e) {
+          alert("Failed to copy");
+        }
+        document.body.removeChild(temp);
+      }
+
+      function importData() {
+        const fileInput = document.getElementById("fileInput");
+        fileInput.click();
+      }
+
+      document.getElementById("fileInput").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          try {
+            const imported = JSON.parse(event.target.result);
+            // Мигрируем данные: если счётчика нет в новой конфиге, он всё равно сохраняется
+            Object.assign(data, imported);
+            saveData();
+            updateUI();
+            alert("✓ Data imported");
+          } catch (err) {
+            alert("✗ Import failed");
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      function toggleDecrease() {
+        decreaseMode = !decreaseMode;
+        const btn = document.getElementById("btnDecrease");
+        const grid = document.getElementById("habitsGrid");
+        
+        if (decreaseMode) {
+          btn.classList.add("active");
+          grid.classList.add("decrease-mode");
+          // Добавляем класс всем кнопкам привычек
+          habits.forEach(h => {
+            const btn = document.getElementById(`btn-${h}`);
+            if (btn) btn.classList.add("decrease-mode");
+          });
+        } else {
+          btn.classList.remove("active");
+          grid.classList.remove("decrease-mode");
+          habits.forEach(h => {
+            const btn = document.getElementById(`btn-${h}`);
+            if (btn) btn.classList.remove("decrease-mode");
+          });
+        }
+      }
+
+      // ===== ИНТЕРФЕЙС =====
+      function renderHabits() {
+        const grid = document.getElementById("habitsGrid");
+        grid.innerHTML = "";
+        
+        habits.forEach(habit => {
+          const button = document.createElement("button");
+          button.className = "btn-habit";
+          button.id = `btn-${habit}`;
+          button.innerHTML = `
+            <span class="btn-label">${habitLabels[habit] || habit}</span>
+            <span class="btn-count" id="count-${habit}">0</span>
+          `;
+          button.addEventListener("click", () => incrementHabit(habit));
+          grid.appendChild(button);
+        });
+      }
+
+      // ===== СОБЫТИЯ =====
+      document.getElementById("btnCopyPrev").addEventListener("click", copyPreviousWeek);
+      document.getElementById("btnExport").addEventListener("click", exportAllData);
+      document.getElementById("btnImport").addEventListener("click", importData);
+      document.getElementById("btnDecrease").addEventListener("click", toggleDecrease);
+
+      // ===== ИНИЦИАЛИЗАЦИЯ =====
+      renderHabits();
+      ensureWeekExists();
+      updateUI();
+
+      // Проверка на понедельник (напоминание об экспорте)
+      const now = new Date();
+      if (now.getDay() === 1) { // 1 = понедельник
+        setTimeout(() => {
+          if (Notification.permission === "granted") {
+            new Notification("TRCKNG SSTM", {
+              body: "Time to export last week to Obsidian",
+              icon: "icons/icon-192.png"
+            });
+          }
+        }, 2000);
+      }
+
+      // Запрос прав на уведомления
+      if ('Notification' in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    })();
+  </script>
+
+</body>
+</html>
