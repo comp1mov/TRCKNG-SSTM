@@ -24,21 +24,63 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-height: 100vh;
-      padding: 40px 16px;
+      padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+      background: #000000;
+      color: #ffffff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     .container {
-      max-width: 480px;
       width: 100%;
+      max-width: 600px;
       display: flex;
       flex-direction: column;
-      gap: 32px;
+      gap: 16px;
     }
     .header {
       text-align: center;
       border: 1px solid rgba(255, 255, 255, 0.4);
       padding: 28px 20px;
+    }
+    .controls {
+      display: flex;
+      gap: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      width: 100%;
+    }
+    .btn-control {
+      flex: 1;
+      border: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+      background: #000000;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 12px 8px;
+      cursor: pointer;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+    .btn-control:last-child {
+      border-right: none;
+    }
+    .btn-control:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .btn-control:active {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .btn-control.active {
+      background: rgba(255, 79, 106, 0.3);
+      color: #ff4f6a;
+      border-color: rgba(255, 79, 106, 0.5);
     }
     .version {
       font-size: 10px;
@@ -59,17 +101,17 @@
       color: rgba(255, 255, 255, 0.65);
     }
     .buttons-grid {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 1px;
       border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.3);
     }
     .btn-habit {
       border: none;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
       background: #000000;
       color: #ffffff;
-      padding: 22px 16px;
+      padding: 20px 12px;
       cursor: pointer;
       font-size: 13px;
       letter-spacing: 0.06em;
@@ -77,13 +119,20 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 10px;
       transition: all 100ms ease-out;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      min-height: 100px;
     }
-    .btn-habit:last-child {
-      border-bottom: none;
+    /* Последний ряд (элементы 7, 8, 9) */
+    .btn-habit:nth-child(n+7) {
+      grid-column: span 1;
+    }
+    /* Элемент 9 (последний) - растягиваем если нужно */
+    .btn-habit:nth-child(9) {
+      grid-column: span 1;
     }
     .btn-habit:hover {
       background: rgba(255, 255, 255, 0.04);
@@ -93,7 +142,6 @@
     }
     .btn-habit.decrease-mode {
       background: rgba(255, 79, 106, 0.15);
-      border-bottom-color: rgba(255, 79, 106, 0.5);
     }
     .btn-label {
       font-size: 12px;
@@ -101,45 +149,12 @@
       opacity: 0.8;
     }
     .btn-count {
-      font-size: 26px;
+      font-size: 28px;
       font-variant-numeric: tabular-nums;
       font-weight: 300;
       opacity: 0.7;
     }
-    .controls {
-      display: flex;
-      gap: 1px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    .btn-control {
-      flex: 1;
-      border: none;
-      border-right: 1px solid rgba(255, 255, 255, 0.3);
-      background: #000000;
-      color: rgba(255, 255, 255, 0.7);
-      padding: 12px 8px;
-      cursor: pointer;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      transition: all 100ms ease-out;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .btn-control:last-child {
-      border-right: none;
-    }
-    .btn-control:hover {
-      background: rgba(255, 255, 255, 0.06);
-      color: rgba(255, 255, 255, 0.9);
-    }
-    .btn-control:active {
-      background: rgba(255, 255, 255, 0.12);
-    }
-    .btn-control.active {
-      background: rgba(255, 79, 106, 0.3);
-      color: #ff4f6a;
-      border-color: rgba(255, 79, 106, 0.5);
-    }
+
     .stats {
       border: 1px solid rgba(255, 255, 255, 0.3);
       padding: 16px;
@@ -161,16 +176,16 @@
       <div class="date-display" id="dateDisplay">Jan 1–7, 2026</div>
     </div>
 
-    <div class="buttons-grid" id="habitsGrid"></div>
-
-    <div class="stats" id="stats"></div>
-
     <div class="controls">
       <button class="btn-control" id="btnCopyPrev">COPY</button>
       <button class="btn-control" id="btnExport">EXPORT</button>
       <button class="btn-control" id="btnImport">IMPORT</button>
       <button class="btn-control" id="btnDecrease">DECREASE</button>
     </div>
+
+    <div class="buttons-grid" id="habitsGrid"></div>
+
+    <div class="stats" id="stats"></div>
   </div>
 
   <input type="file" id="fileInput" accept=".json,.txt" style="display:none">
@@ -215,14 +230,9 @@
       let decreaseMode = false;
 
       // ===== НЕДЕЛЯ (First Monday rule) =====
-      // Неделя начинается в понедельник
-      // W01 начинается с первого понедельника календарного года
-      // Дни до первого понедельника относятся к последней неделе прошлого года
-
       function firstMondayOfYear(year) {
-        // Находим первый понедельник в календарном году
         const jan1 = new Date(year, 0, 1);
-        const dayOfWeek = jan1.getDay(); // 0 = Sunday, 1 = Monday
+        const dayOfWeek = jan1.getDay();
         const daysUntilMonday = (1 - dayOfWeek + 7) % 7;
         return new Date(year, 0, 1 + daysUntilMonday);
       }
@@ -235,15 +245,20 @@
         let weekNum = 1;
 
         if (date < firstMonday) {
-          // Дата до первого понедельника текущего года => последняя неделя прошлого года
           weekYear = y - 1;
           const firstMondayPrev = firstMondayOfYear(y - 1);
           const diffMs = date - firstMondayPrev;
           weekNum = 1 + Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
         } else {
-          // Дата в текущем году
           const diffMs = date - firstMonday;
           weekNum = 1 + Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+        }
+
+        // Ограничиваем максимум на 52 недели
+        // Если вышли за 52, переносим в следующий год как W01
+        if (weekNum > 52) {
+          weekYear = y + 1;
+          weekNum = 1;
         }
 
         return `${weekYear}W${String(weekNum).padStart(2, "0")}`;
