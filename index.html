@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="manifest" href="/TRCKNG-SSTM/manifest.json">
+  <link rel="apple-touch-icon" href="/TRCKNG-SSTM/icons/icon-192.png">
   <title>TRCKNG SSTM</title>
   <style>
     * { box-sizing: border-box; }
@@ -177,7 +177,7 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      navigator.serviceWorker.register('/TRCKNG-SSTM/service-worker.js').catch(() => {});
     }
 
     (function () {
@@ -505,7 +505,7 @@ function getPreviousWeekKey() {
           if (Notification.permission === "granted") {
             new Notification("TRCKNG SSTM", {
               body: "Time to export last week to Obsidian",
-              icon: "icons/icon-192.png"
+              icon: "/TRCKNG-SSTM/icons/icon-192.png"
             });
           }
         }, 2000);
