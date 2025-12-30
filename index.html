@@ -214,28 +214,64 @@
       let data = loadData();
       let decreaseMode = false;
 
-      // ===== НЕДЕЛЯ =====
-      function getWeekKey() {
-        const now = new Date();
-        const jan4 = new Date(now.getFullYear(), 0, 4);
-        const weekOne = new Date(jan4.getFullYear(), jan4.getMonth(), jan4.getDate() - jan4.getDay());
-        const diff = now - weekOne;
-        const weekNum = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
-        return `${now.getFullYear()}W${String(weekNum).padStart(2, "0")}`;
-      }
+      
+// ===== НЕДЕЛЯ =====
+// Логика: неделя начинается в понедельник.
+// W01 начинается с первого понедельника календарного года.
+// Дни до первого понедельника относятся к последней неделе прошлого года.
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MS_PER_WEEK = 7 * MS_PER_DAY;
 
-      function getWeekDateRange(weekKey) {
-        const [yearStr, weekStr] = weekKey.split("W");
-        const year = parseInt(yearStr);
-        const week = parseInt(weekStr);
-        const jan4 = new Date(year, 0, 4);
-        const weekOne = new Date(jan4.getFullYear(), jan4.getMonth(), jan4.getDate() - jan4.getDay());
-        const startDate = new Date(weekOne);
-        startDate.setDate(weekOne.getDate() + (week - 1) * 7);
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6);
-        return { start: startDate, end: endDate };
-      }
+function toUtcMidnightMs(d) {
+  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function addDays(d, days) {
+  const r = new Date(d);
+  r.setDate(r.getDate() + days);
+  return r;
+}
+
+function firstMondayOfYear(year) {
+  // JS: getDay() => 0 (Sun) ... 6 (Sat). Monday is 1.
+  const jan1 = new Date(year, 0, 1);
+  const delta = (1 - jan1.getDay() + 7) % 7; // days to Monday within the same year
+  return new Date(year, 0, 1 + delta);
+}
+
+function getWeekKey(date = new Date()) {
+  const y = date.getFullYear();
+  const fm = firstMondayOfYear(y);
+
+  const dateMs = toUtcMidnightMs(date);
+
+  let weekYear = y;
+  let weekNum = 1;
+
+  if (dateMs < toUtcMidnightMs(fm)) {
+    weekYear = y - 1;
+    const fmPrev = firstMondayOfYear(weekYear);
+    const diffDays = Math.floor((dateMs - toUtcMidnightMs(fmPrev)) / MS_PER_DAY);
+    weekNum = Math.floor(diffDays / 7) + 1;
+  } else {
+    const diffDays = Math.floor((dateMs - toUtcMidnightMs(fm)) / MS_PER_DAY);
+    weekNum = Math.floor(diffDays / 7) + 1;
+  }
+
+  return `${weekYear}W${String(weekNum).padStart(2, "0")}`;
+}
+
+function getWeekDateRange(weekKey) {
+  const [yearStr, weekStr] = weekKey.split("W");
+  const year = parseInt(yearStr, 10);
+  const week = parseInt(weekStr, 10);
+
+  const fm = firstMondayOfYear(year);
+  const startDate = addDays(fm, (week - 1) * 7);
+  const endDate = addDays(startDate, 6);
+
+  return { start: startDate, end: endDate };
+}
 
       function formatDateRange(start, end) {
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -328,15 +364,10 @@
         statsEl.innerHTML = html || '<div style="opacity: 0.5;">No data yet</div>';
       }
 
-      function getPreviousWeekKey() {
-        const now = new Date();
-        const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const jan4 = new Date(lastWeek.getFullYear(), 0, 4);
-        const weekOne = new Date(jan4.getFullYear(), jan4.getMonth(), jan4.getDate() - jan4.getDay());
-        const diff = lastWeek - weekOne;
-        const weekNum = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
-        return `${lastWeek.getFullYear()}W${String(weekNum).padStart(2, "0")}`;
-      }
+      
+function getPreviousWeekKey() {
+  return getWeekKey(addDays(new Date(), -7));
+}
 
       // ===== ЭКСПОРТ/ИМПОРТ =====
       function copyPreviousWeek() {
