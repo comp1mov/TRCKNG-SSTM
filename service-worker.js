@@ -1,20 +1,19 @@
 const CACHE_NAME = 'trckng-sstm-v0.02';
 const urlsToCache = [
-  '/tracking-system/',
-  '/tracking-system/index.html',
-  '/tracking-system/manifest.json',
-  '/tracking-system/icons/icon-192.png',
-  '/tracking-system/icons/icon-512.png'
+  '/TRCKNG-SSTM/',
+  '/TRCKNG-SSTM/index.html',
+  '/TRCKNG-SSTM/manifest.json',
+  '/TRCKNG-SSTM/icons/icon-192.png',
+  '/TRCKNG-SSTM/icons/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(urlsToCache).catch(() => {
-        // Если не все файлы закешировались, продолжаем
         return cache.addAll([
-          '/tracking-system/',
-          '/tracking-system/index.html'
+          '/TRCKNG-SSTM/',
+          '/TRCKNG-SSTM/index.html'
         ]);
       });
     })
@@ -60,8 +59,7 @@ self.addEventListener('fetch', event => {
 
         return response;
       }).catch(() => {
-        // Если нет сети и нет кеша, возвращаем главную страницу
-        return caches.match('/tracking-system/');
+        return caches.match('/TRCKNG-SSTM/');
       });
     })
   );
