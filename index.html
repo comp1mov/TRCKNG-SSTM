@@ -38,14 +38,89 @@
       gap: 16px;
     }
     .header {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 12px 16px;
+      gap: 16px;
+      position: relative;
+    }
+
+    .header-left {
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .header-center {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: center;
       text-align: center;
-      border: 2px solid rgba(255, 255, 255, 0.4);
-      padding: 28px 20px;
+    }
+
+    .header-right {
+      position: absolute;
+      right: 16px;
+      top: 12px;
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .header-week {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      line-height: 1;
+    }
+
+    .header-weekdate {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .header-title {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+    .header-time {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .header-daydate {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      line-height: 1.2;
     }
     .controls {
       display: flex;
       gap: 1px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
       width: 100%;
     }
     .btn-control {
@@ -54,14 +129,14 @@
       border-right: 1px solid rgba(255, 255, 255, 0.3);
       background: #000000;
       color: rgba(255, 255, 255, 0.7);
-      padding: 12px 8px;
+      padding: 8px 6px;
       cursor: pointer;
-      font-size: 10px;
+      font-size: 8px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       transition: all 100ms ease-out;
       -webkit-tap-highlight-color: transparent;
-      min-height: 44px;
+      min-height: 34px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -87,7 +162,6 @@
     .pins {
       display: flex;
       gap: 1px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
       width: 100%;
     }
 
@@ -97,14 +171,14 @@
       border-right: 1px solid rgba(255, 255, 255, 0.3);
       background: #000000;
       color: rgba(255, 255, 255, 0.5);
-      padding: 12px 8px;
+      padding: 8px 6px;
       cursor: pointer;
-      font-size: 10px;
+      font-size: 8px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       transition: all 100ms ease-out;
       -webkit-tap-highlight-color: transparent;
-      min-height: 44px;
+      min-height: 34px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -277,29 +351,29 @@
       animation: none;
     }
     .version {
-      font-size: 10px;
+      font-size: 9px;
       letter-spacing: 0.12em;
       color: rgba(255, 255, 255, 0.4);
-      margin-bottom: 16px;
+      margin-bottom: 6px;
       text-transform: uppercase;
+      line-height: 1.3;
     }
     .week-display {
-      font-size: 52px;
+      font-size: 28px;
       font-weight: 300;
       letter-spacing: 0.12em;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
     }
     .date-display {
-      font-size: 12px;
+      font-size: 10px;
       letter-spacing: 0.08em;
-      color: rgba(255, 255, 255, 0.65);
+      color: rgba(255, 255, 255, 0.6);
     }
     .buttons-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
     }
     .btn-habit {
       border: none;
@@ -408,7 +482,6 @@
     }
 
     .stats {
-      border: 2px solid rgba(255, 255, 255, 0.3);
       padding: 0;
       overflow: hidden;
     }
@@ -699,9 +772,17 @@
 
   <div class="container">
     <div class="header">
-      <div class="version">TRCKNG SSTM · v0.11<br>dev by Grisha Tsvetkov</div>
-      <div class="week-display" id="weekDisplay"></div>
-      <div class="date-display" id="dateDisplay"></div>
+      <div class="header-left">
+        <div class="header-title">TRCKNG SSTM · v0.21</div>
+      </div>
+      <div class="header-center">
+        <div class="header-week" id="weekDisplay"></div>
+        <div class="header-weekdate" id="dateDisplay"></div>
+      </div>
+      <div class="header-right">
+        <div class="header-time" id="headerTime">--:--</div>
+        <div class="header-daydate" id="headerDayDate"></div>
+      </div>
     </div>
 
     <!-- PINS / PAGES -->
@@ -715,6 +796,7 @@
       <button class="btn-control" id="btnCopyPrev">COPY</button>
       <button class="btn-control" id="btnExport">EXPORT</button>
       <button class="btn-control" id="btnImport">IMPORT</button>
+      <button class="btn-control" id="btnReset">RESET</button>
       <button class="btn-control" id="btnInfo">?</button>
     </div>
 
@@ -740,7 +822,7 @@
   <!-- INFO MODAL -->
   <div class="info-modal" id="infoModal">
     <div class="info-modal-content">
-      <div class="info-title">TRCKNG SSTM · v0.11</div>
+      <div class="info-title">TRCKNG SSTM · v0.21</div>
       
       <div class="info-section">
         <div class="info-section-title">What is this?</div>
@@ -787,14 +869,18 @@
         </div>
       </div>
 
-      <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 11px; color: rgba(255, 255, 255, 0.5); text-align: center;">
-        <div style="margin-bottom: 8px;">Made by Grisha Tsvetkov</div>
-        <a href="https://buymeacoffee.com/comp1mov" target="_blank" style="display: inline-block; margin-top: 8px;">
-          <button class="info-button" style="margin: 0;">Support me</button>
-        </a>
+      <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="font-size: 9px; color: rgba(255, 255, 255, 0.6); text-align: center; margin-bottom: 12px; line-height: 1.4;">
+          TRCKNG SSTM · Weekly Habit Tracker<br>
+          dev by Grisha Tsvetkov
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <a href="https://buymeacoffee.com/comp1mov" target="_blank" style="flex: 1;">
+            <button class="info-button" style="margin: 0; width: 100%;">Support me</button>
+          </a>
+          <button class="info-button" id="btnInfoClose" style="margin: 0; flex: 1;">CLOSE</button>
+        </div>
       </div>
-
-      <button class="info-button" id="btnInfoClose">CLOSE</button>
     </div>
   </div>
 
@@ -802,7 +888,7 @@
   <div class="edit-modal" id="editModal">
     <div class="edit-modal-content">
       <div class="edit-modal-header">
-        <div class="edit-modal-title">TRCKNG SSTM · v0.11<br>dev by Grisha Tsvetkov</div>
+        <div class="edit-modal-title">TRCKNG SSTM · v0.21<br>dev by Grisha Tsvetkov</div>
         <div class="edit-modal-version">EDIT</div>
       </div>
 
@@ -968,10 +1054,10 @@
       }
 
       function formatDateRange(start, end) {
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const startStr = `${months[start.getMonth()]} ${start.getDate()}`;
-        const endStr = `${months[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
-        return `${startStr}–${endStr}`;
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        const startStr = `${start.getDate()} ${months[start.getMonth()]}`;
+        const endStr = `${end.getDate()} ${months[end.getMonth()]} ${end.getFullYear()}`;
+        return `${startStr} - ${endStr}`;
       }
 
       // ===== ДАННЫЕ =====
@@ -1025,30 +1111,70 @@
         }
       }
 
-      let lastHue = Math.random() * 360; // Начальный случайный Hue
+      // ===== ГЕНЕРАЦИЯ ЦВЕТОВОЙ ПАЛИТРЫ =====
+      function generateColorPalette() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const timeValue = hours * 60 + minutes; // 0-1439
+        
+        // Базовый hue на основе времени (0-360)
+        const baseHue = (timeValue / 1440) * 360;
+        
+        // Три цвета для кнопок - гармоничная композиция
+        const button1Hue = baseHue;
+        const button2Hue = (baseHue + 60) % 360; // Аналогичный
+        const button3Hue = (baseHue + 240) % 360; // Трёхцветие
+        
+        const buttonColors = [
+          `hsl(${button1Hue}, 100%, 50%)`,
+          `hsl(${button2Hue}, 100%, 50%)`,
+          `hsl(${button3Hue}, 100%, 50%)`
+        ];
+        
+        // Применяем цвета к CSS переменным
+        document.documentElement.style.setProperty('--palette-1', buttonColors[0]);
+        document.documentElement.style.setProperty('--palette-2', buttonColors[1]);
+        document.documentElement.style.setProperty('--palette-3', buttonColors[2]);
+        
+        return {
+          buttonColors,
+          baseHue
+        };
+      }
+
+      // Генерируем палитру при загрузке
+      const palette = generateColorPalette();
+      let paletteIndex = 0;
 
       function animateButton(btn, habitName) {
-        // Генерируем новый цвет
+        // Генерируем новый цвет из палитры
         let newColor;
         if (decreaseMode) {
           newColor = '#ff4f6a'; // Red для DECREASE
         } else {
-          // Комплиментарные цвета: прыгаем на ~85° каждый раз
-          lastHue = (lastHue + 85 + Math.random() * 10 - 5) % 360; // ±5° вариация
+          // Циклим через три цвета палитры
+          newColor = palette.buttonColors[paletteIndex % 3];
+          paletteIndex++;
           
-          const saturation = 100; // Максимальная насыщенность
-          const lightness = 50; // Оптимальная яркость для максимальной выраженности
-          
-          newColor = `hsl(${lastHue}, ${saturation}%, ${lightness}%)`;
+          // Иногда добавляем вариацию в lightness для интереса
+          if (Math.random() > 0.7) {
+            // Извлекаем hue из текущего цвета и добавляем вариацию
+            const hueMatch = newColor.match(/\d+/);
+            const hue = hueMatch ? parseInt(hueMatch[0]) : 0;
+            const lightness = 45 + Math.random() * 10; // 45-55%
+            newColor = `hsl(${hue}, 100%, ${lightness}%)`;
+          }
         }
 
-        console.log(`Clicked ${habitName}, hue: ${lastHue.toFixed(1)}°, color: ${newColor}`);
+        console.log(`Clicked ${habitName}, color: ${newColor}`);
 
         // Убираем выделение (важно для мобильных)
         btn.blur();
 
-        // Применяем цвет с красивым эффектом
+        // Применяем цвет и интенсивность
         btn.style.setProperty('--btn-color', newColor);
+        btn.style.setProperty('--btn-intensity-attack', '1');
 
         // Добавляем класс анимации
         btn.classList.add('animating');
@@ -1056,6 +1182,7 @@
         // Убираем класс после завершения анимации
         setTimeout(() => {
           btn.classList.remove('animating');
+          btn.style.setProperty('--btn-intensity-attack', '0');
         }, 800);
       }
 
@@ -1077,7 +1204,36 @@
           dateEl.textContent = formatDateRange(range.start, range.end);
         }
 
+        // Обновляем текущее время и дату
+        updateHeaderTime();
+
         updateStats();
+      }
+
+      function updateHeaderTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        
+        const timeEl = document.getElementById("headerTime");
+        if (timeEl) {
+          timeEl.textContent = `${hours}:${minutes}`;
+        }
+
+        const dayDateEl = document.getElementById("headerDayDate");
+        if (dayDateEl) {
+          const day = String(now.getDate()).padStart(2, "0");
+          const monthName = now.toLocaleDateString('en-US', { month: 'short' });
+          const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+          
+          // Вычисляем процент недели (0-100%)
+          const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday...
+          const minutesInDay = now.getHours() * 60 + now.getMinutes();
+          const minutesInWeek = ((dayOfWeek === 0 ? 6 : dayOfWeek - 1) * 24 * 60) + minutesInDay;
+          const weekProgress = Math.round((minutesInWeek / (7 * 24 * 60)) * 100);
+          
+          dayDateEl.textContent = `${day} ${monthName}\n${dayName} · ${weekProgress}%`;
+        }
       }
 
       function updateStats() {
@@ -1311,6 +1467,29 @@
         fileInput.click();
       }
 
+      function resetAll() {
+        if (!confirm("═══════════════════════════════\nDELETE ALL DATA?\n═══════════════════════════════\n\nThis will erase everything:\n- All tracking data\n- All pins and settings\n- Cannot be undone\n\nProceed?")) {
+          return;
+        }
+
+        // Очищаем все для всех трёх пинов
+        for (let pin = 0; pin < 3; pin++) {
+          localStorage.removeItem(`${STORAGE_KEY}_pin${pin}`);
+          localStorage.removeItem(`${LABELS_KEY}_pin${pin}`);
+        }
+
+        // Очищаем остальной кеш
+        localStorage.removeItem('trckng_has_seen_info');
+        localStorage.removeItem(COLOR_CACHE_KEY);
+        localStorage.removeItem(COLOR_CACHE_TIME_KEY);
+
+        // Сообщение об успехе
+        alert("✓ All data deleted\nRefreshing app...");
+        
+        // Перезагружаем страницу
+        window.location.reload();
+      }
+
       document.getElementById("fileInput").addEventListener("change", function (e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -1481,6 +1660,7 @@
       document.getElementById("btnCopyPrev").addEventListener("click", copyPreviousWeek);
       document.getElementById("btnExport").addEventListener("click", exportAllData);
       document.getElementById("btnImport").addEventListener("click", importData);
+      document.getElementById("btnReset").addEventListener("click", resetAll);
       document.getElementById("btnDecrease").addEventListener("click", toggleDecrease);
       document.getElementById("btnEdit").addEventListener("click", openEditModal);
       document.getElementById("btnInfo").addEventListener("click", openInfo);
@@ -1594,6 +1774,11 @@
       renderHabits();
       ensureWeekExists();
       updateUI();
+
+      // Обновляем время каждую минуту
+      setInterval(() => {
+        updateHeaderTime();
+      }, 60000); // 60000 мс = 1 минута
 
       // Проверка на понедельник (напоминание об экспорте)
       const now = new Date();
