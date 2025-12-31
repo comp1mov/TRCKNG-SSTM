@@ -39,13 +39,13 @@
     }
     .header {
       text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.4);
       padding: 28px 20px;
     }
     .controls {
       display: flex;
       gap: 1px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       width: 100%;
     }
     .btn-control {
@@ -82,6 +82,200 @@
       color: #ff4f6a;
       border-color: rgba(255, 79, 106, 0.5);
     }
+
+    /* ===== PINS ===== */
+    .pins {
+      display: flex;
+      gap: 1px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      width: 100%;
+    }
+
+    .pin {
+      flex: 1;
+      border: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+      background: #000000;
+      color: rgba(255, 255, 255, 0.5);
+      padding: 12px 8px;
+      cursor: pointer;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pin:last-child {
+      border-right: none;
+    }
+
+    .pin:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .pin:active {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .pin.active {
+      background: rgba(255, 140, 66, 0.2);
+      color: #ff8c42;
+      border-right-color: rgba(255, 140, 66, 0.5);
+    }
+
+    /* ===== SPLASH & INFO ===== */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      flex-direction: column;
+      gap: 24px;
+      padding: 20px;
+    }
+
+    .splash.hidden {
+      display: none;
+    }
+
+    .splash-logo {
+      font-size: 64px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .splash-version {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: center;
+    }
+
+    .splash-btn {
+      border: 2px solid #ff8c42;
+      background: #ff8c42;
+      color: #000000;
+      padding: 12px 24px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 100ms ease-out;
+      font-weight: 500;
+    }
+
+    .splash-btn:hover {
+      background: rgba(255, 140, 66, 0.9);
+    }
+
+    /* Info modal */
+    .info-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .info-modal.visible {
+      display: flex;
+    }
+
+    .info-modal-content {
+      background: #000000;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      padding: 28px 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .info-title {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .info-section {
+      margin-bottom: 12px;
+    }
+
+    .info-section-title {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #ff8c42;
+      margin-bottom: 8px;
+    }
+
+    .info-text {
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .info-button {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: #000000;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 12px 16px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 100ms ease-out;
+      margin-top: 8px;
+    }
+
+    .info-button:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* Пульсирующая кнопка ? при первом открытии */
+    @keyframes pulse {
+      0% {
+        background: rgba(255, 140, 66, 0.3);
+      }
+      50% {
+        background: rgba(255, 140, 66, 0.8);
+      }
+      100% {
+        background: rgba(255, 140, 66, 0.3);
+      }
+    }
+
+    #btnInfo.pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+      color: #ff8c42;
+      border-color: #ff8c42;
+    }
+
+    #btnInfo.pulse:hover {
+      animation: none;
+    }
     .version {
       font-size: 10px;
       letter-spacing: 0.12em;
@@ -104,14 +298,14 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       background: rgba(255, 255, 255, 0.3);
     }
     .btn-habit {
       border: none;
       background: #000000;
       color: #ffffff;
-      padding: 20px 12px;
+      padding: 0;
       cursor: pointer;
       font-size: 13px;
       letter-spacing: 0.06em;
@@ -124,24 +318,82 @@
       transition: all 100ms ease-out;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
-      min-height: 100px;
+      position: relative;
+      overflow: hidden;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-appearance: none;
+      appearance: none;
+      aspect-ratio: 1;
+      border: 2px solid rgba(255, 255, 255, 0.3);
     }
-    /* Последний ряд (элементы 7, 8, 9) */
-    .btn-habit:nth-child(n+7) {
-      grid-column: span 1;
+    .btn-habit::-moz-focus-inner {
+      border: 0;
     }
-    /* Элемент 9 (последний) - растягиваем если нужно */
-    .btn-habit:nth-child(9) {
-      grid-column: span 1;
+
+    /* Неактивные ячейки */
+    .btn-habit.inactive {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: #000000;
+      opacity: 1;
     }
-    .btn-habit:hover {
-      background: rgba(255, 255, 255, 0.04);
+
+    .btn-habit.inactive::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        linear-gradient(45deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.2) calc(50% - 1px), rgba(255, 255, 255, 0.2) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(-45deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.2) calc(50% - 1px), rgba(255, 255, 255, 0.2) calc(50% + 1px), transparent calc(50% + 1px));
+      pointer-events: none;
     }
-    .btn-habit:active {
+    .btn-habit::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--btn-color, transparent);
+      opacity: 0;
+      transition: opacity 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      pointer-events: none;
+      z-index: 0;
+    }
+    /* Hover state — лёгкий серый */
+    .btn-habit:hover::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+      z-index: 1;
     }
-    .btn-habit.decrease-mode {
-      background: rgba(255, 79, 106, 0.15);
+    .btn-habit > * {
+      position: relative;
+      z-index: 2;
+    }
+    /* Состояние при клике — быстрая атака + задержка + плавное затухание */
+    .btn-habit.animating::before {
+      opacity: var(--btn-intensity-attack, 0);
+      animation: colorAttackFade 800ms ease-out forwards;
+    }
+    @keyframes colorAttackFade {
+      0% {
+        opacity: 0.85;
+      }
+      20% {
+        opacity: 0.85;
+      }
+      100% {
+        opacity: 0;
+      }
     }
     .btn-label {
       font-size: 12px;
@@ -156,14 +408,290 @@
     }
 
     .stats {
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
       font-size: 11px;
-      color: rgba(255, 255, 255, 0.65);
-      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .stats-table thead {
+      background: rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stats-table th {
+      padding: 10px 8px;
       text-align: left;
-      letter-spacing: 0.04em;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 10px;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stats-table th:last-child {
+      border-right: none;
+    }
+
+    .stats-table tbody tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stats-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .stats-table td {
+      padding: 10px 8px;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .stats-table td:first-child {
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+
+    .stats-table td:last-child {
+      border-right: none;
+    }
+
+    .stats-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Highlight при наведении на ячейку */
+    .stats-table tbody tr:hover td,
+    .stats-table thead tr:hover th {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .stats-table tbody tr:hover td:first-child,
+    .stats-table thead tr:hover th:first-child {
+      background: rgba(53, 242, 163, 0.15);
+      color: #35f2a3;
+    }
+
+    /* Highlight столбца при наведении */
+    .stats-table tbody tr td:hover,
+    .stats-table thead th:hover {
+      background: rgba(53, 242, 163, 0.2);
+      color: #35f2a3;
+      font-weight: 500;
+    }
+
+    /* ===== EDIT MODAL ===== */
+    .edit-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .edit-modal.visible {
+      display: flex;
+    }
+    .edit-modal-content {
+      background: #000000;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      max-height: 90vh;
+      overflow-y: auto;
+      max-width: 500px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+    }
+    .edit-modal-header {
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 28px 20px;
+    }
+    .edit-modal-title {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+    .edit-modal-version {
+      font-size: 48px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+    .edit-items-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .edit-item {
+      background: #000000;
+      border: none;
+      padding: 20px 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      min-height: 100px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .edit-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .edit-item-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .edit-item-name {
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: 400;
+      text-align: center;
       word-break: break-word;
+    }
+    .edit-modal-buttons {
+      display: flex;
+      gap: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .edit-modal-btn {
+      flex: 1;
+      border: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+      background: #000000;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 12px 8px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .edit-modal-btn:last-child {
+      border-right: none;
+    }
+    .edit-modal-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .edit-modal-btn:active {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .edit-modal-btn.primary {
+      border-color: #35f2a3;
+      background: #35f2a3;
+      color: #000000;
+    }
+    .edit-modal-btn.primary:hover {
+      background: #4df7b5;
+    }
+
+    /* Modal для редактирования одной ячейки */
+    .edit-cell-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 101;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .edit-cell-modal.visible {
+      display: flex;
+    }
+    .edit-cell-modal-content {
+      background: #000000;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 24px;
+      max-width: 350px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .edit-cell-modal-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: center;
+    }
+    .edit-cell-modal-input {
+      background: #050607;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 12px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border-radius: 0;
+      text-align: center;
+    }
+    .edit-cell-modal-input:focus {
+      outline: none;
+      border-color: #35f2a3;
+      box-shadow: 0 0 0 1px rgba(53, 242, 163, 0.2);
+    }
+    .edit-cell-modal-buttons {
+      display: flex;
+      gap: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .edit-cell-modal-btn {
+      flex: 1;
+      border: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+      background: #050607;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 10px 8px;
+      font-size: 10px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .edit-cell-modal-btn:last-child {
+      border-right: none;
+    }
+    .edit-cell-modal-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .edit-cell-modal-btn.primary {
+      border-color: #35f2a3;
+      background: #35f2a3;
+      color: #000000;
+    }
+    .edit-cell-modal-btn.primary:hover {
+      background: #4df7b5;
     }
   </style>
 </head>
@@ -171,16 +699,28 @@
 
   <div class="container">
     <div class="header">
-      <div class="version">TRCKNG SSTM · v0.02</div>
-      <div class="week-display" id="weekDisplay">2026W1</div>
-      <div class="date-display" id="dateDisplay">Jan 1–7, 2026</div>
+      <div class="version">TRCKNG SSTM · v0.11<br>dev by Grisha Tsvetkov</div>
+      <div class="week-display" id="weekDisplay"></div>
+      <div class="date-display" id="dateDisplay"></div>
+    </div>
+
+    <!-- PINS / PAGES -->
+    <div class="pins">
+      <button class="pin active" data-pin="0" id="pin0">PIN 01</button>
+      <button class="pin" data-pin="1" id="pin1">PIN 02</button>
+      <button class="pin" data-pin="2" id="pin2">PIN 03</button>
     </div>
 
     <div class="controls">
       <button class="btn-control" id="btnCopyPrev">COPY</button>
       <button class="btn-control" id="btnExport">EXPORT</button>
       <button class="btn-control" id="btnImport">IMPORT</button>
+      <button class="btn-control" id="btnInfo">?</button>
+    </div>
+
+    <div class="controls">
       <button class="btn-control" id="btnDecrease">DECREASE</button>
+      <button class="btn-control" id="btnEdit">EDIT</button>
     </div>
 
     <div class="buttons-grid" id="habitsGrid"></div>
@@ -189,6 +729,107 @@
   </div>
 
   <input type="file" id="fileInput" accept=".json,.txt" style="display:none">
+
+  <!-- SPLASH SCREEN -->
+  <div class="splash" id="splash">
+    <div class="splash-logo">TRCKNG SSTM</div>
+    <div class="splash-version">v0.1 · Weekly Habit Tracker</div>
+    <button class="splash-btn" id="btnStartApp">START</button>
+  </div>
+
+  <!-- INFO MODAL -->
+  <div class="info-modal" id="infoModal">
+    <div class="info-modal-content">
+      <div class="info-title">TRCKNG SSTM · v0.11</div>
+      
+      <div class="info-section">
+        <div class="info-section-title">What is this?</div>
+        <div class="info-text">
+          A minimal weekly habit tracker. Define your own habits, track them across 3 independent pages (pins), and keep everything stored locally on your device. No cloud, no accounts, just you and your data.
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">How it works</div>
+        <div class="info-text">
+          <strong>9 cells:</strong> Each can be customized or left empty<br>
+          <strong>3 pins:</strong> Independent tracking pages with separate data<br>
+          <strong>Weekly counter:</strong> Auto-counts by ISO week standard<br>
+          <strong>Color gradient:</strong> Visual feedback on each tap
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Toolbar</div>
+        <div class="info-text">
+          <strong>COPY:</strong> Copy previous week to clipboard<br>
+          <strong>EXPORT:</strong> Download all data as JSON<br>
+          <strong>IMPORT:</strong> Restore from JSON backup<br>
+          <strong>DECREASE:</strong> Toggle subtract mode<br>
+          <strong>EDIT:</strong> Customize cell names<br>
+          <strong>?:</strong> This help menu
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Customization</div>
+        <div class="info-text">
+          Click <strong>EDIT</strong> to rename any cell. Empty name = inactive cell (hidden from view). Each pin remembers its own configuration.
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Install as App</div>
+        <div class="info-text">
+          <strong>iOS:</strong> Safari → Share → Add to Home Screen<br>
+          <strong>Android:</strong> Chrome → Menu → Install app<br>
+          <strong>Desktop:</strong> Use as PWA or bookmark
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 11px; color: rgba(255, 255, 255, 0.5); text-align: center;">
+        <div style="margin-bottom: 8px;">Made by Grisha Tsvetkov</div>
+        <a href="https://buymeacoffee.com/comp1mov" target="_blank" style="display: inline-block; margin-top: 8px;">
+          <button class="info-button" style="margin: 0;">Support me</button>
+        </a>
+      </div>
+
+      <button class="info-button" id="btnInfoClose">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- MAIN EDIT MODAL -->
+  <div class="edit-modal" id="editModal">
+    <div class="edit-modal-content">
+      <div class="edit-modal-header">
+        <div class="edit-modal-title">TRCKNG SSTM · v0.11<br>dev by Grisha Tsvetkov</div>
+        <div class="edit-modal-version">EDIT</div>
+      </div>
+
+      <div class="edit-items-grid" id="editItemsContainer"></div>
+
+      <div style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin: 12px 0; line-height: 1.5;">
+        Clear name to deactivate cell. Rename to activate.
+      </div>
+
+      <div class="edit-modal-buttons">
+        <button class="edit-modal-btn" id="editModalCancel">CANCEL</button>
+        <button class="edit-modal-btn primary" id="editModalSave">DONE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CELL EDIT MODAL -->
+  <div class="edit-cell-modal" id="editCellModal">
+    <div class="edit-cell-modal-content">
+      <div class="edit-cell-modal-label" id="editCellLabel">CELL 01</div>
+      <input type="text" class="edit-cell-modal-input" id="editCellInput" maxlength="20" autocomplete="off">
+      <div class="edit-cell-modal-buttons">
+        <button class="edit-cell-modal-btn" id="editCellCancel">CANCEL</button>
+        <button class="edit-cell-modal-btn primary" id="editCellSave">SAVE</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     if ('serviceWorker' in navigator) {
@@ -199,35 +840,92 @@
       // ===== КОНФИГУРАЦИЯ =====
       // Порядок и список привычек (можешь менять порядок, добавлять, удалять)
       const habits = [
-        "sport",
-        "cig", 
-        "want",
-        "vitamins",
-        "weed",
-        "post",
-        "alcohol",
-        "adhd",
-        "vuse"
+        "cell01",
+        "cell02", 
+        "cell03",
+        "cell04",
+        "cell05",
+        "cell06",
+        "cell07",
+        "cell08",
+        "cell09"
       ];
 
-      const habitLabels = {
-        "sport": "Sport",
-        "cig": "Cig",
-        "want": "Want but not",
-        "vitamins": "Vitamins",
-        "weed": "Weed",
-        "post": "Post",
-        "alcohol": "Alco",
-        "adhd": "ADHD",
-        "vuse": "Vuse Pod"
+      let habitLabels = {}; // Будет загружаться из localStorage или дефолтов
+
+      // Default labels для каждого пина
+      const defaultLabelsPerPin = {
+        0: { // PIN 01 - четыре актива (по углам/диагонали)
+          "cell01": "Water",
+          "cell02": "Coffee",
+          "cell03": "",
+          "cell04": "",
+          "cell05": "",
+          "cell06": "Walk",
+          "cell07": "Read",
+          "cell08": "",
+          "cell09": ""
+        },
+        1: { // PIN 02 - центр (один актив)
+          "cell01": "",
+          "cell02": "",
+          "cell03": "",
+          "cell04": "Focus",
+          "cell05": "",
+          "cell06": "",
+          "cell07": "",
+          "cell08": "",
+          "cell09": ""
+        },
+        2: { // PIN 03 - все пусто
+          "cell01": "",
+          "cell02": "",
+          "cell03": "",
+          "cell04": "",
+          "cell05": "",
+          "cell06": "",
+          "cell07": "",
+          "cell08": "",
+          "cell09": ""
+        }
       };
 
       const STORAGE_KEY = "trckng_sstm_data";
       const WEEKS_TO_KEEP = 52; // 1 год
+      const LABELS_KEY = "trckng_sstm_labels"; // Для сохранения переименованных названий
+      let currentPin = 0; // Текущий активный пин (0, 1, или 2)
 
       let currentWeekKey = getWeekKey();
       let data = loadData();
       let decreaseMode = false;
+
+      // Загружаем пользовательские имена привычек
+      function loadCustomLabels() {
+        // Сначала загружаем дефолты для текущего пина
+        habitLabels = { ...defaultLabelsPerPin[currentPin] };
+        
+        // Потом перезаписываем загруженными из localStorage
+        const key = `${LABELS_KEY}_pin${currentPin}`;
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          try {
+            const custom = JSON.parse(stored);
+            Object.assign(habitLabels, custom);
+          } catch (e) {}
+        }
+      }
+
+      // Сохраняем пользовательские имена
+      function saveCustomLabels() {
+        const key = `${LABELS_KEY}_pin${currentPin}`;
+        const customLabels = {};
+        habits.forEach(habit => {
+          customLabels[habit] = habitLabels[habit];
+        });
+        localStorage.setItem(key, JSON.stringify(customLabels));
+      }
+
+      loadCustomLabels();
 
       // ===== НЕДЕЛЯ (First Monday rule) =====
       function firstMondayOfYear(year) {
@@ -254,13 +952,6 @@
           weekNum = 1 + Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
         }
 
-        // Ограничиваем максимум на 52 недели
-        // Если вышли за 52, переносим в следующий год как W01
-        if (weekNum > 52) {
-          weekYear = y + 1;
-          weekNum = 1;
-        }
-
         return `${weekYear}W${String(weekNum).padStart(2, "0")}`;
       }
 
@@ -285,16 +976,18 @@
 
       // ===== ДАННЫЕ =====
       function loadData() {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const storageKey = `${STORAGE_KEY}_pin${currentPin}`;
+        const stored = localStorage.getItem(storageKey);
         return stored ? JSON.parse(stored) : {};
       }
 
       function saveData() {
+        const storageKey = `${STORAGE_KEY}_pin${currentPin}`;
         const keys = Object.keys(data).sort().reverse();
         if (keys.length > WEEKS_TO_KEEP) {
           keys.slice(WEEKS_TO_KEEP).forEach(k => delete data[k]);
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem(storageKey, JSON.stringify(data));
       }
 
       function ensureWeekExists() {
@@ -312,6 +1005,10 @@
 
       // ===== ПРИВЫЧКИ =====
       function incrementHabit(habitName) {
+        // Проверяем что ячейка активна (имеет имя)
+        const label = habitLabels[habitName];
+        if (!label || label.trim() === "") return;
+        
         ensureWeekExists();
         if (decreaseMode) {
           data[currentWeekKey][habitName] = Math.max(0, (data[currentWeekKey][habitName] || 0) - 1);
@@ -320,6 +1017,46 @@
         }
         saveData();
         updateUI();
+
+        // Анимация кнопки с градиентом
+        const btn = document.getElementById(`btn-${habitName}`);
+        if (btn) {
+          animateButton(btn, habitName);
+        }
+      }
+
+      let lastHue = Math.random() * 360; // Начальный случайный Hue
+
+      function animateButton(btn, habitName) {
+        // Генерируем новый цвет
+        let newColor;
+        if (decreaseMode) {
+          newColor = '#ff4f6a'; // Red для DECREASE
+        } else {
+          // Комплиментарные цвета: прыгаем на ~85° каждый раз
+          lastHue = (lastHue + 85 + Math.random() * 10 - 5) % 360; // ±5° вариация
+          
+          const saturation = 100; // Максимальная насыщенность
+          const lightness = 50; // Оптимальная яркость для максимальной выраженности
+          
+          newColor = `hsl(${lastHue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        console.log(`Clicked ${habitName}, hue: ${lastHue.toFixed(1)}°, color: ${newColor}`);
+
+        // Убираем выделение (важно для мобильных)
+        btn.blur();
+
+        // Применяем цвет с красивым эффектом
+        btn.style.setProperty('--btn-color', newColor);
+
+        // Добавляем класс анимации
+        btn.classList.add('animating');
+
+        // Убираем класс после завершения анимации
+        setTimeout(() => {
+          btn.classList.remove('animating');
+        }, 800);
       }
 
       function updateUI() {
@@ -345,26 +1082,162 @@
 
       function updateStats() {
         const statsEl = document.getElementById("stats");
-        let html = "";
-
-        const allWeeks = Object.keys(data).sort().reverse().slice(0, 3);
-        allWeeks.forEach(week => {
-          const weekData = data[week];
-          let weekLine = `<strong>${week}</strong> · `;
-          
-          habits.forEach((habit, index) => {
-            const count = weekData[habit] || 0;
-            const label = habitLabels[habit] || habit;
-            weekLine += `${label}: ${count}`;
-            if (index < habits.length - 1) {
-              weekLine += " | ";
-            }
-          });
-          
-          html += `<div style="margin-bottom: 6px; word-break: break-word; line-height: 1.6;">${weekLine}</div>`;
+        
+        // Проверяем есть ли активные ячейки
+        const hasActiveHabits = habits.some(habit => {
+          const label = habitLabels[habit];
+          return label && label.trim() !== "";
         });
 
-        statsEl.innerHTML = html || '<div style="opacity: 0.5;">No data yet</div>';
+        // Если нет активных ячеек - показываем пусто
+        if (!hasActiveHabits) {
+          statsEl.innerHTML = '<div style="padding: 16px; text-align: center; opacity: 0.5; font-size: 12px;">No data yet</div>';
+          return;
+        }
+
+        const allWeeks = Object.keys(data).sort().reverse().slice(0, 3);
+
+        if (allWeeks.length === 0) {
+          statsEl.innerHTML = '<div style="padding: 16px; text-align: center; opacity: 0.5; font-size: 12px;">No data yet</div>';
+          return;
+        }
+
+        let html = `
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+        `;
+
+        // Заголовки с названиями привычек
+        habits.forEach((habit, idx) => {
+          const label = habitLabels[habit];
+          // Пропускаем неактивные ячейки
+          if (!label || label.trim() === "") return;
+          
+          const cellNum = idx + 1;
+          const cellLabel = `CELL ${String(cellNum).padStart(2, "0")}`;
+          html += `<th data-habit="${habit}" data-cell="${cellLabel}">${label}</th>`;
+        });
+        html += `
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        // Строки с данными по неделям
+        allWeeks.forEach(week => {
+          const weekData = data[week];
+          html += `<tr data-week="${week}"><td>${week}</td>`;
+          
+          habits.forEach((habit, idx) => {
+            const label = habitLabels[habit];
+            // Пропускаем неактивные ячейки
+            if (!label || label.trim() === "") return;
+            
+            const count = weekData[habit] || 0;
+            const cellNum = idx + 1;
+            const cellLabel = `CELL ${String(cellNum).padStart(2, "0")}`;
+            html += `<td data-habit="${habit}" data-cell="${cellLabel}">${count}</td>`;
+          });
+          
+          html += `</tr>`;
+        });
+
+        html += `
+            </tbody>
+          </table>
+        `;
+
+        statsEl.innerHTML = html;
+        attachTableHoverListeners();
+      }
+
+      const COLOR_CACHE_KEY = "trckng_color_cache";
+      const COLOR_CACHE_TIME_KEY = "trckng_color_cache_time";
+      const HIGHLIGHT_COLOR = "#ff8c42"; // Тёплый оранжевый для подсветки
+
+      function attachTableHoverListeners() {
+        const table = document.querySelector(".stats-table");
+        if (!table) return; // Таблицы нет - выходим
+
+        const cells = table.querySelectorAll("th, td");
+        if (cells.length === 0) return; // Нет ячеек - выходим
+        
+        cells.forEach(cell => {
+          // Удаляем старые слушатели, клонируя элемент
+          const newCell = cell.cloneNode(true);
+          cell.parentNode.replaceChild(newCell, cell);
+        });
+
+        // Добавляем слушатели на новые элементы
+        const newCells = table.querySelectorAll("th, td");
+        
+        newCells.forEach(cell => {
+          cell.addEventListener("mouseenter", function() {
+            const habit = this.dataset.habit;
+            const week = this.closest("tr")?.dataset.week;
+
+            // Подсвечиваем всю строку (неделю)
+            if (week) {
+              const row = table.querySelector(`tr[data-week="${week}"]`);
+              if (row) {
+                row.style.backgroundColor = `color-mix(in srgb, ${HIGHLIGHT_COLOR} 10%, transparent)`;
+              }
+            }
+
+            // Подсвечиваем весь столбец (привычка)
+            if (habit) {
+              const headerCell = table.querySelector(`thead th[data-habit="${habit}"]`);
+              const bodyCells = table.querySelectorAll(`tbody td[data-habit="${habit}"]`);
+              
+              if (headerCell) {
+                headerCell.style.color = HIGHLIGHT_COLOR;
+                headerCell.style.backgroundColor = `color-mix(in srgb, ${HIGHLIGHT_COLOR} 15%, transparent)`;
+              }
+              bodyCells.forEach(cell => {
+                if (cell !== this) {
+                  cell.style.color = HIGHLIGHT_COLOR;
+                  cell.style.backgroundColor = `color-mix(in srgb, ${HIGHLIGHT_COLOR} 10%, transparent)`;
+                }
+              });
+            }
+
+            // Подсвечиваем текущую ячейку
+            this.style.color = HIGHLIGHT_COLOR;
+            this.style.backgroundColor = `color-mix(in srgb, ${HIGHLIGHT_COLOR} 25%, transparent)`;
+            this.style.fontWeight = "500";
+          });
+
+          cell.addEventListener("mouseleave", function() {
+            // Убираем стили при уходе мыши
+            this.style.color = "";
+            this.style.backgroundColor = "";
+            this.style.fontWeight = "";
+
+            const habit = this.dataset.habit;
+            const week = this.closest("tr")?.dataset.week;
+
+            if (week) {
+              const row = table.querySelector(`tr[data-week="${week}"]`);
+              if (row) row.style.backgroundColor = "";
+            }
+
+            if (habit) {
+              const headerCell = table.querySelector(`thead th[data-habit="${habit}"]`);
+              const bodyCells = table.querySelectorAll(`tbody td[data-habit="${habit}"]`);
+              
+              if (headerCell) {
+                headerCell.style.color = "";
+                headerCell.style.backgroundColor = "";
+              }
+              bodyCells.forEach(cell => {
+                cell.style.color = "";
+                cell.style.backgroundColor = "";
+              });
+            }
+          });
+        });
       }
 
       function getPreviousWeekKey() {
@@ -384,8 +1257,11 @@
         
         let text = `${prevWeek}\n`;
         habits.forEach(habit => {
+          const label = habitLabels[habit];
+          // Пропускаем неактивные ячейки
+          if (!label || label.trim() === "") return;
+          
           const count = weekData[habit] || 0;
-          const label = habitLabels[habit] || habit;
           text += `${label}: ${count}\n`;
         });
 
@@ -482,24 +1358,237 @@
         const grid = document.getElementById("habitsGrid");
         grid.innerHTML = "";
         
-        habits.forEach(habit => {
+        habits.forEach((habit, idx) => {
+          const label = habitLabels[habit];
+          const isActive = label && label.trim() !== "";
+          
           const button = document.createElement("button");
           button.className = "btn-habit";
+          if (!isActive) {
+            button.classList.add("inactive");
+          }
           button.id = `btn-${habit}`;
-          button.innerHTML = `
-            <span class="btn-label">${habitLabels[habit] || habit}</span>
-            <span class="btn-count" id="count-${habit}">0</span>
-          `;
-          button.addEventListener("click", () => incrementHabit(habit));
+          
+          // Показываем текст только для активных
+          if (isActive) {
+            button.innerHTML = `
+              <span class="btn-label">${label}</span>
+              <span class="btn-count" id="count-${habit}">0</span>
+            `;
+          } else {
+            // Неактивные - без содержимого
+            button.innerHTML = '';
+          }
+          
+          // Кликать можно только активные ячейки
+          if (isActive) {
+            button.addEventListener("click", () => incrementHabit(habit));
+          } else {
+            button.style.cursor = "default";
+            button.style.pointerEvents = "none";
+          }
+          
           grid.appendChild(button);
         });
       }
 
+      function openEditModal() {
+        const modal = document.getElementById("editModal");
+        const container = document.getElementById("editItemsContainer");
+        
+        container.innerHTML = "";
+        habits.forEach((habit, index) => {
+          const cellNum = index + 1;
+          const cellLabel = `CELL ${String(cellNum).padStart(2, "0")}`;
+          
+          const item = document.createElement("button");
+          item.className = "edit-item";
+          item.type = "button";
+          const displayName = habitLabels[habit] || ""; // Показываем пусто как пусто
+          item.innerHTML = `
+            <div class="edit-item-label">${cellLabel}</div>
+            <div class="edit-item-name">${displayName === "" ? "—" : displayName}</div>
+          `;
+          item.addEventListener("click", () => openCellEditModal(habit, cellLabel, index));
+          container.appendChild(item);
+        });
+
+        modal.classList.add("visible");
+      }
+
+      function closeEditModal() {
+        const modal = document.getElementById("editModal");
+        modal.classList.remove("visible");
+      }
+
+      function openCellEditModal(habit, cellLabel, index) {
+        const modal = document.getElementById("editCellModal");
+        const label = document.getElementById("editCellLabel");
+        const input = document.getElementById("editCellInput");
+        
+        label.textContent = cellLabel;
+        input.value = habitLabels[habit] || habit;
+        input.dataset.habit = habit;
+        
+        modal.classList.add("visible");
+        setTimeout(() => input.focus(), 100);
+      }
+
+      function closeCellEditModal() {
+        const modal = document.getElementById("editCellModal");
+        modal.classList.remove("visible");
+      }
+
+      function saveCellEdit() {
+        const input = document.getElementById("editCellInput");
+        const habit = input.dataset.habit;
+        const newLabel = input.value.trim();
+        
+        // Если имя было и стало пусто — обнуляем счётчик
+        const wasActive = habitLabels[habit] && habitLabels[habit].trim() !== "";
+        const isNowEmpty = newLabel === "";
+        
+        if (wasActive && isNowEmpty) {
+          // Обнуляем все значения этой ячейки во всех неделях
+          Object.keys(data).forEach(week => {
+            data[week][habit] = 0;
+          });
+        }
+        
+        // Сохраняем новое имя (может быть пустым)
+        habitLabels[habit] = newLabel;
+        saveCustomLabels();
+        saveData();
+        
+        // Обновляем UI
+        renderHabits();
+        updateUI();
+        openEditModal();
+        
+        closeCellEditModal();
+      }
+
       // ===== СОБЫТИЯ =====
+      // Пины
+      document.querySelectorAll(".pin").forEach(pin => {
+        pin.addEventListener("click", function() {
+          const pinNum = parseInt(this.dataset.pin);
+          switchPin(pinNum);
+        });
+      });
+
+      // Контролы
       document.getElementById("btnCopyPrev").addEventListener("click", copyPreviousWeek);
       document.getElementById("btnExport").addEventListener("click", exportAllData);
       document.getElementById("btnImport").addEventListener("click", importData);
       document.getElementById("btnDecrease").addEventListener("click", toggleDecrease);
+      document.getElementById("btnEdit").addEventListener("click", openEditModal);
+      document.getElementById("btnInfo").addEventListener("click", openInfo);
+
+      // Main modal события
+      document.getElementById("editModalCancel").addEventListener("click", closeEditModal);
+      document.getElementById("editModalSave").addEventListener("click", closeEditModal);
+      document.getElementById("editModal").addEventListener("click", function(e) {
+        if (e.target === this) closeEditModal();
+      });
+
+      // Cell edit modal события
+      document.getElementById("editCellCancel").addEventListener("click", closeCellEditModal);
+      document.getElementById("editCellSave").addEventListener("click", saveCellEdit);
+      document.getElementById("editCellModal").addEventListener("click", function(e) {
+        if (e.target === this) closeCellEditModal();
+      });
+
+      // Splash & Info
+      const splash = document.getElementById("splash");
+      const btnStart = document.getElementById("btnStartApp");
+      const btnInfoClose = document.getElementById("btnInfoClose");
+      const infoModal = document.getElementById("infoModal");
+      const btnInfo = document.getElementById("btnInfo");
+
+      // Пульсирующий ? при первом открытии
+      const hasSeenInfo = localStorage.getItem("trckng_has_seen_info");
+      if (!hasSeenInfo && btnInfo) {
+        btnInfo.classList.add("pulse");
+        // Снимаем пульсацию при клике
+        btnInfo.addEventListener("click", function() {
+          btnInfo.classList.remove("pulse");
+          localStorage.setItem("trckng_has_seen_info", "true");
+        });
+      }
+
+      if (btnStart) {
+        btnStart.addEventListener("click", hideSplash);
+      }
+
+      if (btnInfoClose) {
+        btnInfoClose.addEventListener("click", closeInfo);
+      }
+
+      if (infoModal) {
+        infoModal.addEventListener("click", function(e) {
+          if (e.target === this) closeInfo();
+        });
+      }
+
+      // Закрытие на Escape
+      document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+          const cellModal = document.getElementById("editCellModal");
+          const mainModal = document.getElementById("editModal");
+          const infoMod = document.getElementById("infoModal");
+          if (cellModal?.classList.contains("visible")) {
+            closeCellEditModal();
+          } else if (mainModal?.classList.contains("visible")) {
+            closeEditModal();
+          } else if (infoMod?.classList.contains("visible")) {
+            closeInfo();
+          }
+        }
+      });
+
+      function showSplash() {
+        const splash = document.getElementById("splash");
+        if (splash) splash.classList.remove("hidden");
+      }
+
+      function hideSplash() {
+        const splash = document.getElementById("splash");
+        if (splash) splash.classList.add("hidden");
+      }
+
+      function openInfo() {
+        const modal = document.getElementById("infoModal");
+        if (modal) modal.classList.add("visible");
+      }
+
+      function closeInfo() {
+        const modal = document.getElementById("infoModal");
+        if (modal) modal.classList.remove("visible");
+      }
+
+      function switchPin(pinNum) {
+        currentPin = pinNum;
+        
+        // Обновляем активный пин в UI
+        document.querySelectorAll(".pin").forEach(pin => {
+          pin.classList.remove("active");
+        });
+        document.getElementById(`pin${pinNum}`).classList.add("active");
+
+        // Перезагружаем данные для нового пина
+        data = loadData();
+        
+        // Перезагружаем labels для нового пина (с дефолтами)
+        loadCustomLabels();
+        
+        currentWeekKey = getWeekKey();
+        ensureWeekExists();
+        
+        // Обновляем UI
+        renderHabits();
+        updateUI();
+      }
 
       // ===== ИНИЦИАЛИЗАЦИЯ =====
       renderHabits();
