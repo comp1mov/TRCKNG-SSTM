@@ -8,6 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="/TRCKNG-SSTM/manifest.json">
   <link rel="apple-touch-icon" href="/TRCKNG-SSTM/icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
   <title>TRCKNG SSTM</title>
   <style>
     * { box-sizing: border-box; }
@@ -32,7 +35,14 @@
       max-width: 600px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
+    }
+    
+    /* Группа кнопок без gap между рядами */
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
     }
 
     /* ===== HEADER ===== */
@@ -66,52 +76,51 @@
       text-align: center;
     }
     .header-week {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 700;
       letter-spacing: 0.04em;
       line-height: 1;
     }
     .header-weekdate {
-      font-size: 11px;
+      font-size: 10px;
       letter-spacing: 0.04em;
       color: rgba(255,255,255,0.6);
       text-transform: uppercase;
       line-height: 1.2;
+      margin-top: 2px;
     }
     .header-percent {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 700;
       letter-spacing: 0.04em;
       line-height: 1;
     }
     .header-time {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 700;
       letter-spacing: 0.04em;
       font-variant-numeric: tabular-nums;
       line-height: 1;
     }
     .header-daydate {
-      font-size: 11px;
-      font-weight: 500;
+      font-size: 10px;
       letter-spacing: 0.04em;
       color: rgba(255,255,255,0.6);
       text-transform: uppercase;
-      line-height: 1.3;
-      margin-top: 3px;
+      line-height: 1.2;
+      margin-top: 2px;
       white-space: pre-line;
     }
 
     /* ===== PINS ===== */
     .pins {
       display: flex;
-      gap: 1px;
       width: 100%;
     }
     .pin {
       flex: 1;
       border: none;
-      border-right: 1px solid rgba(255,255,255,0.3);
+      border-right: 1px solid rgba(255,255,255,0.2);
       background: #000;
       color: rgba(255,255,255,0.5);
       padding: 8px 6px;
@@ -126,20 +135,19 @@
       align-items: center;
       justify-content: center;
     }
-    .pin:last-child { border-right: none; }
+    .pin:first-child { border-left: 1px solid rgba(255,255,255,0.2); }
     .pin:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
     .pin.active { background: rgba(255,140,66,0.2); color: #ff8c42; }
 
     /* ===== CONTROLS ===== */
     .controls {
       display: flex;
-      gap: 1px;
       width: 100%;
     }
     .btn-control {
       flex: 1;
       border: none;
-      border-right: 1px solid rgba(255,255,255,0.3);
+      border-right: 1px solid rgba(255,255,255,0.2);
       background: #000;
       color: rgba(255,255,255,0.7);
       padding: 8px 6px;
@@ -155,7 +163,7 @@
       justify-content: center;
       white-space: nowrap;
     }
-    .btn-control:last-child { border-right: none; }
+    .btn-control:first-child { border-left: 1px solid rgba(255,255,255,0.2); }
     .btn-control:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
     .btn-control:active { background: rgba(255,255,255,0.12); }
     .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; }
@@ -209,9 +217,10 @@
 
     /* Cell content structure */
     .btn-status { 
-      font-size: 10px; 
+      font-size: 8px; 
       opacity: 0.6;
       order: 1;
+      letter-spacing: 0.1em;
     }
     .btn-label { 
       font-size: 11px; 
@@ -220,22 +229,19 @@
       order: 2;
     }
     .btn-value { 
-      font-size: 48px;
+      font-family: "Google Sans Mono", "SF Mono", ui-monospace, monospace;
+      font-size: clamp(24px, 10vw, 38px);
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       line-height: 1;
       order: 3;
     }
-    .btn-unit {
-      font-size: 10px;
-      opacity: 0.5;
-      letter-spacing: 0.08em;
-      order: 4;
-    }
     .btn-breakdown {
       font-size: 9px;
-      opacity: 0.4;
-      order: 5;
+      opacity: 0.5;
+      letter-spacing: 0.06em;
+      order: 4;
+      min-height: 14px;
     }
 
     /* Running state */
@@ -262,22 +268,23 @@
       opacity: 0.35;
     }
 
-    /* Flash animation on click */
+    /* Flash animation on click - bright and slow fade */
     .btn-habit::before {
       content: '';
       position: absolute;
       inset: 0;
       background: var(--btn-color, transparent);
       opacity: 0;
-      transition: opacity 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
       pointer-events: none;
       z-index: 0;
     }
     .btn-habit.animating::before {
-      animation: flash 400ms ease-out forwards;
+      animation: flash 1500ms ease-out forwards;
     }
     @keyframes flash {
-      0% { opacity: 0.7; }
+      0% { opacity: 1; }
+      10% { opacity: 0.95; }
+      30% { opacity: 0.7; }
       100% { opacity: 0; }
     }
     .btn-habit > * { position: relative; z-index: 2; }
@@ -600,24 +607,26 @@
       </div>
     </div>
 
-    <div class="pins">
-      <button class="pin active" data-pin="0" id="pin0">PIN 01</button>
-      <button class="pin" data-pin="1" id="pin1">PIN 02</button>
-      <button class="pin" data-pin="2" id="pin2">PIN 03</button>
-    </div>
+    <div class="controls-group">
+      <div class="pins">
+        <button class="pin active" data-pin="0" id="pin0">PIN 01</button>
+        <button class="pin" data-pin="1" id="pin1">PIN 02</button>
+        <button class="pin" data-pin="2" id="pin2">PIN 03</button>
+      </div>
 
-    <div class="controls">
-      <button class="btn-control" id="btnCopy">COPY</button>
-      <button class="btn-control" id="btnCopyPrev">COPY PREV</button>
-      <button class="btn-control" id="btnExport">EXPORT</button>
-      <button class="btn-control" id="btnImport">IMPORT</button>
-      <button class="btn-control" id="btnReset">RESET</button>
-      <button class="btn-control" id="btnInfo">?</button>
-    </div>
+      <div class="controls">
+        <button class="btn-control" id="btnCopy">COPY</button>
+        <button class="btn-control" id="btnCopyPrev">COPY PREV</button>
+        <button class="btn-control" id="btnExport">EXPORT</button>
+        <button class="btn-control" id="btnImport">IMPORT</button>
+        <button class="btn-control" id="btnReset">RESET</button>
+        <button class="btn-control" id="btnInfo">?</button>
+      </div>
 
-    <div class="controls">
-      <button class="btn-control" id="btnDecrease">DECREASE</button>
-      <button class="btn-control" id="btnEdit">EDIT</button>
+      <div class="controls">
+        <button class="btn-control" id="btnDecrease">DECREASE</button>
+        <button class="btn-control" id="btnEdit">EDIT</button>
+      </div>
     </div>
 
     <div class="buttons-grid" id="habitsGrid"></div>
@@ -676,7 +685,7 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V0.46</div>
+        <div class="info-version">V0.49</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
@@ -716,7 +725,7 @@
 
       <div class="info-footer">
         <div class="info-buttons">
-          <a href="https://buymeacoffee.com/comp1mov" target="_blank" class="info-button">Support</a>
+          <a href="https://buymeacoffee.com/comp1mov" target="_blank" class="info-button">Donate</a>
           <a href="https://forms.gle/zgFWRNWtBvKzULr89" target="_blank" class="info-button">Feedback</a>
         </div>
         <button class="info-button" id="btnInfoClose" style="width: 100%;">CLOSE</button>
@@ -748,13 +757,13 @@
 
     // Default configuration
     const DEFAULT_LABELS = {
-      0: { cell01: 'Coffee', cell02: 'Smokes', cell03: 'Snacks', cell04: 'Focus', cell05: 'Break', cell06: '', cell07: 'Calls', cell08: 'Outside', cell09: '' },
-      1: { cell01: '', cell02: '', cell03: '', cell04: 'Work', cell05: '', cell06: '', cell07: '', cell08: '', cell09: '' },
+      0: { cell01: 'Coffee', cell02: 'Smoke', cell03: 'Snacks', cell04: 'Road', cell05: 'Work', cell06: '', cell07: 'Sport', cell08: 'Outside', cell09: '' },
+      1: { cell01: '', cell02: '', cell03: '', cell04: 'Focus', cell05: '', cell06: '', cell07: '', cell08: '', cell09: '' },
       2: { cell01: '', cell02: '', cell03: '', cell04: '', cell05: '', cell06: '', cell07: '', cell08: '', cell09: '' }
     };
 
     const DEFAULT_TYPES = {
-      0: { cell01: 'counter', cell02: 'counter', cell03: 'counter', cell04: 'duration_sec', cell05: 'duration_sec', cell06: 'counter', cell07: 'counter', cell08: 'duration_min', cell09: 'counter' },
+      0: { cell01: 'counter', cell02: 'counter', cell03: 'counter', cell04: 'duration_sec', cell05: 'duration_min', cell06: 'counter', cell07: 'counter', cell08: 'duration_min', cell09: 'counter' },
       1: { cell01: 'counter', cell02: 'counter', cell03: 'counter', cell04: 'duration_sec', cell05: 'counter', cell06: 'counter', cell07: 'counter', cell08: 'counter', cell09: 'counter' },
       2: { cell01: 'counter', cell02: 'counter', cell03: 'counter', cell04: 'counter', cell05: 'counter', cell06: 'counter', cell07: 'counter', cell08: 'counter', cell09: 'counter' }
     };
@@ -784,26 +793,24 @@
       const isNight = hour >= 20 || hour < 8;
       
       if (isNight) {
-        // Night palette - cool purples/cyans
+        // Night palette - vibrant purples/cyans
         return [
-          '#6633cc',
-          '#6666cc',
-          '#6699cc',
-          '#66cccc',
-          '#66ffcc',
-          '#ff8c42',
-          '#ffffff'
+          '#9966ff',  // bright purple
+          '#6699ff',  // bright blue
+          '#66ccff',  // sky blue
+          '#66ffcc',  // mint
+          '#66ffff',  // cyan
+          '#ff8c42'   // orange
         ];
       } else {
-        // Day palette - warm sunset
+        // Day palette - vibrant sunset
         return [
-          '#eeaf61',
-          '#fb9062',
-          '#ee5d6c',
-          '#ce4993',
-          '#6a0d83',
-          '#ff8c42',
-          '#ffffff'
+          '#ffcc44',  // golden yellow
+          '#ff9955',  // bright orange
+          '#ff6677',  // coral pink
+          '#ff44aa',  // hot pink
+          '#cc55ff',  // bright magenta
+          '#ff8c42'   // orange
         ];
       }
     }
@@ -981,9 +988,9 @@
       const seconds = totalSeconds % 60;
       
       const main = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      const breakdown = hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : '';
+      const breakdown = `${hours}h ${minutes}m ${seconds}s`;
       
-      return { main, breakdown, unit: 'MIN SEC' };
+      return { main, breakdown };
     }
 
     function formatDurationMin(totalMinutes) {
@@ -991,9 +998,9 @@
       const minutes = totalMinutes % 60;
       
       const main = String(totalMinutes).padStart(2, '0');
-      const breakdown = hours > 0 ? `${hours}h ${minutes}m` : '';
+      const breakdown = `${hours}h ${minutes}m`;
       
-      return { main, breakdown, unit: 'MINS' };
+      return { main, breakdown };
     }
 
     // ===== CLICK HANDLERS =====
@@ -1076,7 +1083,7 @@
       btn.classList.remove('animating');
       void btn.offsetWidth;
       btn.classList.add('animating');
-      setTimeout(() => btn.classList.remove('animating'), 400);
+      setTimeout(() => btn.classList.remove('animating'), 1500);
     }
 
     // ===== INTERVAL =====
@@ -1155,6 +1162,7 @@
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
             <span class="btn-value" id="value-${habit}">${value}</span>
+            <span class="btn-breakdown"></span>
           `;
         } else {
           const isRunning = state.isRunning;
@@ -1172,13 +1180,12 @@
             fmt = formatDurationMin(Math.floor(total / 60));
           }
 
-          const statusIcon = isRunning ? '⏸' : '▶';
+          const statusIcon = isRunning ? '| |' : '►';
           
           btn.innerHTML = `
             <span class="btn-status">${statusIcon}</span>
             <span class="btn-label">${label}</span>
             <span class="btn-value" id="value-${habit}">${fmt.main}</span>
-            <span class="btn-unit">${fmt.unit}</span>
             <span class="btn-breakdown" id="breakdown-${habit}">${fmt.breakdown}</span>
           `;
 
