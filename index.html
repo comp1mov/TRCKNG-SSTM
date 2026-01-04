@@ -74,6 +74,7 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
+      gap: 4px;
     }
     .header-week {
       font-size: 22px;
@@ -89,11 +90,13 @@
       line-height: 1.2;
       margin-top: 2px;
     }
-    .header-percent {
-      font-size: 22px;
-      font-weight: 700;
+    .header-week-percent {
+      font-size: 10px;
       letter-spacing: 0.04em;
-      line-height: 1;
+      color: rgba(255,255,255,0.4);
+      line-height: 1.2;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
     }
     .header-time {
       font-size: 22px;
@@ -109,18 +112,25 @@
       text-transform: uppercase;
       line-height: 1.2;
       margin-top: 2px;
-      white-space: pre-line;
+    }
+    .header-day-info {
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.2;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
     }
 
     /* ===== PINS ===== */
     .pins {
-      display: flex;
-      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      background: #000;
     }
     .pin {
-      flex: 1;
       border: none;
-      border-right: 1px solid rgba(255,255,255,0.2);
       background: #000;
       color: rgba(255,255,255,0.5);
       padding: 8px 6px;
@@ -135,19 +145,27 @@
       align-items: center;
       justify-content: center;
     }
-    .pin:first-child { border-left: 1px solid rgba(255,255,255,0.2); }
     .pin:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
     .pin.active { background: rgba(255,140,66,0.2); color: #ff8c42; }
 
     /* ===== CONTROLS ===== */
     .controls {
-      display: flex;
-      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0px;
+      background: #000;
+    }
+    .controls-edit {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0px;
+      background: #000;
+    }
+    .btn-control-wide {
+      grid-column: span 3;
     }
     .btn-control {
-      flex: 1;
       border: none;
-      border-right: 1px solid rgba(255,255,255,0.2);
       background: #000;
       color: rgba(255,255,255,0.7);
       padding: 8px 6px;
@@ -163,17 +181,22 @@
       justify-content: center;
       white-space: nowrap;
     }
-    .btn-control:first-child { border-left: 1px solid rgba(255,255,255,0.2); }
     .btn-control:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
     .btn-control:active { background: rgba(255,255,255,0.12); }
     .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; }
 
     /* ===== HABITS GRID ===== */
+    /* 🎨 НАСТРОЙКА РАМОК ГРИДА:
+       - border: рамка вокруг всей сетки 3x3
+       - gap: расстояние между клетками
+       - background: цвет линий между клетками
+    */
     .buttons-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: rgba(255,255,255,0.1);
+      gap: 0;
+      background: #000;
+      border: none;
     }
 
     .btn-habit {
@@ -198,20 +221,45 @@
       -webkit-user-select: none;
       user-select: none;
       aspect-ratio: 1;
-      border: 2px solid rgba(255,255,255,0.3);
     }
 
+    /* 🎨 НЕАКТИВНЫЕ КЛЕТКИ - РАЗНЫЕ ПАТТЕРНЫ ДЛЯ ПИНОВ */
     .btn-habit.inactive {
-      border: 2px solid rgba(255,255,255,0.1);
       background: #000;
+      cursor: default;
+      pointer-events: none;
     }
-    .btn-habit.inactive::after {
+    
+    /* PIN 01 - РОМБЫ (45°) */
+    [data-pin="0"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
       inset: 0;
       background: 
-        linear-gradient(45deg, transparent calc(50% - 1px), rgba(255,255,255,0.2) calc(50% - 1px), rgba(255,255,255,0.2) calc(50% + 1px), transparent calc(50% + 1px)),
-        linear-gradient(-45deg, transparent calc(50% - 1px), rgba(255,255,255,0.2) calc(50% - 1px), rgba(255,255,255,0.2) calc(50% + 1px), transparent calc(50% + 1px));
+        linear-gradient(45deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(-45deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+      pointer-events: none;
+    }
+    
+    /* PIN 02 - СЕТКА (0°/90°) */
+    [data-pin="1"] .btn-habit.inactive::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: 
+        linear-gradient(0deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+      pointer-events: none;
+    }
+    
+    /* PIN 03 - ГИБРИД (левая диагональ + правая сетка) */
+    [data-pin="2"] .btn-habit.inactive::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: 
+        linear-gradient(45deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px));
       pointer-events: none;
     }
 
@@ -235,6 +283,9 @@
       font-variant-numeric: tabular-nums;
       line-height: 1;
       order: 3;
+      letter-spacing: 0;
+      word-spacing: 0;
+      font-feature-settings: "tnum" 1;
     }
     .btn-breakdown {
       font-size: 9px;
@@ -246,7 +297,7 @@
 
     /* Running state */
     .btn-habit.running {
-      border-color: var(--btn-color, rgba(53,242,163,0.6));
+      border: 2px solid var(--btn-color, rgba(53,242,163,0.6));
       background: color-mix(in srgb, var(--btn-color, #35f2a3) 15%, transparent);
     }
     .btn-habit.running .btn-value {
@@ -260,7 +311,7 @@
 
     /* Paused state */
     .btn-habit.paused {
-      border-color: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.15);
     }
     .btn-habit.paused .btn-value,
     .btn-habit.paused .btn-label,
@@ -302,8 +353,17 @@
     }
     .stats-table th, .stats-table td {
       padding: 8px 6px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border-right: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       text-align: center;
+      transition: background-color 100ms ease-out, color 100ms ease-out;
+    }
+    .stats-table th:last-child,
+    .stats-table td:last-child {
+      border-right: none;
+    }
+    .stats-table tbody tr:last-child td {
+      border-bottom: none;
     }
     .stats-table th {
       font-weight: 400;
@@ -315,6 +375,23 @@
     }
     .stats-table td:first-child, .stats-table th:first-child {
       text-align: left;
+    }
+
+    /* Highlight на hover */
+    .stats-table tbody tr.row-highlight {
+      background: rgba(255,140,66,0.05);
+    }
+
+    .stats-table th.col-highlight,
+    .stats-table td.col-highlight {
+      background: rgba(255,140,66,0.08) !important;
+    }
+
+    .stats-table th.cell-highlight,
+    .stats-table td.cell-highlight {
+      background: rgba(255,140,66,0.25) !important;
+      color: #ff8c42 !important;
+      font-weight: 500;
     }
 
     /* ===== MODALS ===== */
@@ -345,7 +422,7 @@
 
     .modal-header {
       text-align: center;
-      border: 1px solid rgba(255,255,255,0.3);
+      border: 0px solid rgba(255,255,255,0.3);
       padding: 20px;
     }
     .modal-title {
@@ -596,13 +673,14 @@
         <div class="header-left">
           <div class="header-week" id="weekDisplay"></div>
           <div class="header-weekdate" id="dateDisplay"></div>
+          <div class="header-week-percent" id="weekPercent">--%</div>
         </div>
         <div class="header-center">
-          <div class="header-percent" id="weekPercent">--%</div>
         </div>
         <div class="header-right">
           <div class="header-time" id="headerTime">--:--</div>
           <div class="header-daydate" id="headerDayDate"></div>
+          <div class="header-day-info" id="dayInfo">- --%</div>
         </div>
       </div>
     </div>
@@ -623,24 +701,24 @@
         <button class="btn-control" id="btnInfo">?</button>
       </div>
 
-      <div class="controls">
-        <button class="btn-control" id="btnDecrease">DECREASE</button>
-        <button class="btn-control" id="btnEdit">EDIT</button>
+      <div class="controls-edit">
+        <button class="btn-control btn-control-wide" id="btnDecrease">DECREASE</button>
+        <button class="btn-control btn-control-wide" id="btnEdit">EDIT</button>
       </div>
     </div>
 
-    <div class="buttons-grid" id="habitsGrid"></div>
+    <div class="buttons-grid" id="habitsGrid" data-pin="0"></div>
 
     <div class="stats" id="stats"></div>
   </div>
 
-  <input type="file" id="fileInput" accept=".json,.txt" style="display:none">
+  <input type="file" id="fileInput" accept=".json" style="display:none">
 
   <!-- EDIT MODAL -->
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM · v0.46</div>
+        <div class="modal-title">TRCKNG SSTM · v0.58</div>
         <div class="modal-version">EDIT</div>
       </div>
       <div class="edit-items-grid" id="editItemsContainer"></div>
@@ -663,9 +741,15 @@
         <div class="cell-edit-label" style="margin-bottom: 8px;">Type</div>
         <div class="type-selector">
           <button class="type-btn active" data-type="counter">Counter</button>
-          <button class="type-btn" data-type="duration_sec">Dur Sec</button>
-          <button class="type-btn" data-type="duration_min">Dur Min</button>
+          <button class="type-btn" data-type="duration_sec">MM:SS</button>
+          <button class="type-btn" data-type="duration_min">Min</button>
+          <button class="type-btn" data-type="duration_sec_count">Sec</button>
         </div>
+      </div>
+
+      <div style="margin-top: 8px;" id="descriptionField">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Description</div>
+        <input type="text" class="cell-edit-input" id="cellEditDescription" maxlength="30" autocomplete="off" placeholder="Optional description">
       </div>
 
       <div class="color-picker-wrap">
@@ -685,8 +769,18 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V0.49</div>
+        <div class="info-version">V0.58</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
+      </div>
+      
+      <div class="info-section">
+        <div class="info-section-title">What's New in v0.58</div>
+        <div class="info-text">
+          • New type: Duration Sec Count<br>
+          • Counts seconds as number (2300s)<br>
+          • Shows breakdown below (0h 38m 20s)<br>
+          • Blue default color (#6b9dff)
+        </div>
       </div>
       
       <div class="info-section">
@@ -699,19 +793,20 @@
       <div class="info-section">
         <div class="info-section-title">Cell Types</div>
         <div class="info-text">
-          <strong>Counter</strong> — tap to +1<br>
-          <strong>Duration Sec</strong> — live MM:SS stopwatch<br>
-          <strong>Duration Min</strong> — live minutes counter
+          <strong>Counter</strong> – tap to +1<br>
+          <strong>Duration Sec</strong> – live MM:SS stopwatch<br>
+          <strong>Duration Min</strong> – live minutes counter
         </div>
       </div>
 
       <div class="info-section">
         <div class="info-section-title">Controls</div>
         <div class="info-text">
-          <strong>DECREASE</strong> — subtract mode / reset duration<br>
-          <strong>COPY</strong> — copy current week<br>
-          <strong>COPY PREV</strong> — copy previous week<br>
-          <strong>EXPORT / IMPORT</strong> — backup data
+          <strong>DECREASE</strong> – subtract mode / reset duration<br>
+          <strong>COPY</strong> – copy current week<br>
+          <strong>COPY PREV</strong> – copy previous week<br>
+          <strong>EXPORT</strong> – download backup.json<br>
+          <strong>IMPORT</strong> – restore from .json
         </div>
       </div>
 
@@ -725,7 +820,7 @@
 
       <div class="info-footer">
         <div class="info-buttons">
-          <a href="https://buymeacoffee.com/comp1mov" target="_blank" class="info-button">Donate</a>
+          <a href="https://buymeacoffee.com/comp1mov" target="_blank" class="info-button">Support Me</a>
           <a href="https://forms.gle/zgFWRNWtBvKzULr89" target="_blank" class="info-button">Feedback</a>
         </div>
         <button class="info-button" id="btnInfoClose" style="width: 100%;">CLOSE</button>
@@ -740,7 +835,8 @@
     const CELL_TYPES = {
       COUNTER: 'counter',
       DURATION_SEC: 'duration_sec',
-      DURATION_MIN: 'duration_min'
+      DURATION_MIN: 'duration_min',
+      DURATION_SEC_COUNT: 'duration_sec_count'
     };
 
     const STORAGE_KEYS = {
@@ -748,6 +844,7 @@
       LABELS: 'trckng_sstm_labels',
       TYPES: 'trckng_sstm_types',
       COLORS: 'trckng_sstm_colors',
+      DESCRIPTIONS: 'trckng_sstm_descriptions',
       DURATION: 'trckng_sstm_duration',
       SEEN_INFO: 'trckng_has_seen_info'
     };
@@ -783,8 +880,10 @@
     let habitLabels = {};
     let habitTypes = {};
     let habitColors = {};
+    let habitDescriptions = {};
     let durationStates = {};
     let globalInterval = null;
+    let clockInterval = null;
     let editingHabit = null;
 
     // ===== COLOR PALETTE =====
@@ -793,32 +892,15 @@
       const isNight = hour >= 20 || hour < 8;
       
       if (isNight) {
-        // Night palette - vibrant purples/cyans
-        return [
-          '#9966ff',  // bright purple
-          '#6699ff',  // bright blue
-          '#66ccff',  // sky blue
-          '#66ffcc',  // mint
-          '#66ffff',  // cyan
-          '#ff8c42'   // orange
-        ];
+        return ['#9966ff', '#6699ff', '#66ccff', '#66ffcc', '#66ffff', '#ff8c42'];
       } else {
-        // Day palette - vibrant sunset
-        return [
-          '#ffcc44',  // golden yellow
-          '#ff9955',  // bright orange
-          '#ff6677',  // coral pink
-          '#ff44aa',  // hot pink
-          '#cc55ff',  // bright magenta
-          '#ff8c42'   // orange
-        ];
+        return ['#ffcc44', '#ff9955', '#ff6677', '#ff44aa', '#cc55ff', '#ff8c42'];
       }
     }
 
     let colorPalette = generateColorPalette();
     let paletteIndex = 0;
 
-    // Refresh palette every hour
     setInterval(() => {
       colorPalette = generateColorPalette();
     }, 3600000);
@@ -827,24 +909,14 @@
       const customColor = habitColors[habit];
       const type = habitTypes[habit] || CELL_TYPES.COUNTER;
       
-      if (decreaseMode) {
-        return '#ff4f6a';
-      }
+      if (decreaseMode) return '#ff4f6a';
       
-      // Custom color set
-      if (customColor && customColor !== '#ffffff') {
-        return customColor;
-      }
+      if (customColor && customColor !== '#ffffff') return customColor;
       
-      // Duration types have default colors
-      if (type === CELL_TYPES.DURATION_SEC) {
-        return '#35f2a3';
-      }
-      if (type === CELL_TYPES.DURATION_MIN) {
-        return '#ff8c42';
-      }
+      if (type === CELL_TYPES.DURATION_SEC) return '#35f2a3';
+      if (type === CELL_TYPES.DURATION_MIN) return '#ff8c42';
+      if (type === CELL_TYPES.DURATION_SEC_COUNT) return '#6b9dff';
       
-      // Counter with white color - random from palette
       const color = colorPalette[paletteIndex % colorPalette.length];
       paletteIndex++;
       return color;
@@ -896,7 +968,6 @@
       const stored = localStorage.getItem(key);
       weekData = stored ? JSON.parse(stored) : {};
       
-      // Clean up corrupted data (values that are not objects)
       Object.keys(weekData).forEach(week => {
         if (typeof weekData[week] !== 'object' || weekData[week] === null) {
           delete weekData[week];
@@ -953,6 +1024,20 @@
     function saveColors() {
       const key = `${STORAGE_KEYS.COLORS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(habitColors));
+    }
+
+    function loadDescriptions() {
+      habitDescriptions = {};
+      const key = `${STORAGE_KEYS.DESCRIPTIONS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try { Object.assign(habitDescriptions, JSON.parse(stored)); } catch(e) {}
+      }
+    }
+
+    function saveDescriptions() {
+      const key = `${STORAGE_KEYS.DESCRIPTIONS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(habitDescriptions));
     }
 
     function loadDurationStates() {
@@ -1076,7 +1161,6 @@
       const btn = document.getElementById(`btn-${habit}`);
       if (!btn) return;
       
-      // Set animation color
       const animColor = getAnimationColor(habit);
       btn.style.setProperty('--btn-color', animColor);
       
@@ -1111,16 +1195,22 @@
 
         const valueEl = document.getElementById(`value-${habit}`);
         const breakdownEl = document.getElementById(`breakdown-${habit}`);
+        
+        const description = habitDescriptions[habit];
 
         if (type === CELL_TYPES.DURATION_SEC) {
           const fmt = formatDurationSec(total);
-          if (valueEl) valueEl.textContent = fmt.main;
-          if (breakdownEl) breakdownEl.textContent = fmt.breakdown;
+          if (valueEl) valueEl.textContent = `${fmt.main}s`;
+          if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
         } else if (type === CELL_TYPES.DURATION_MIN) {
           const totalMin = Math.floor(total / 60);
           const fmt = formatDurationMin(totalMin);
-          if (valueEl) valueEl.textContent = fmt.main;
-          if (breakdownEl) breakdownEl.textContent = fmt.breakdown;
+          if (valueEl) valueEl.textContent = `${fmt.main}m`;
+          if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
+        } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
+          const fmt = formatDurationSec(total);
+          if (valueEl) valueEl.textContent = `${total}s`;
+          if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
         }
       });
     }
@@ -1153,16 +1243,18 @@
         if (!btnColor || btnColor === '#ffffff') {
           if (type === CELL_TYPES.DURATION_SEC) btnColor = '#35f2a3';
           else if (type === CELL_TYPES.DURATION_MIN) btnColor = '#ff8c42';
+          else if (type === CELL_TYPES.DURATION_SEC_COUNT) btnColor = '#6b9dff';
         }
         btn.style.setProperty('--btn-color', btnColor);
 
         if (type === CELL_TYPES.COUNTER) {
           const weekObj = weekData[currentWeekKey];
           const value = (weekObj && typeof weekObj === 'object') ? (weekObj[habit] || 0) : 0;
+          const description = habitDescriptions[habit] || '';
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
             <span class="btn-value" id="value-${habit}">${value}</span>
-            <span class="btn-breakdown"></span>
+            <span class="btn-breakdown">${description}</span>
           `;
         } else {
           const isRunning = state.isRunning;
@@ -1174,19 +1266,24 @@
           }
 
           let fmt;
+          let displayValue;
           if (type === CELL_TYPES.DURATION_SEC) {
             fmt = formatDurationSec(total);
-          } else {
+            displayValue = `${fmt.main}s`; // MM:SS with 's'
+          } else if (type === CELL_TYPES.DURATION_MIN) {
             fmt = formatDurationMin(Math.floor(total / 60));
+            displayValue = `${fmt.main}m`; // Minutes with 'm'
+          } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
+            fmt = formatDurationSec(total);
+            displayValue = `${total}s`; // Total seconds as number with 's'
           }
-
-          const statusIcon = isRunning ? '| |' : '►';
+          
+          const description = habitDescriptions[habit] || fmt.breakdown;
           
           btn.innerHTML = `
-            <span class="btn-status">${statusIcon}</span>
             <span class="btn-label">${label}</span>
-            <span class="btn-value" id="value-${habit}">${fmt.main}</span>
-            <span class="btn-breakdown" id="breakdown-${habit}">${fmt.breakdown}</span>
+            <span class="btn-value" id="value-${habit}">${displayValue}</span>
+            <span class="btn-breakdown" id="breakdown-${habit}">${description}</span>
           `;
 
           if (isRunning) {
@@ -1242,6 +1339,7 @@
       const timeEl = document.getElementById('headerTime');
       if (timeEl) timeEl.textContent = `${hours}:${minutes}`;
 
+      // Week progress (under dates on left)
       const dayOfWeek = now.getDay();
       const minutesInDay = now.getHours() * 60 + now.getMinutes();
       const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -1251,12 +1349,23 @@
       const percentEl = document.getElementById('weekPercent');
       if (percentEl) percentEl.textContent = `${weekProgress}%`;
 
+      // Day progress (0-100%)
+      const dayProgress = Math.round((minutesInDay / (24 * 60)) * 100);
+
+      // Day number (1-7)
+      const dayNumber = dayIndex + 1;
+
+      // Combined day info (7 96%)
+      const dayInfoEl = document.getElementById('dayInfo');
+      if (dayInfoEl) dayInfoEl.textContent = `${dayNumber} ${dayProgress}%`;
+
+      // Day date (04 JAN SUNDAY in one line)
       const dayDateEl = document.getElementById('headerDayDate');
       if (dayDateEl) {
         const day = String(now.getDate()).padStart(2, '0');
         const monthName = now.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-        const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-        dayDateEl.textContent = `${day} ${monthName}\n${dayName}`;
+        const dayNameFull = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+        dayDateEl.textContent = `${day} ${monthName} ${dayNameFull}`;
       }
     }
 
@@ -1277,16 +1386,16 @@
       }
 
       let html = '<table class="stats-table"><thead><tr><th>Week</th>';
-      HABITS.forEach(h => {
+      HABITS.forEach((h, idx) => {
         if (habitLabels[h]?.trim()) {
-          html += `<th>${habitLabels[h]}</th>`;
+          html += `<th data-col="${idx}">${habitLabels[h]}</th>`;
         }
       });
       html += '</tr></thead><tbody>';
 
       allWeeks.forEach(week => {
         html += `<tr><td>${week}</td>`;
-        HABITS.forEach(h => {
+        HABITS.forEach((h, idx) => {
           if (habitLabels[h]?.trim()) {
             const weekObj = weekData[week];
             const value = (weekObj && typeof weekObj === 'object') ? (weekObj[h] || 0) : 0;
@@ -1299,16 +1408,93 @@
               display = `${m}:${String(s).padStart(2, '0')}`;
             } else if (type === CELL_TYPES.DURATION_MIN) {
               display = `${value}m`;
+            } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
+              display = `${value}s`;
             }
             
-            html += `<td>${display}</td>`;
+            html += `<td data-col="${idx}">${display}</td>`;
           }
         });
         html += '</tr>';
       });
 
+      // TOTAL row - sum all weeks for ALL types
+      html += '<tr style="border-top: 2px solid rgba(255,255,255,0.3);"><td style="font-weight: 500; color: rgba(255,255,255,0.8);">TOTAL</td>';
+      HABITS.forEach((h, idx) => {
+        if (habitLabels[h]?.trim()) {
+          const type = habitTypes[h] || CELL_TYPES.COUNTER;
+          
+          // Calculate total across ALL weeks (not just displayed 3)
+          let total = 0;
+          Object.keys(weekData).forEach(week => {
+            const weekObj = weekData[week];
+            if (weekObj && typeof weekObj === 'object') {
+              total += (weekObj[h] || 0);
+            }
+          });
+          
+          let display = '-';
+          if (total > 0) {
+            if (type === CELL_TYPES.DURATION_SEC) {
+              const m = Math.floor(total / 60);
+              const s = total % 60;
+              display = `${m}:${String(s).padStart(2, '0')}`;
+            } else if (type === CELL_TYPES.DURATION_MIN) {
+              display = `${total}m`;
+            } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
+              display = `${total}s`;
+            } else {
+              // COUNTER type
+              display = total;
+            }
+          }
+          
+          html += `<td data-col="${idx}" style="font-weight: 500;">${display}</td>`;
+        }
+      });
+      html += '</tr>';
+
       html += '</tbody></table>';
       statsEl.innerHTML = html;
+      
+      attachTableHighlight();
+    }
+
+    // Table highlight on hover
+    function attachTableHighlight() {
+      const table = document.querySelector('.stats-table');
+      if (!table) return;
+
+      const cells = table.querySelectorAll('th, td');
+      
+      cells.forEach(cell => {
+        cell.addEventListener('mouseenter', function() {
+          const col = this.dataset.col;
+          const row = this.closest('tr');
+
+          // Dimmed row highlight
+          if (row) {
+            row.classList.add('row-highlight');
+          }
+
+          // Medium column highlight
+          if (col !== undefined) {
+            table.querySelectorAll(`th[data-col="${col}"], td[data-col="${col}"]`).forEach(c => {
+              c.classList.add('col-highlight');
+            });
+          }
+
+          // Bright cell highlight (only current cell)
+          this.classList.add('cell-highlight');
+        });
+
+        cell.addEventListener('mouseleave', function() {
+          // Remove all highlights
+          table.querySelectorAll('.row-highlight').forEach(r => r.classList.remove('row-highlight'));
+          table.querySelectorAll('.col-highlight').forEach(c => c.classList.remove('col-highlight'));
+          table.querySelectorAll('.cell-highlight').forEach(c => c.classList.remove('cell-highlight'));
+        });
+      });
     }
 
     // ===== CONTROLS =====
@@ -1367,6 +1553,7 @@
 
     function exportData() {
       const exportObj = {
+        version: '0.58',
         weekData,
         habitLabels,
         habitTypes,
@@ -1375,7 +1562,19 @@
         pin: currentPin,
         exportedAt: new Date().toISOString()
       };
-      navigator.clipboard?.writeText(JSON.stringify(exportObj, null, 2)).then(() => alert('✓ Data copied to clipboard'));
+      
+      const dataStr = JSON.stringify(exportObj, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `trckng_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('✓ Backup downloaded');
     }
 
     function importData() {
@@ -1391,14 +1590,28 @@
         try {
           const imported = JSON.parse(event.target.result);
           if (imported.weekData) Object.assign(weekData, imported.weekData);
+          if (imported.habitLabels) Object.assign(habitLabels, imported.habitLabels);
+          if (imported.habitTypes) Object.assign(habitTypes, imported.habitTypes);
+          if (imported.habitColors) Object.assign(habitColors, imported.habitColors);
+          if (imported.durationStates) Object.assign(durationStates, imported.durationStates);
+          
           saveWeekData();
+          saveLabels();
+          saveTypes();
+          saveColors();
+          saveDurationStates();
+          
           renderHabits();
-          alert('✓ Data imported');
+          updateHeader();
+          alert('✓ Data imported successfully');
         } catch(err) {
-          alert('✗ Import failed');
+          alert('✗ Import failed: Invalid file format');
         }
       };
       reader.readAsText(file);
+      
+      // Reset input
+      e.target.value = '';
     }
 
     function resetAll() {
@@ -1427,11 +1640,16 @@
       currentPin = pinNum;
       document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
       document.getElementById(`pin${pinNum}`).classList.add('active');
+      
+      // Update grid data-pin for pattern styling
+      const grid = document.getElementById('habitsGrid');
+      if (grid) grid.setAttribute('data-pin', pinNum);
 
       loadWeekData();
       loadLabels();
       loadTypes();
       loadColors();
+      loadDescriptions();
       loadDurationStates();
       currentWeekKey = getWeekKey();
       ensureWeekExists();
@@ -1472,6 +1690,7 @@
       document.getElementById('cellEditLabel').textContent = `CELL ${cellNum}`;
       document.getElementById('cellEditInput').value = habitLabels[habit] || '';
       document.getElementById('cellEditColor').value = habitColors[habit] || '#ffffff';
+      document.getElementById('cellEditDescription').value = habitDescriptions[habit] || '';
 
       const type = habitTypes[habit] || CELL_TYPES.COUNTER;
       document.querySelectorAll('.type-btn').forEach(btn => {
@@ -1492,6 +1711,7 @@
 
       const newLabel = document.getElementById('cellEditInput').value.trim();
       const newColor = document.getElementById('cellEditColor').value;
+      const newDescription = document.getElementById('cellEditDescription').value.trim();
       const activeTypeBtn = document.querySelector('.type-btn.active');
       const newType = activeTypeBtn?.dataset.type || CELL_TYPES.COUNTER;
 
@@ -1511,10 +1731,12 @@
       habitLabels[editingHabit] = newLabel;
       habitColors[editingHabit] = newColor;
       habitTypes[editingHabit] = newType;
+      habitDescriptions[editingHabit] = newDescription;
 
       saveLabels();
       saveColors();
       saveTypes();
+      saveDescriptions();
       saveWeekData();
       saveDurationStates();
 
@@ -1539,7 +1761,18 @@
       loadLabels();
       loadTypes();
       loadColors();
+      loadDescriptions();
       loadDurationStates();
+      
+      // Check if week changed - reset duration states for new week
+      const lastWeekKey = localStorage.getItem('trckng_last_week_key');
+      if (lastWeekKey && lastWeekKey !== currentWeekKey) {
+        console.log('New week detected! Resetting duration states.');
+        durationStates = {};
+        saveDurationStates();
+      }
+      localStorage.setItem('trckng_last_week_key', currentWeekKey);
+      
       ensureWeekExists();
 
       renderHabits();
@@ -1549,7 +1782,8 @@
         document.getElementById('btnInfo').classList.add('pulse');
       }
 
-      setInterval(updateHeaderTime, 60000);
+      // Update clock every second (fixes lag issue)
+      clockInterval = setInterval(updateHeaderTime, 1000);
 
       document.querySelectorAll('.pin').forEach(btn => {
         btn.addEventListener('click', () => switchPin(parseInt(btn.dataset.pin)));
