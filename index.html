@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" href="/TRCKNG-SSTM/icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
   <title>TRCKNG SSTM</title>
   <style>
     * { box-sizing: border-box; }
@@ -77,49 +77,56 @@
       gap: 4px;
     }
     .header-week {
-      font-size: 22px;
+      font-family: "Roboto Condensed", -apple-system, sans-serif;
+      font-size: 24px;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.02em;
       line-height: 1;
+      font-variant-numeric: tabular-nums;
     }
     .header-weekdate {
       font-size: 10px;
-      letter-spacing: 0.04em;
-      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.5);
       text-transform: uppercase;
       line-height: 1.2;
-      margin-top: 2px;
+      margin-top: 3px;
+      font-weight: 400;
     }
     .header-week-percent {
       font-size: 10px;
-      letter-spacing: 0.04em;
-      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.5);
       line-height: 1.2;
       margin-top: 2px;
       font-variant-numeric: tabular-nums;
+      font-weight: 400;
     }
     .header-time {
-      font-size: 22px;
+      font-family: "Roboto Condensed", -apple-system, sans-serif;
+      font-size: 24px;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.02em;
       font-variant-numeric: tabular-nums;
       line-height: 1;
     }
     .header-daydate {
       font-size: 10px;
-      letter-spacing: 0.04em;
-      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.5);
       text-transform: uppercase;
       line-height: 1.2;
-      margin-top: 2px;
+      margin-top: 3px;
+      font-weight: 400;
     }
     .header-day-info {
       font-size: 10px;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       color: rgba(255,255,255,0.5);
       line-height: 1.2;
       margin-top: 2px;
       font-variant-numeric: tabular-nums;
+      font-weight: 400;
     }
 
     /* ===== PINS ===== */
@@ -277,13 +284,13 @@
       order: 2;
     }
     .btn-value { 
-      font-family: "Google Sans Mono", "SF Mono", ui-monospace, monospace;
-      font-size: clamp(24px, 10vw, 38px);
+      font-family: "Roboto Condensed", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: clamp(28px, 12vw, 48px);
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       line-height: 1;
       order: 3;
-      letter-spacing: 0;
+      letter-spacing: -0.02em;
       word-spacing: 0;
       font-feature-settings: "tnum" 1;
     }
@@ -348,43 +355,69 @@
     .stats-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 11px;
       color: rgba(255,255,255,0.8);
     }
+    
     .stats-table th, .stats-table td {
-      padding: 8px 6px;
-      border-right: 1px solid rgba(255,255,255,0.1);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 10px 8px;
       text-align: center;
-      transition: background-color 100ms ease-out, color 100ms ease-out;
+      border-right: 1px solid rgba(80,80,80,0.5);
+      border-bottom: 1px solid rgba(80,80,80,0.5);
+      background: transparent;
     }
+    
     .stats-table th:last-child,
     .stats-table td:last-child {
       border-right: none;
     }
+    
     .stats-table tbody tr:last-child td {
       border-bottom: none;
     }
+    
     .stats-table th {
+      font-size: 8px;
       font-weight: 400;
-      font-size: 10px;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.6);
-      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.5);
     }
-    .stats-table td:first-child, .stats-table th:first-child {
+    
+    .stats-table td {
+      font-family: "Roboto Condensed", -apple-system, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .stats-table td:first-child, 
+    .stats-table th:first-child {
       text-align: left;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 8px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: color 100ms ease-out;
     }
 
-    /* Highlight на hover */
+    /* Hover on week label only */
+    .stats-table tbody td:first-child:hover {
+      color: #ff8c42;
+    }
+
+    /* Hover effects - subtle */
     .stats-table tbody tr.row-highlight {
-      background: rgba(255,140,66,0.05);
+      background: rgba(255,140,66,0.03);
     }
 
     .stats-table th.col-highlight,
     .stats-table td.col-highlight {
-      background: rgba(255,140,66,0.08) !important;
+      background: rgba(255,140,66,0.05) !important;
+      color: #ff8c42 !important;
     }
 
     .stats-table th.cell-highlight,
@@ -671,16 +704,16 @@
     <div class="header">
       <div class="header-content">
         <div class="header-left">
-          <div class="header-week" id="weekDisplay"></div>
-          <div class="header-weekdate" id="dateDisplay"></div>
-          <div class="header-week-percent" id="weekPercent">--%</div>
+          <div class="header-time" id="headerTime">--:--:--</div>
+          <div class="header-daydate" id="headerDayDate"></div>
+          <div class="header-day-info" id="dayInfo">- --%</div>
         </div>
         <div class="header-center">
         </div>
         <div class="header-right">
-          <div class="header-time" id="headerTime">--:--</div>
-          <div class="header-daydate" id="headerDayDate"></div>
-          <div class="header-day-info" id="dayInfo">- --%</div>
+          <div class="header-week" id="weekDisplay"></div>
+          <div class="header-weekdate" id="dateDisplay"></div>
+          <div class="header-week-percent" id="weekPercent">--%</div>
         </div>
       </div>
     </div>
@@ -718,13 +751,27 @@
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM · v0.58</div>
+        <div class="modal-title">TRCKNG SSTM · v0.61</div>
         <div class="modal-version">EDIT</div>
       </div>
-      <div class="edit-items-grid" id="editItemsContainer"></div>
-      <div style="font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.5;">
-        Clear name to deactivate cell. Tap cell to edit.
+      
+      <!-- Instructions in 2 columns -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 9px; color: rgba(255,255,255,0.5); line-height: 1.7; padding: 0 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div>
+          • Tap cell to edit name, type, color, description<br>
+          • Clear name to deactivate cell<br>
+          • <strong style="color: rgba(255,255,255,0.7);">Counter:</strong> tap to +1, DECREASE to -1<br>
+          • <strong style="color: rgba(255,255,255,0.7);">MM:SS:</strong> live stopwatch (minutes:seconds)
+        </div>
+        <div>
+          • <strong style="color: rgba(255,255,255,0.7);">Min:</strong> live timer (minutes count)<br>
+          • <strong style="color: rgba(255,255,255,0.7);">Sec:</strong> live timer (seconds count)<br>
+          • Duration timers: DECREASE resets to 0<br>
+          • Switching timer types converts values
+        </div>
       </div>
+      
+      <div class="edit-items-grid" id="editItemsContainer"></div>
       <div class="modal-buttons">
         <button class="modal-btn" id="editModalClose">DONE</button>
       </div>
@@ -769,17 +816,18 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V0.58</div>
+        <div class="info-version">V0.61</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v0.58</div>
+        <div class="info-section-title">What's New in v0.61</div>
         <div class="info-text">
-          • New type: Duration Sec Count<br>
-          • Counts seconds as number (2300s)<br>
-          • Shows breakdown below (0h 38m 20s)<br>
-          • Blue default color (#6b9dff)
+          • Table: hover on week label (orange)<br>
+          • No auto-highlight of current week<br>
+          • Edit modal: 2-column instructions<br>
+          • Instructions moved under EDIT title<br>
+          • Removed "Quick Guide" label
         </div>
       </div>
       
@@ -1335,9 +1383,10 @@
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
 
       const timeEl = document.getElementById('headerTime');
-      if (timeEl) timeEl.textContent = `${hours}:${minutes}`;
+      if (timeEl) timeEl.textContent = `${hours}:${minutes}:${seconds}`;
 
       // Week progress (under dates on left)
       const dayOfWeek = now.getDay();
@@ -1419,7 +1468,7 @@
       });
 
       // TOTAL row - sum all weeks for ALL types
-      html += '<tr style="border-top: 2px solid rgba(255,255,255,0.3);"><td style="font-weight: 500; color: rgba(255,255,255,0.8);">TOTAL</td>';
+      html += '<tr style="border-top: 1px solid rgba(255,255,255,0.15);"><td>TOTAL</td>';
       HABITS.forEach((h, idx) => {
         if (habitLabels[h]?.trim()) {
           const type = habitTypes[h] || CELL_TYPES.COUNTER;
@@ -1449,7 +1498,7 @@
             }
           }
           
-          html += `<td data-col="${idx}" style="font-weight: 500;">${display}</td>`;
+          html += `<td data-col="${idx}">${display}</td>`;
         }
       });
       html += '</tr>';
@@ -1553,7 +1602,7 @@
 
     function exportData() {
       const exportObj = {
-        version: '0.58',
+        version: '0.61',
         weekData,
         habitLabels,
         habitTypes,
@@ -1719,13 +1768,53 @@
       const wasActive = habitLabels[editingHabit]?.trim();
       const typeChanged = oldType !== newType;
 
-      if ((wasActive && !newLabel) || typeChanged) {
+      // Check if we need to reset or convert
+      const oldIsDuration = oldType === CELL_TYPES.DURATION_SEC || oldType === CELL_TYPES.DURATION_MIN || oldType === CELL_TYPES.DURATION_SEC_COUNT;
+      const newIsDuration = newType === CELL_TYPES.DURATION_SEC || newType === CELL_TYPES.DURATION_MIN || newType === CELL_TYPES.DURATION_SEC_COUNT;
+
+      if (wasActive && !newLabel) {
+        // Deactivating cell - reset everything
         Object.keys(weekData).forEach(week => {
           if (weekData[week] && typeof weekData[week] === 'object') {
             weekData[week][editingHabit] = 0;
           }
         });
         delete durationStates[editingHabit];
+      } else if (typeChanged) {
+        // Type changed
+        if (oldIsDuration && newIsDuration) {
+          // Duration to duration - CONVERT values
+          Object.keys(weekData).forEach(week => {
+            if (weekData[week] && typeof weekData[week] === 'object') {
+              const oldValue = weekData[week][editingHabit] || 0;
+              
+              // All duration types store seconds internally
+              // DURATION_SEC and DURATION_SEC_COUNT: already in seconds
+              // DURATION_MIN: stored as minutes, need to convert
+              
+              let seconds = oldValue;
+              if (oldType === CELL_TYPES.DURATION_MIN) {
+                seconds = oldValue * 60; // minutes to seconds
+              }
+              
+              // Convert to new type
+              if (newType === CELL_TYPES.DURATION_MIN) {
+                weekData[week][editingHabit] = Math.floor(seconds / 60); // to minutes
+              } else {
+                weekData[week][editingHabit] = seconds; // keep as seconds
+              }
+            }
+          });
+          // Keep duration state but it will be recalculated on render
+        } else {
+          // Counter <-> Duration - RESET
+          Object.keys(weekData).forEach(week => {
+            if (weekData[week] && typeof weekData[week] === 'object') {
+              weekData[week][editingHabit] = 0;
+            }
+          });
+          delete durationStates[editingHabit];
+        }
       }
 
       habitLabels[editingHabit] = newLabel;
