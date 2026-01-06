@@ -908,7 +908,171 @@
       animation: btnPulse 1.5s ease-in-out infinite;
       color: #ff8c42;
     }
-  </style>
+  
+
+    /* ===== UI NORMALIZATION (v0.91) ===== */
+    :root {
+      --ui-font: "Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+
+      /* Button internal row heights */
+      --btn-row-status: 14px;
+      --btn-row-label: 28px;
+      --btn-row-break: 18px;
+
+      /* Value sizing (desktop baseline) */
+      --value-min: 22px;
+      --value-fluid: 10vw;
+      --value-max: 48px;
+
+      /* Controls sizing */
+      --ctl-font: 11px;
+      --ctl-pad-y: 12px;
+      --ctl-pad-x: 8px;
+    }
+
+    html, body { font-family: var(--ui-font); }
+
+    /* Unify typography across UI */
+    .btn-control, .pin, .stats-table, .modal, .cell-edit-content, .modal-content {
+      font-family: var(--ui-font);
+    }
+
+    /* Habit button: enforce consistent internal layout */
+    .btn-habit {
+      display: grid !important;
+      grid-template-rows: var(--btn-row-status) var(--btn-row-label) 1fr var(--btn-row-break);
+      align-items: center !important;
+      justify-items: center !important;
+      gap: 2px !important;
+      padding: 10px 8px !important;
+      letter-spacing: 0.04em;
+    }
+
+    .btn-status {
+      grid-row: 1;
+      margin: 0 !important;
+      min-height: var(--btn-row-status);
+    }
+
+    .btn-label {
+      grid-row: 2;
+      margin: 0 !important;
+      width: 100%;
+      max-width: 100%;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.15;
+      opacity: 0.75;
+      padding: 0 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .btn-value {
+      grid-row: 3;
+      display: inline-block;
+      max-width: 100%;
+      white-space: nowrap;
+      font-size: clamp(var(--value-min), var(--value-fluid), var(--value-max));
+      letter-spacing: -0.01em;
+    }
+
+    .btn-breakdown {
+      grid-row: 4;
+      margin: 0 !important;
+      max-width: 100%;
+      padding: 0 4px;
+      font-size: 10px;
+      line-height: 1.1;
+      opacity: 0.5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Make controls more compact by default */
+    .btn-control {
+      font-size: var(--ctl-font);
+      padding: var(--ctl-pad-y) var(--ctl-pad-x);
+    }
+    .pin {
+      font-size: 10px;
+      padding: 14px 10px;
+    }
+
+    /* Modals: improve iOS scrolling */
+    .modal-content {
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      max-height: calc(100dvh - 32px);
+    }
+    .cell-edit-content {
+      max-height: calc(100dvh - 32px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.88);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.9);
+      padding: 10px 12px;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      max-width: min(520px, calc(100vw - 24px));
+      width: max-content;
+      text-align: center;
+      z-index: 999;
+      display: none;
+    }
+    .toast.visible { display: block; }
+
+    /* ===== MOBILE OVERRIDES ===== */
+    @media (max-width: 480px) {
+      :root {
+        --btn-row-status: 12px;
+        --btn-row-label: 24px;
+        --btn-row-break: 16px;
+
+        --value-min: 18px;
+        --value-fluid: 11vw;
+        --value-max: 40px;
+
+        --ctl-font: 10px;
+        --ctl-pad-y: 10px;
+        --ctl-pad-x: 6px;
+      }
+
+      .header { padding: 2px 12px 10px; }
+      .header-week, .header-time { font-size: 20px; }
+      .header-weekdate, .header-week-percent, .header-day { font-size: 9px; }
+
+      .pin { padding: 12px 8px; }
+      .btn-control { letter-spacing: 0.04em; }
+
+      .btn-habit { padding: 8px 6px !important; }
+      .btn-label { font-size: 10px; }
+      .btn-breakdown { font-size: 9px; }
+
+      .stats-table th, .stats-table td { font-size: 9px; padding: 10px 6px; }
+
+      /* Modal alignment: top for easier scrolling on iOS */
+      .modal.visible { align-items: flex-start; }
+      .modal { padding: 12px; }
+      .modal-content, .cell-edit-content { padding: 16px; }
+      .type-btn { padding: 8px 4px; font-size: 9px; }
+      .color-picker { height: 34px; }
+    }
+
+</style>
 </head>
 <body>
   <div class="container">
@@ -962,7 +1126,7 @@
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM - v0.90</div>
+        <div class="modal-title">TRCKNG SSTM - v0.91</div>
         <div class="modal-version">EDIT</div>
       </div>
       
@@ -1118,12 +1282,12 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V0.90</div>
+        <div class="info-version">V0.91</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v0.90</div>
+        <div class="info-section-title">What's New in v0.91</div>
         <div class="info-text">
           <strong>ENCODING AND SOURCE:</strong><br>
           * All source comments are English (ASCII only)<br>
@@ -1134,7 +1298,7 @@
           * Accent color follows the active duration color<br>
           <br>
           <strong>HOUSEKEEPING:</strong><br>
-          * Version labels unified to v0.90<br>
+          * Version labels unified to v0.91<br>
         </div>
       </div>
       
@@ -1285,6 +1449,80 @@
     }
 
     // ===== NOTIFICATION SOUNDS =====
+
+
+    // ===== MOBILE FIXES (v0.91) =====
+    let toastEl = null;
+    let toastTimer = null;
+    let audioUnlocked = false;
+
+    function ensureToast() {
+      if (toastEl) return toastEl;
+      toastEl = document.createElement('div');
+      toastEl.id = 'toast';
+      toastEl.className = 'toast';
+      document.body.appendChild(toastEl);
+      return toastEl;
+    }
+
+    function showToast(message, ms = 3500) {
+      if (!message) return;
+      const el = ensureToast();
+      el.textContent = message;
+      el.classList.add('visible');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('visible'), ms);
+    }
+
+    async function ensureNotificationPermission() {
+      if (!('Notification' in window)) return 'unsupported';
+      if (Notification.permission === 'default') {
+        try {
+          return await Notification.requestPermission();
+        } catch (e) {
+          return Notification.permission;
+        }
+      }
+      return Notification.permission;
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+        // tiny silent tick to unlock iOS audio
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.0001;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.01);
+        audioUnlocked = true;
+      } catch (e) {}
+    }
+
+    function autoFitText(el, minPx = 16) {
+      if (!el) return;
+      // Reset before fitting
+      el.style.fontSize = '';
+      // Force measurement in current layout
+      const maxLoops = 24;
+      let size = parseFloat(getComputedStyle(el).fontSize) || 24;
+      let loops = 0;
+      while (el.scrollWidth > el.clientWidth + 1 && size > minPx && loops < maxLoops) {
+        size -= 1;
+        el.style.fontSize = `${size}px`;
+        loops += 1;
+      }
+    }
+
+    function autoFitAllValues() {
+      document.querySelectorAll('.btn-value').forEach(el => autoFitText(el, 16));
+    }
     function getAudioContext() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1294,6 +1532,8 @@
 
     function playNotificationSound(soundType, volume) {
       const ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') { ctx.resume().catch(() => {}); }
+
       const vol = volume / 100;
 
       switch(soundType) {
@@ -1718,6 +1958,8 @@
 
       if (!state.isRunning) {
         // Start timer
+        unlockAudio();
+        ensureNotificationPermission();
         const durationMs = (settings.duration || 20) * 60 * 1000;
         timerStates[habit] = {
           isRunning: true,
@@ -1812,6 +2054,9 @@
         navigator.vibrate([200, 100, 200]);
       }
 
+      // Always show in-app toast (works on mobile)
+      showToast(`${label}: ${message}`);
+
       // Browser notification
       if (Notification.permission === 'granted') {
         new Notification(`${label}`, {
@@ -1840,6 +2085,9 @@
       if (settings.vibrate && navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
+
+      // Always show in-app toast (works on mobile)
+      showToast(`${label}: ${message}`);
 
       // Browser notification
       if (Notification.permission === 'granted') {
@@ -2038,7 +2286,9 @@
           }
         }
       });
-    }
+    
+      autoFitAllValues();
+}
 
     // ===== RENDER =====
     function renderHabits() {
@@ -2222,6 +2472,7 @@
       if (hasRunning) startGlobalInterval();
       else stopGlobalIntervalIfNeeded();
 
+      autoFitAllValues();
       updateStats();
     }
 
@@ -2579,6 +2830,10 @@
       ensureWeekExists();
       renderHabits();
       updateHeader();
+
+      // Unlock audio on first user gesture (iOS requirement)
+      document.addEventListener('pointerdown', unlockAudio, { once: true });
+      document.addEventListener('touchstart', unlockAudio, { once: true });
     }
 
     // ===== EDIT MODALS =====
@@ -2772,6 +3027,9 @@
           vibrate: vibrateBtn ? vibrateBtn.dataset.vibrate === 'on' : true,
           message: document.getElementById('timerMessage').value.trim()
         };
+
+        unlockAudio();
+        ensureNotificationPermission();
       } else if (newType === CELL_TYPES.COUNTDOWN) {
         const vibrateCdBtn = document.querySelector('[data-vibrate-cd].active');
         
@@ -2783,6 +3041,9 @@
           vibrate: vibrateCdBtn ? vibrateCdBtn.dataset.vibrateCd === 'on' : true,
           message: document.getElementById('countdownMessage').value.trim()
         };
+
+        unlockAudio();
+        ensureNotificationPermission();
       }
 
       habitLabels[editingHabit] = newLabel;
