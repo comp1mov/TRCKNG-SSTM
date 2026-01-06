@@ -38,7 +38,7 @@
       gap: 8px;
     }
     
-    /* Группа кнопок без gap между рядами */
+    /* Ð“Ñ€ÑƒÐ¿Ð¿Ð° ÐºÐ½Ð¾Ð¿Ð¾Ðº Ð±ÐµÐ· gap Ð¼ÐµÐ¶Ð´Ñƒ Ñ€ÑÐ´Ð°Ð¼Ð¸ */
     .controls-group {
       display: flex;
       flex-direction: column;
@@ -193,10 +193,10 @@
     .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; }
 
     /* ===== HABITS GRID ===== */
-    /* 🎨 НАСТРОЙКА РАМОК ГРИДА:
-       - border: рамка вокруг всей сетки 3x3
-       - gap: расстояние между клетками
-       - background: цвет линий между клетками
+    /* ðŸŽ¨ ÐÐÐ¡Ð¢Ð ÐžÐ™ÐšÐ Ð ÐÐœÐžÐš Ð“Ð Ð˜Ð”Ð:
+       - border: Ñ€Ð°Ð¼ÐºÐ° Ð²Ð¾ÐºÑ€ÑƒÐ³ Ð²ÑÐµÐ¹ ÑÐµÑ‚ÐºÐ¸ 3x3
+       - gap: Ñ€Ð°ÑÑÑ‚Ð¾ÑÐ½Ð¸Ðµ Ð¼ÐµÐ¶Ð´Ñƒ ÐºÐ»ÐµÑ‚ÐºÐ°Ð¼Ð¸
+       - background: Ñ†Ð²ÐµÑ‚ Ð»Ð¸Ð½Ð¸Ð¹ Ð¼ÐµÐ¶Ð´Ñƒ ÐºÐ»ÐµÑ‚ÐºÐ°Ð¼Ð¸
     */
     .buttons-grid {
       display: grid;
@@ -230,14 +230,14 @@
       aspect-ratio: 1;
     }
 
-    /* 🎨 НЕАКТИВНЫЕ КЛЕТКИ - РАЗНЫЕ ПАТТЕРНЫ ДЛЯ ПИНОВ */
+    /* ðŸŽ¨ ÐÐ•ÐÐšÐ¢Ð˜Ð’ÐÐ«Ð• ÐšÐ›Ð•Ð¢ÐšÐ˜ - Ð ÐÐ—ÐÐ«Ð• ÐŸÐÐ¢Ð¢Ð•Ð ÐÐ« Ð”Ð›Ð¯ ÐŸÐ˜ÐÐžÐ’ */
     .btn-habit.inactive {
       background: #000;
       cursor: default;
       pointer-events: none;
     }
     
-    /* PIN 01 - РОМБЫ (45°) */
+    /* PIN 01 - Ð ÐžÐœÐ‘Ð« (45Â°) */
     [data-pin="0"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
@@ -248,7 +248,7 @@
       pointer-events: none;
     }
     
-    /* PIN 02 - СЕТКА (0°/90°) */
+    /* PIN 02 - Ð¡Ð•Ð¢ÐšÐ (0Â°/90Â°) */
     [data-pin="1"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
@@ -259,7 +259,7 @@
       pointer-events: none;
     }
     
-    /* PIN 03 - ГИБРИД (левая диагональ + правая сетка) */
+    /* PIN 03 - Ð“Ð˜Ð‘Ð Ð˜Ð” (Ð»ÐµÐ²Ð°Ñ Ð´Ð¸Ð°Ð³Ð¾Ð½Ð°Ð»ÑŒ + Ð¿Ñ€Ð°Ð²Ð°Ñ ÑÐµÑ‚ÐºÐ°) */
     [data-pin="2"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
@@ -271,12 +271,25 @@
     }
 
     /* Cell content structure */
-    .btn-status { 
-      font-size: 8px; 
-      opacity: 0.6;
-      order: 1;
-      letter-spacing: 0.1em;
+    .btn-status {
+      display: block;
+      font-size: 10px;
+      line-height: 1.2;
+      margin-bottom: 3px;
+      text-transform: lowercase;
+      letter-spacing: 0.16em;
+      opacity: 0.9;
     }
+    .btn-status-countdown {
+      text-transform: lowercase;
+      opacity: 0.7;
+    }
+    .btn-status-timer {
+      text-transform: lowercase;
+      opacity: 0.7;
+    }
+
+
     .btn-label { 
       font-size: 11px; 
       font-weight: 400; 
@@ -294,6 +307,13 @@
       word-spacing: 0;
       font-feature-settings: "tnum" 1;
     }
+    
+    /* Small suffix letters (s, m) - 5x smaller */
+    .btn-value-suffix {
+      font-size: 0.2em;
+      opacity: 0.6;
+      margin-left: 0.1em;
+    }
     .btn-breakdown {
       font-size: 9px;
       opacity: 0.5;
@@ -302,21 +322,198 @@
       min-height: 14px;
     }
 
-    /* Running state */
+    /* Running state with animated border */
+    
+    /* Running states base */
     .btn-habit.running {
-      border: 2px solid var(--btn-color, rgba(53,242,163,0.6));
-      background: color-mix(in srgb, var(--btn-color, #35f2a3) 15%, transparent);
-    }
-    .btn-habit.running .btn-value {
-      animation: pulse 1s ease-in-out infinite;
-      color: var(--btn-color, #35f2a3);
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+      position: relative;
     }
 
-    /* Paused state */
+    /* Duration types - colored border and background pulse */
+    .btn-habit[data-type="duration_sec"].running,
+    .btn-habit[data-type="duration_min"].running,
+    .btn-habit[data-type="duration_sec_count"].running {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      background: color-mix(in srgb, var(--btn-color, #35f2a3) 15%, transparent);
+      box-shadow: inset 0 0 0 3px var(--btn-color, #35f2a3);
+      animation: borderPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes borderPulse {
+      0%, 100% {
+        box-shadow: inset 0 0 0 3px var(--btn-color, #35f2a3);
+      }
+      50% {
+        box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--btn-color, #35f2a3) 50%, transparent);
+      }
+    }
+
+    /* TIMER - top edge progress bar, black background, pulsing value */
+    .btn-habit[data-type="timer"].running {
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      background: #000;
+    }
+
+    .btn-habit[data-type="timer"].running::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 70%;
+      height: 2px;
+      background: var(--btn-color, #35f2a3);
+      pointer-events: none;
+      z-index: 2;
+      animation: timerScan 600s linear infinite;
+    }
+
+    @keyframes timerScan {
+      0% {
+        left: -3px;
+        right: 60%;
+      }
+      50% {
+        left: 60%;
+        right: -3px;
+      }
+      100% {
+        left: -3px;
+        right: 60%;
+      }
+    }
+
+    /* COUNTDOWN - perimeter snake over one-minute cycle */
+    .btn-habit[data-type="countdown"].running {
+      border: none;
+      background: #000;
+    }
+
+    .btn-habit[data-type="countdown"].running::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--btn-color, #ffffff);
+      pointer-events: none;
+      z-index: 0;
+      transform-origin: center center;
+      transform: translateX(-50%) rotate(0deg);
+      opacity: 0.85;
+      animation: countdownSnake 3600s linear infinite;
+    }
+
+    @keyframes countdownSnake {
+      0% {
+        transform: translateX(-50%) rotate(0deg);
+      }
+      100% {
+        transform: translateX(-50%) rotate(-360deg);
+      }
+    }
+
+/* Common z-index for content on top of effects */
+    .btn-habit.running > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Value color for active cells */
+    .btn-habit[data-type="duration_sec"].running .btn-value,
+    .btn-habit[data-type="duration_min"].running .btn-value,
+    .btn-habit[data-type="duration_sec_count"].running .btn-value,
+    .btn-habit[data-type="timer"].running .btn-value,
+    .btn-habit[data-type="countdown"].running .btn-value {
+      color: var(--btn-color, #35f2a3);
+    }
+
+    /* Timer text pulse */
+    .btn-habit[data-type="timer"].running .btn-value {
+      animation: timerTextPulse 16s ease-in-out infinite;
+    }
+
+    @keyframes timerTextPulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      50% {
+        transform: scale(1.08);
+        filter: brightness(1.9);
+      }
+    }
+
+    /* Countdown hourly flash */
+    .btn-habit[data-type="countdown"].hour-ping {
+      animation: countdownHourPing 0.8s ease-out;
+    }
+
+    @keyframes countdownHourPing {
+      0% {
+        box-shadow: 0 0 0 rgba(255,255,255,0);
+      }
+      40% {
+        box-shadow: 0 0 40px rgba(255,255,255,0.9);
+      }
+      100% {
+        box-shadow: 0 0 0 rgba(255,255,255,0);
+      }
+    }
+
+    /* Countdown expired blinking value */
+    .btn-habit[data-type="countdown"].pulsing .btn-value {
+      animation: countdownExpired 1s steps(2, end) infinite;
+    }
+
+    @keyframes countdownExpired {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
+
+    /* Stronger tap feedback when value changes */
+    .btn-habit.animating {
+      animation: tapPress 780ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    /* Countdown click feedback: text color flashes to accent, no background glow */
+    .btn-habit[data-type="countdown"] .btn-label,
+    .btn-habit[data-type="countdown"] .btn-status,
+    .btn-habit[data-type="countdown"] .btn-value,
+    .btn-habit[data-type="countdown"] .btn-breakdown {
+      transition: color 900ms ease-out;
+    }
+
+    .btn-habit[data-type="countdown"].animating .btn-label,
+    .btn-habit[data-type="countdown"].animating .btn-status,
+    .btn-habit[data-type="countdown"].animating .btn-value,
+    .btn-habit[data-type="countdown"].animating .btn-breakdown {
+      color: var(--btn-color, #ffffff);
+    }
+
+    /* Disable background flash for countdown: keep only text + perimeter line */
+    .btn-habit[data-type="countdown"].animating::before {
+      animation: none;
+      opacity: 0;
+    }
+
+
+
+    @keyframes tapPress {
+      0% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      30% {
+        transform: scale(0.97);
+        filter: brightness(1.6);
+      }
+      100% {
+        transform: scale(1);
+        filter: brightness(1.05);
+      }
+    }
+/* Paused state */
     .btn-habit.paused {
       border: 2px solid rgba(255,255,255,0.15);
     }
@@ -324,6 +521,21 @@
     .btn-habit.paused .btn-label,
     .btn-habit.paused .btn-status {
       opacity: 0.35;
+    }
+
+    /* Pulsing animation for expired countdown */
+    .btn-habit.pulsing {
+      animation: fastPulse 0.5s ease-in-out infinite;
+    }
+    @keyframes fastPulse {
+      0%, 100% { 
+        border-color: rgba(255,79,106,0.8);
+        background: rgba(255,79,106,0.15);
+      }
+      50% { 
+        border-color: rgba(255,79,106,0.3);
+        background: rgba(255,79,106,0.05);
+      }
     }
 
     /* Flash animation on click - bright and slow fade */
@@ -751,7 +963,7 @@
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM · v0.61</div>
+        <div class="modal-title">TRCKNG SSTM · v0.64</div>
         <div class="modal-version">EDIT</div>
       </div>
       
@@ -792,11 +1004,102 @@
           <button class="type-btn" data-type="duration_min">Min</button>
           <button class="type-btn" data-type="duration_sec_count">Sec</button>
         </div>
+        <div class="type-selector" style="margin-top: 1px;">
+          <button class="type-btn" data-type="timer">Timer</button>
+          <button class="type-btn" data-type="countdown">Countdown</button>
+        </div>
       </div>
 
       <div style="margin-top: 8px;" id="descriptionField">
         <div class="cell-edit-label" style="margin-bottom: 8px;">Description</div>
         <input type="text" class="cell-edit-input" id="cellEditDescription" maxlength="30" autocomplete="off" placeholder="Optional description">
+      </div>
+
+      <!-- TIMER SETTINGS -->
+      <div id="timerSettingsFields" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Timer Duration (minutes)</div>
+          <input type="number" class="cell-edit-input" id="timerDuration" min="1" max="999" value="20" autocomplete="off">
+        </div>
+        
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Display Format</div>
+          <div class="type-selector">
+            <button class="type-btn active" data-format="mm:ss">MM:SS</button>
+            <button class="type-btn" data-format="mm">MM</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Notification Sound</div>
+          <select class="cell-edit-input" id="timerSound" style="padding: 8px;">
+            <option value="soft_chime">Soft Chime</option>
+            <option value="digital_pulse">Digital Pulse</option>
+            <option value="organic_bell">Organic Bell</option>
+            <option value="minimal_beep">Minimal Beep</option>
+            <option value="ascending_trill">Ascending Trill</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Volume <span id="volumeValue">50%</span></div>
+          <input type="range" id="timerVolume" min="0" max="100" value="50" style="width: 100%; height: 4px; background: rgba(255,255,255,0.2);">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Vibration</div>
+          <div class="type-selector">
+            <button class="type-btn active" data-vibrate="on">ON</button>
+            <button class="type-btn" data-vibrate="off">OFF</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Custom Message (optional)</div>
+          <input type="text" class="cell-edit-input" id="timerMessage" maxlength="50" autocomplete="off" placeholder="Leave empty for default">
+        </div>
+      </div>
+
+      <!-- COUNTDOWN SETTINGS -->
+      <div id="countdownSettingsFields" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Target Date</div>
+          <input type="date" class="cell-edit-input" id="countdownDate" autocomplete="off">
+        </div>
+        
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Target Time</div>
+          <input type="time" class="cell-edit-input" id="countdownTime" value="12:00" autocomplete="off">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Notification Sound</div>
+          <select class="cell-edit-input" id="countdownSound" style="padding: 8px;">
+            <option value="soft_chime">Soft Chime</option>
+            <option value="digital_pulse">Digital Pulse</option>
+            <option value="organic_bell">Organic Bell</option>
+            <option value="minimal_beep">Minimal Beep</option>
+            <option value="ascending_trill">Ascending Trill</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Volume <span id="countdownVolumeValue">50%</span></div>
+          <input type="range" id="countdownVolume" min="0" max="100" value="50" style="width: 100%; height: 4px; background: rgba(255,255,255,0.2);">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Vibration</div>
+          <div class="type-selector">
+            <button class="type-btn active" data-vibrate-cd="on">ON</button>
+            <button class="type-btn" data-vibrate-cd="off">OFF</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="cell-edit-label" style="margin-bottom: 8px;">Custom Message (optional)</div>
+          <input type="text" class="cell-edit-input" id="countdownMessage" maxlength="50" autocomplete="off" placeholder="Leave empty for default">
+        </div>
       </div>
 
       <div class="color-picker-wrap">
@@ -821,13 +1124,21 @@
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v0.61</div>
+        <div class="info-section-title">What's New in v0.64</div>
         <div class="info-text">
-          • Table: hover on week label (orange)<br>
-          • No auto-highlight of current week<br>
-          • Edit modal: 2-column instructions<br>
-          • Instructions moved under EDIT title<br>
-          • Removed "Quick Guide" label
+          <strong>UI IMPROVEMENTS:</strong><br>
+          • Suffixes (s, m) now 5x smaller for cleaner look<br>
+          • Fixed dash encoding in EDIT modal<br>
+          • Duration Min now shows seconds in breakdown (0h 12m 32s)<br>
+          <br>
+          <strong>ANIMATED PROGRESS BORDER:</strong><br>
+          • Timer/Countdown show animated circular progress<br>
+          • Border completes full circle every 60 seconds<br>
+          • Visual indicator for active timers/countdowns<br>
+          <br>
+          <strong>v0.63 FEATURES:</strong><br>
+          • Countdown notifications with sound & vibration<br>
+          • Click expired countdown to stop pulsing
         </div>
       </div>
       
@@ -841,28 +1152,28 @@
       <div class="info-section">
         <div class="info-section-title">Cell Types</div>
         <div class="info-text">
-          <strong>Counter</strong> – tap to +1<br>
-          <strong>Duration Sec</strong> – live MM:SS stopwatch<br>
-          <strong>Duration Min</strong> – live minutes counter
+          <strong>Counter</strong> - tap to +1<br>
+          <strong>Duration Sec</strong> - live MM:SS stopwatch<br>
+          <strong>Duration Min</strong> - live minutes counter
         </div>
       </div>
 
       <div class="info-section">
         <div class="info-section-title">Controls</div>
         <div class="info-text">
-          <strong>DECREASE</strong> – subtract mode / reset duration<br>
-          <strong>COPY</strong> – copy current week<br>
-          <strong>COPY PREV</strong> – copy previous week<br>
-          <strong>EXPORT</strong> – download backup.json<br>
-          <strong>IMPORT</strong> – restore from .json
+          <strong>DECREASE</strong> - subtract mode / reset duration<br>
+          <strong>COPY</strong> - copy current week<br>
+          <strong>COPY PREV</strong> - copy previous week<br>
+          <strong>EXPORT</strong> - download backup.json<br>
+          <strong>IMPORT</strong> - restore from .json
         </div>
       </div>
 
       <div class="info-section">
         <div class="info-section-title">Install as App</div>
         <div class="info-text">
-          <strong>iOS:</strong> Safari → Share → Add to Home Screen<br>
-          <strong>Android:</strong> Chrome → Menu → Install app
+          <strong>iOS:</strong> Safari â†’ Share â†’ Add to Home Screen<br>
+          <strong>Android:</strong> Chrome â†’ Menu â†’ Install app
         </div>
       </div>
 
@@ -884,7 +1195,9 @@
       COUNTER: 'counter',
       DURATION_SEC: 'duration_sec',
       DURATION_MIN: 'duration_min',
-      DURATION_SEC_COUNT: 'duration_sec_count'
+      DURATION_SEC_COUNT: 'duration_sec_count',
+      TIMER: 'timer',
+      COUNTDOWN: 'countdown'
     };
 
     const STORAGE_KEYS = {
@@ -894,6 +1207,8 @@
       COLORS: 'trckng_sstm_colors',
       DESCRIPTIONS: 'trckng_sstm_descriptions',
       DURATION: 'trckng_sstm_duration',
+      TIMER_SETTINGS: 'trckng_sstm_timer_settings',
+      TIMER_STATES: 'trckng_sstm_timer_states',
       SEEN_INFO: 'trckng_has_seen_info'
     };
 
@@ -930,9 +1245,12 @@
     let habitColors = {};
     let habitDescriptions = {};
     let durationStates = {};
+    let timerSettings = {}; // Timer/Countdown configurations
+    let timerStates = {}; // Runtime state (iterations, running status)
     let globalInterval = null;
     let clockInterval = null;
     let editingHabit = null;
+    let audioContext = null;
 
     // ===== COLOR PALETTE =====
     function generateColorPalette() {
@@ -968,6 +1286,146 @@
       const color = colorPalette[paletteIndex % colorPalette.length];
       paletteIndex++;
       return color;
+    }
+
+    // ===== NOTIFICATION SOUNDS =====
+    function getAudioContext() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioContext;
+    }
+
+    function playNotificationSound(soundType, volume) {
+      const ctx = getAudioContext();
+      const vol = volume / 100;
+
+      switch(soundType) {
+        case 'soft_chime':
+          playSoftChime(ctx, vol);
+          break;
+        case 'digital_pulse':
+          playDigitalPulse(ctx, vol);
+          break;
+        case 'organic_bell':
+          playOrganicBell(ctx, vol);
+          break;
+        case 'minimal_beep':
+          playMinimalBeep(ctx, vol);
+          break;
+        case 'ascending_trill':
+          playAscendingTrill(ctx, vol);
+          break;
+      }
+    }
+
+    function playSoftChime(ctx, volume) {
+      const notes = [523.25, 659.25, 783.99];
+      const now = ctx.currentTime;
+      for (let repeat = 0; repeat < 3; repeat++) {
+        const repeatOffset = repeat * 1.1;
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const startTime = now + repeatOffset + (i * 0.15);
+          gain.gain.setValueAtTime(volume * 0.3, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.5);
+        });
+      }
+    }
+
+    function playDigitalPulse(ctx, volume) {
+      const now = ctx.currentTime;
+      for (let repeat = 0; repeat < 3; repeat++) {
+        const repeatOffset = repeat * 1.0;
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.value = 800;
+        gain1.gain.setValueAtTime(volume * 0.4, now + repeatOffset);
+        gain1.gain.exponentialRampToValueAtTime(0.01, now + repeatOffset + 0.1);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now + repeatOffset);
+        osc1.stop(now + repeatOffset + 0.15);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.value = 1000;
+        gain2.gain.setValueAtTime(volume * 0.4, now + repeatOffset + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.01, now + repeatOffset + 0.25);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + repeatOffset + 0.12);
+        osc2.stop(now + repeatOffset + 0.3);
+      }
+    }
+
+    function playOrganicBell(ctx, volume) {
+      const now = ctx.currentTime;
+      const fundamental = 523.25;
+      const harmonics = [1, 2, 3, 4.2, 5.4];
+      for (let repeat = 0; repeat < 3; repeat++) {
+        const repeatOffset = repeat * 1.4;
+        harmonics.forEach((ratio, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = fundamental * ratio;
+          const harmVolume = volume * (0.3 / (i + 1));
+          gain.gain.setValueAtTime(harmVolume, now + repeatOffset);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + repeatOffset + 0.8);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + repeatOffset);
+          osc.stop(now + repeatOffset + 1);
+        });
+      }
+    }
+
+    function playMinimalBeep(ctx, volume) {
+      const now = ctx.currentTime;
+      for (let repeat = 0; repeat < 3; repeat++) {
+        const repeatOffset = repeat * 0.65;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 1000;
+        gain.gain.setValueAtTime(volume * 0.4, now + repeatOffset);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + repeatOffset + 0.12);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + repeatOffset);
+        osc.stop(now + repeatOffset + 0.15);
+      }
+    }
+
+    function playAscendingTrill(ctx, volume) {
+      const notes = [500, 630, 800, 1000, 1200];
+      const now = ctx.currentTime;
+      for (let repeat = 0; repeat < 3; repeat++) {
+        const repeatOffset = repeat * 1.0;
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const startTime = now + repeatOffset + (i * 0.08);
+          gain.gain.setValueAtTime(volume * 0.25, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.12);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.15);
+        });
+      }
     }
 
     // ===== WEEK CALCULATION =====
@@ -1102,6 +1560,34 @@
       localStorage.setItem(key, JSON.stringify(durationStates));
     }
 
+    function loadTimerSettings() {
+      timerSettings = {};
+      const key = `${STORAGE_KEYS.TIMER_SETTINGS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try { timerSettings = JSON.parse(stored); } catch(e) {}
+      }
+    }
+
+    function saveTimerSettings() {
+      const key = `${STORAGE_KEYS.TIMER_SETTINGS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(timerSettings));
+    }
+
+    function loadTimerStates() {
+      timerStates = {};
+      const key = `${STORAGE_KEYS.TIMER_STATES}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try { timerStates = JSON.parse(stored); } catch(e) {}
+      }
+    }
+
+    function saveTimerStates() {
+      const key = `${STORAGE_KEYS.TIMER_STATES}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(timerStates));
+    }
+
     function ensureWeekExists() {
       if (!weekData[currentWeekKey] || typeof weekData[currentWeekKey] !== 'object') {
         weekData[currentWeekKey] = {};
@@ -1115,6 +1601,10 @@
     }
 
     // ===== FORMATTING =====
+    function formatValueWithSuffix(value, suffix) {
+      return `${value}<span class="btn-value-suffix">${suffix}</span>`;
+    }
+
     function formatDurationSec(totalSeconds) {
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -1126,12 +1616,20 @@
       return { main, breakdown };
     }
 
-    function formatDurationMin(totalMinutes) {
+    function formatDurationMin(totalMinutes, totalSeconds = null) {
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
       
       const main = String(totalMinutes).padStart(2, '0');
-      const breakdown = `${hours}h ${minutes}m`;
+      
+      // If totalSeconds provided, include them in breakdown
+      let breakdown;
+      if (totalSeconds !== null) {
+        const secs = totalSeconds % 60;
+        breakdown = `${hours}h ${minutes}m ${secs}s`;
+      } else {
+        breakdown = `${hours}h ${minutes}m`;
+      }
       
       return { main, breakdown };
     }
@@ -1145,6 +1643,10 @@
 
       if (type === CELL_TYPES.COUNTER) {
         handleCounterClick(habit);
+      } else if (type === CELL_TYPES.TIMER) {
+        handleTimerClick(habit);
+      } else if (type === CELL_TYPES.COUNTDOWN) {
+        handleCountdownClick(habit);
       } else {
         handleDurationClick(habit, type);
       }
@@ -1205,6 +1707,153 @@
       animateButton(habit);
     }
 
+    function handleTimerClick(habit) {
+      const state = timerStates[habit] || { isRunning: false, startTime: null, remaining: null, iterations: 0 };
+      const settings = timerSettings[habit] || { duration: 20 };
+
+      if (decreaseMode) {
+        // Reset iterations
+        timerStates[habit] = { isRunning: false, startTime: null, remaining: null, iterations: 0 };
+        saveTimerStates();
+        renderHabits();
+        animateButton(habit);
+        return;
+      }
+
+      if (!state.isRunning) {
+        // Start timer
+        const durationMs = (settings.duration || 20) * 60 * 1000;
+        timerStates[habit] = {
+          isRunning: true,
+          startTime: Date.now(),
+          remaining: state.remaining !== null ? state.remaining : durationMs,
+          iterations: state.iterations || 0
+        };
+        startGlobalInterval();
+      } else {
+        // Pause/Stop timer - return to original time
+        const durationMs = (settings.duration || 20) * 60 * 1000;
+        timerStates[habit] = {
+          isRunning: false,
+          startTime: null,
+          remaining: durationMs,
+          iterations: state.iterations || 0
+        };
+      }
+
+      saveTimerStates();
+      renderHabits();
+      animateButton(habit);
+    }
+
+    function handleCountdownClick(habit) {
+      // If countdown expired and pulsing - stop pulsing and reset notification flag,
+      // и в любом случае даём визуальный отклик на клик
+      const settings = timerSettings[habit] || {};
+      if (settings.targetDate) {
+        const targetDateTime = new Date(`${settings.targetDate}T${settings.targetTime || '12:00'}`);
+        const now = new Date();
+        const diff = targetDateTime - now;
+
+        if (diff <= 0) {
+          // Stop pulsing
+          const btn = document.getElementById(`btn-${habit}`);
+          if (btn) btn.classList.remove('pulsing');
+
+          // Reset notification flag so it can be sent again if needed
+          const state = timerStates[habit] || {};
+          timerStates[habit] = { ...state, notificationSent: false };
+          saveTimerStates();
+        }
+      }
+
+      // Лёгкий клик-фидбек по аналогии с другими слотами
+      animateButton(habit);
+    }
+
+
+    // Timer notification messages
+    function getTimerNotificationMessage(iterations, duration, customMessage) {
+      if (customMessage && customMessage.trim()) {
+        return customMessage;
+      }
+
+      const messages = [
+        `Timer complete • ${duration}min`,
+        `Session 2 finished • ${duration}min`,
+        `Round 3 done • ${duration}min`,
+        `Cycle 4 complete • ${duration}min`,
+        `Phase 5 finished • ${duration}min`
+      ];
+
+      if (iterations === 0) return messages[0];
+      if (iterations === 1) return messages[1];
+      if (iterations === 2) return messages[2];
+      if (iterations === 3) return messages[3];
+      if (iterations === 4) return messages[4];
+      return `Session ${iterations + 1} complete • ${duration}min`;
+    }
+
+    function sendTimerNotification(habit) {
+      const settings = timerSettings[habit] || {};
+      const state = timerStates[habit] || {};
+      const label = habitLabels[habit] || 'Timer';
+      
+      const message = getTimerNotificationMessage(
+        state.iterations || 0,
+        settings.duration || 20,
+        settings.message
+      );
+
+      // Play sound
+      if (settings.sound && settings.volume) {
+        playNotificationSound(settings.sound, settings.volume);
+      }
+
+      // Vibrate
+      if (settings.vibrate && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+      }
+
+      // Browser notification
+      if (Notification.permission === 'granted') {
+        new Notification(`${label}`, {
+          body: message,
+          icon: '/TRCKNG-SSTM/icons/icon-192.png',
+          tag: `timer-${habit}`
+        });
+      }
+    }
+
+    function sendCountdownNotification(habit) {
+      const settings = timerSettings[habit] || {};
+      const label = habitLabels[habit] || 'Countdown';
+      
+      // Default message or custom message
+      const message = settings.message && settings.message.trim() 
+        ? settings.message 
+        : 'Time is up!';
+
+      // Play sound
+      if (settings.sound && settings.volume) {
+        playNotificationSound(settings.sound, settings.volume);
+      }
+
+      // Vibrate
+      if (settings.vibrate && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+      }
+
+      // Browser notification
+      if (Notification.permission === 'granted') {
+        new Notification(`${label}`, {
+          body: message,
+          icon: '/TRCKNG-SSTM/icons/icon-192.png',
+          tag: `countdown-${habit}`
+        });
+      }
+    }
+
     function animateButton(habit) {
       const btn = document.getElementById(`btn-${habit}`);
       if (!btn) return;
@@ -1234,31 +1883,162 @@
 
     function updateLiveDisplays() {
       HABITS.forEach(habit => {
-        const state = durationStates[habit];
-        if (!state?.isRunning) return;
-
         const type = habitTypes[habit];
-        const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
-        const total = (state.accumulated || 0) + elapsed;
-
-        const valueEl = document.getElementById(`value-${habit}`);
-        const breakdownEl = document.getElementById(`breakdown-${habit}`);
         
-        const description = habitDescriptions[habit];
+        // Handle duration types
+        const state = durationStates[habit];
+        if (state?.isRunning) {
+          const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+          const total = (state.accumulated || 0) + elapsed;
 
-        if (type === CELL_TYPES.DURATION_SEC) {
-          const fmt = formatDurationSec(total);
-          if (valueEl) valueEl.textContent = `${fmt.main}s`;
-          if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
-        } else if (type === CELL_TYPES.DURATION_MIN) {
-          const totalMin = Math.floor(total / 60);
-          const fmt = formatDurationMin(totalMin);
-          if (valueEl) valueEl.textContent = `${fmt.main}m`;
-          if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
-        } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
-          const fmt = formatDurationSec(total);
-          if (valueEl) valueEl.textContent = `${total}s`;
-          if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
+          const valueEl = document.getElementById(`value-${habit}`);
+          const breakdownEl = document.getElementById(`breakdown-${habit}`);
+          const description = habitDescriptions[habit];
+
+          // Calculate progress for animated border (0-100% over 60 seconds)
+          const secondsInMinute = total % 60;
+          const progress = ((60 - secondsInMinute) / 60) * 100;
+          const btn = document.getElementById(`btn-${habit}`);
+          if (btn) {
+            btn.style.setProperty('--progress', progress);
+          }
+
+          if (type === CELL_TYPES.DURATION_SEC) {
+            const fmt = formatDurationSec(total);
+            if (valueEl) valueEl.innerHTML = formatValueWithSuffix(fmt.main, 's');
+            if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
+          } else if (type === CELL_TYPES.DURATION_MIN) {
+            const totalMin = Math.floor(total / 60);
+            const fmt = formatDurationMin(totalMin, total);
+            if (valueEl) valueEl.innerHTML = formatValueWithSuffix(fmt.main, 'm');
+            if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
+          } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
+            const fmt = formatDurationSec(total);
+            if (valueEl) valueEl.innerHTML = formatValueWithSuffix(total, 's');
+            if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
+          }
+        }
+
+        // Handle Timer
+        const timerState = timerStates[habit];
+        if (type === CELL_TYPES.TIMER && timerState?.isRunning) {
+          const elapsed = Date.now() - timerState.startTime;
+          const remaining = Math.max(0, timerState.remaining - elapsed);
+          
+          const valueEl = document.getElementById(`value-${habit}`);
+          const breakdownEl = document.getElementById(`breakdown-${habit}`);
+          
+          if (remaining <= 0) {
+            // Timer finished - trigger notification and restart
+            const settings = timerSettings[habit] || {};
+            const newcycless = (timerState.iterations || 0) + 1;
+            
+            sendTimerNotification(habit);
+            
+            // Auto-restart
+            const durationMs = (settings.duration || 20) * 60 * 1000;
+            timerStates[habit] = {
+              isRunning: true,
+              startTime: Date.now(),
+              remaining: durationMs,
+              iterations: newcycless
+            };
+            saveTimerStates();
+            renderHabits(); // Re-render to show new iteration count
+          } else {
+            // Update display
+            const seconds = Math.floor(remaining / 1000);
+            const settings = timerSettings[habit] || {};
+            
+            // Calculate progress for animated border (0-100% over 60 seconds)
+            const secondsInMinute = seconds % 60;
+            const progress = ((60 - secondsInMinute) / 60) * 100;
+            const btn = document.getElementById(`btn-${habit}`);
+            if (btn) {
+              btn.style.setProperty('--progress', progress);
+            }
+            
+            if (settings.format === 'mm') {
+              const minutes = Math.ceil(seconds / 60);
+              if (valueEl) valueEl.innerHTML = formatValueWithSuffix(minutes, 'm');
+            } else {
+              const m = Math.floor(seconds / 60);
+              const s = seconds % 60;
+              if (valueEl) valueEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+            
+            if (breakdownEl) {
+              breakdownEl.textContent = `cycles ${(timerState.iterations || 0) + 1}`;
+            }
+          }
+        }
+
+        // Handle Countdown
+        if (type === CELL_TYPES.COUNTDOWN) {
+          const settings = timerSettings[habit];
+          if (settings?.targetDate) {
+            const targetDateTime = new Date(`${settings.targetDate}T${settings.targetTime || '12:00'}`);
+            const now = new Date();
+            const diff = targetDateTime - now;
+            
+            const valueEl = document.getElementById(`value-${habit}`);
+            const breakdownEl = document.getElementById(`breakdown-${habit}`);
+            
+            // Check if we need to send notification
+            const state = timerStates[habit] || {};
+            
+            if (diff <= 0) {
+              // Expired - show pulsing 00:00
+              if (valueEl) {
+                valueEl.textContent = '00:00';
+                valueEl.closest('.btn-habit')?.classList.add('pulsing');
+              }
+              if (breakdownEl) breakdownEl.textContent = '0d 0h 0m';
+              
+              // Send notification only once
+              if (!state.notificationSent) {
+                sendCountdownNotification(habit);
+                timerStates[habit] = { ...state, notificationSent: true };
+                saveTimerStates();
+              }
+            } else {
+              // Still counting down - reset notification flag if it was set
+              if (state.notificationSent) {
+                timerStates[habit] = { ...state, notificationSent: false };
+                saveTimerStates();
+              }
+              
+              // Calculate remaining time
+              const totalMinutes = Math.floor(diff / (1000 * 60));
+              const totalSeconds = Math.floor(diff / 1000);
+              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = totalSeconds % 60;
+              
+              const btn = document.getElementById(`btn-${habit}`);
+              if (btn) {
+                // Perimeter animation: full loop each minute
+                const angle = ((60 - seconds) / 60) * 360;
+                btn.style.setProperty('--progress-angle', `${angle}deg`);
+
+                // Hourly flash once when a new hour boundary is reached
+                const minutesLeftInHour = totalMinutes % 60;
+                const lastPing = btn.dataset.lastPingMinute ? parseInt(btn.dataset.lastPingMinute, 10) : null;
+
+                if (minutesLeftInHour === 59 && lastPing !== totalMinutes) {
+                  btn.classList.add('hour-ping');
+                  setTimeout(() => btn.classList.remove('hour-ping'), 900);
+                  btn.dataset.lastPingMinute = String(totalMinutes);
+                } else if (minutesLeftInHour !== 59 && btn.dataset.lastPingMinute) {
+                  delete btn.dataset.lastPingMinute;
+                }
+              }
+              
+              if (valueEl) valueEl.innerHTML = formatValueWithSuffix(totalMinutes, 'm');
+              if (breakdownEl) breakdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            }
+          }
         }
       });
     }
@@ -1278,6 +2058,7 @@
         const btn = document.createElement('button');
         btn.className = 'btn-habit';
         btn.id = `btn-${habit}`;
+        btn.dataset.type = type.toLowerCase();
 
         if (!isActive) {
           btn.classList.add('inactive');
@@ -1304,7 +2085,95 @@
             <span class="btn-value" id="value-${habit}">${value}</span>
             <span class="btn-breakdown">${description}</span>
           `;
+        } else if (type === CELL_TYPES.TIMER) {
+          const timerState = timerStates[habit] || {};
+          const settings = timerSettings[habit] || { duration: 20, format: 'mm:ss' };
+          const isRunning = timerState.isRunning;
+          
+          let displayValue = '00:00';
+          if (isRunning && timerState.startTime && timerState.remaining) {
+            const elapsed = Date.now() - timerState.startTime;
+            const remaining = Math.max(0, timerState.remaining - elapsed);
+            const seconds = Math.floor(remaining / 1000);
+            
+            if (settings.format === 'mm') {
+              const minutes = Math.ceil(seconds / 60);
+              displayValue = formatValueWithSuffix(minutes, 'm');
+            } else {
+              const m = Math.floor(seconds / 60);
+              const s = seconds % 60;
+              displayValue = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+          } else {
+            // Stopped state - show original duration
+            if (settings.format === 'mm') {
+              displayValue = formatValueWithSuffix(settings.duration, 'm');
+            } else {
+              const m = settings.duration;
+              displayValue = `${String(m).padStart(2, '0')}:00`;
+            }
+          }
+          
+          const breakdown = `cycles ${(timerState.iterations || 0) + 1}`;
+
+          btn.innerHTML = `
+            <span class="btn-status">timer</span>
+            <span class="btn-label">${label}</span>
+            <span class="btn-value" id="value-${habit}">${displayValue}</span>
+            <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
+          `;
+                    if (isRunning) {
+            btn.classList.add('running');
+            // Set initial progress
+            if (timerState.startTime && timerState.remaining) {
+              const elapsed = Date.now() - timerState.startTime;
+              const remaining = Math.max(0, timerState.remaining - elapsed);
+              const seconds = Math.floor(remaining / 1000);
+              const secondsInMinute = seconds % 60;
+              const progress = ((60 - secondsInMinute) / 60) * 100;
+              btn.style.setProperty('--progress', progress);
+            }
+          }
+        } else if (type === CELL_TYPES.COUNTDOWN) {
+          const settings = timerSettings[habit] || {};
+          let displayValue = '--:--';
+          let breakdown = '-- -- --';
+          
+          if (settings.targetDate) {
+            const targetDateTime = new Date(`${settings.targetDate}T${settings.targetTime || '12:00'}`);
+            const now = new Date();
+            const diff = targetDateTime - now;
+            
+            if (diff <= 0) {
+              displayValue = '00:00';
+              breakdown = '0d 0h 0m 0s';
+              btn.classList.add('pulsing');
+            } else {
+              const totalMinutes = Math.floor(diff / (1000 * 60));
+              const totalSeconds = Math.floor(diff / 1000);
+              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = totalSeconds % 60;
+              
+              displayValue = formatValueWithSuffix(totalMinutes, 'm');
+              breakdown = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+              
+              // Add running class and set initial progress
+              btn.classList.add('running');
+              const progress = ((60 - seconds) / 60) * 100;
+              btn.style.setProperty('--progress', progress);
+            }
+          }
+          
+          btn.innerHTML = `
+            <span class="btn-status">until</span>
+            <span class="btn-label">${label}</span>
+            <span class="btn-value" id="value-${habit}">${displayValue}</span>
+            <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
+          `;
         } else {
+          // Duration types (DURATION_SEC, DURATION_MIN, DURATION_SEC_COUNT)
           const isRunning = state.isRunning;
           const accumulated = state.accumulated || 0;
           let total = accumulated;
@@ -1317,13 +2186,14 @@
           let displayValue;
           if (type === CELL_TYPES.DURATION_SEC) {
             fmt = formatDurationSec(total);
-            displayValue = `${fmt.main}s`; // MM:SS with 's'
+            displayValue = formatValueWithSuffix(fmt.main, 's');
           } else if (type === CELL_TYPES.DURATION_MIN) {
-            fmt = formatDurationMin(Math.floor(total / 60));
-            displayValue = `${fmt.main}m`; // Minutes with 'm'
+            const totalMin = Math.floor(total / 60);
+            fmt = formatDurationMin(totalMin, total);
+            displayValue = formatValueWithSuffix(fmt.main, 'm');
           } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
             fmt = formatDurationSec(total);
-            displayValue = `${total}s`; // Total seconds as number with 's'
+            displayValue = formatValueWithSuffix(total, 's');
           }
           
           const description = habitDescriptions[habit] || fmt.breakdown;
@@ -1336,6 +2206,10 @@
 
           if (isRunning) {
             btn.classList.add('running');
+            // Set initial progress
+            const secondsInMinute = total % 60;
+            const progress = ((60 - secondsInMinute) / 60) * 100;
+            btn.style.setProperty('--progress', progress);
           } else if (accumulated > 0) {
             btn.classList.add('paused');
           }
@@ -1345,7 +2219,9 @@
         grid.appendChild(btn);
       });
 
-      const hasRunning = Object.values(durationStates).some(s => s.isRunning);
+      const hasRunning = Object.values(durationStates).some(s => s.isRunning) ||
+                         Object.values(timerStates).some(s => s.isRunning) ||
+                         HABITS.some(h => habitTypes[h] === CELL_TYPES.COUNTDOWN);
       if (hasRunning) startGlobalInterval();
       else stopGlobalIntervalIfNeeded();
 
@@ -1571,7 +2447,7 @@
         }
         text += `${label}: ${display}\n`;
       });
-      navigator.clipboard?.writeText(text).then(() => alert('✓ Current week copied'));
+      navigator.clipboard?.writeText(text).then(() => alert('âœ“ Current week copied'));
     }
 
     function copyPreviousWeek() {
@@ -1597,7 +2473,7 @@
         }
         text += `${label}: ${display}\n`;
       });
-      navigator.clipboard?.writeText(text).then(() => alert('✓ Previous week copied'));
+      navigator.clipboard?.writeText(text).then(() => alert('âœ“ Previous week copied'));
     }
 
     function exportData() {
@@ -1623,7 +2499,7 @@
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      alert('✓ Backup downloaded');
+      alert('âœ“ Backup downloaded');
     }
 
     function importData() {
@@ -1652,9 +2528,9 @@
           
           renderHabits();
           updateHeader();
-          alert('✓ Data imported successfully');
+          alert('âœ“ Data imported successfully');
         } catch(err) {
-          alert('✗ Import failed: Invalid file format');
+          alert('âœ— Import failed: Invalid file format');
         }
       };
       reader.readAsText(file);
@@ -1675,7 +2551,7 @@
       }
       localStorage.removeItem(STORAGE_KEYS.SEEN_INFO);
 
-      alert('✓ All data deleted');
+      alert('âœ“ All data deleted');
       window.location.reload();
     }
 
@@ -1700,6 +2576,8 @@
       loadColors();
       loadDescriptions();
       loadDurationStates();
+      loadTimerSettings();
+      loadTimerStates();
       currentWeekKey = getWeekKey();
       ensureWeekExists();
       renderHabits();
@@ -1719,7 +2597,7 @@
         item.className = 'edit-item';
         item.innerHTML = `
           <div class="edit-item-label">CELL ${cellNum}</div>
-          <div class="edit-item-name">${label || '—'}</div>
+          <div class="edit-item-name">${label || "-"}</div>
         `;
         item.addEventListener('click', () => openCellEditModal(habit, index));
         container.appendChild(item);
@@ -1746,8 +2624,78 @@
         btn.classList.toggle('active', btn.dataset.type === type);
       });
 
+      // Load timer settings if exists
+      const settings = timerSettings[habit] || {
+        duration: 20,
+        format: 'mm:ss',
+        sound: 'soft_chime',
+        volume: 50,
+        vibrate: true,
+        message: '',
+        targetDate: '',
+        targetTime: '12:00'
+      };
+
+      document.getElementById('timerDuration').value = settings.duration || 20;
+      document.getElementById('timerSound').value = settings.sound || 'soft_chime';
+      document.getElementById('timerVolume').value = settings.volume || 50;
+      document.getElementById('volumeValue').textContent = `${settings.volume || 50}%`;
+      document.getElementById('timerMessage').value = settings.message || '';
+      document.getElementById('countdownDate').value = settings.targetDate || '';
+      document.getElementById('countdownTime').value = settings.targetTime || '12:00';
+      document.getElementById('countdownSound').value = settings.sound || 'soft_chime';
+      document.getElementById('countdownVolume').value = settings.volume || 50;
+      document.getElementById('countdownVolumeValue').textContent = `${settings.volume || 50}%`;
+      document.getElementById('countdownMessage').value = settings.message || '';
+
+      // Set format buttons
+      document.querySelectorAll('[data-format]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.format === (settings.format || 'mm:ss'));
+      });
+
+      // Set vibrate buttons (timer)
+      document.querySelectorAll('[data-vibrate]').forEach(btn => {
+        const isOn = settings.vibrate !== false;
+        btn.classList.toggle('active', 
+          (btn.dataset.vibrate === 'on' && isOn) || 
+          (btn.dataset.vibrate === 'off' && !isOn)
+        );
+      });
+
+      // Set vibrate buttons (countdown)
+      document.querySelectorAll('[data-vibrate-cd]').forEach(btn => {
+        const isOn = settings.vibrate !== false;
+        btn.classList.toggle('active', 
+          (btn.dataset.vibrateCd === 'on' && isOn) || 
+          (btn.dataset.vibrateCd === 'off' && !isOn)
+        );
+      });
+
+      // Show/hide appropriate fields
+      updateTimerFieldsVisibility(type);
+
       document.getElementById('cellEditModal').classList.add('visible');
       setTimeout(() => document.getElementById('cellEditInput').focus(), 100);
+    }
+
+    function updateTimerFieldsVisibility(type) {
+      const timerFields = document.getElementById('timerSettingsFields');
+      const countdownFields = document.getElementById('countdownSettingsFields');
+      const descField = document.getElementById('descriptionField');
+
+      if (type === CELL_TYPES.TIMER) {
+        timerFields.style.display = 'block';
+        countdownFields.style.display = 'none';
+        descField.style.display = 'none';
+      } else if (type === CELL_TYPES.COUNTDOWN) {
+        timerFields.style.display = 'none';
+        countdownFields.style.display = 'block';
+        descField.style.display = 'none';
+      } else {
+        timerFields.style.display = 'none';
+        countdownFields.style.display = 'none';
+        descField.style.display = 'block';
+      }
     }
 
     function closeCellEditModal() {
@@ -1771,6 +2719,8 @@
       // Check if we need to reset or convert
       const oldIsDuration = oldType === CELL_TYPES.DURATION_SEC || oldType === CELL_TYPES.DURATION_MIN || oldType === CELL_TYPES.DURATION_SEC_COUNT;
       const newIsDuration = newType === CELL_TYPES.DURATION_SEC || newType === CELL_TYPES.DURATION_MIN || newType === CELL_TYPES.DURATION_SEC_COUNT;
+      const oldIsTimer = oldType === CELL_TYPES.TIMER || oldType === CELL_TYPES.COUNTDOWN;
+      const newIsTimer = newType === CELL_TYPES.TIMER || newType === CELL_TYPES.COUNTDOWN;
 
       if (wasActive && !newLabel) {
         // Deactivating cell - reset everything
@@ -1780,6 +2730,8 @@
           }
         });
         delete durationStates[editingHabit];
+        delete timerStates[editingHabit];
+        delete timerSettings[editingHabit];
       } else if (typeChanged) {
         // Type changed
         if (oldIsDuration && newIsDuration) {
@@ -1787,34 +2739,53 @@
           Object.keys(weekData).forEach(week => {
             if (weekData[week] && typeof weekData[week] === 'object') {
               const oldValue = weekData[week][editingHabit] || 0;
-              
-              // All duration types store seconds internally
-              // DURATION_SEC and DURATION_SEC_COUNT: already in seconds
-              // DURATION_MIN: stored as minutes, need to convert
-              
               let seconds = oldValue;
               if (oldType === CELL_TYPES.DURATION_MIN) {
-                seconds = oldValue * 60; // minutes to seconds
+                seconds = oldValue * 60;
               }
-              
-              // Convert to new type
               if (newType === CELL_TYPES.DURATION_MIN) {
-                weekData[week][editingHabit] = Math.floor(seconds / 60); // to minutes
+                weekData[week][editingHabit] = Math.floor(seconds / 60);
               } else {
-                weekData[week][editingHabit] = seconds; // keep as seconds
+                weekData[week][editingHabit] = seconds;
               }
             }
           });
-          // Keep duration state but it will be recalculated on render
         } else {
-          // Counter <-> Duration - RESET
+          // Any other type change - RESET
           Object.keys(weekData).forEach(week => {
             if (weekData[week] && typeof weekData[week] === 'object') {
               weekData[week][editingHabit] = 0;
             }
           });
           delete durationStates[editingHabit];
+          delete timerStates[editingHabit];
         }
+      }
+
+      // Save timer/countdown settings
+      if (newType === CELL_TYPES.TIMER) {
+        const formatBtn = document.querySelector('[data-format].active');
+        const vibrateBtn = document.querySelector('[data-vibrate].active');
+        
+        timerSettings[editingHabit] = {
+          duration: parseInt(document.getElementById('timerDuration').value) || 20,
+          format: formatBtn ? formatBtn.dataset.format : 'mm:ss',
+          sound: document.getElementById('timerSound').value || 'soft_chime',
+          volume: parseInt(document.getElementById('timerVolume').value) || 50,
+          vibrate: vibrateBtn ? vibrateBtn.dataset.vibrate === 'on' : true,
+          message: document.getElementById('timerMessage').value.trim()
+        };
+      } else if (newType === CELL_TYPES.COUNTDOWN) {
+        const vibrateCdBtn = document.querySelector('[data-vibrate-cd].active');
+        
+        timerSettings[editingHabit] = {
+          targetDate: document.getElementById('countdownDate').value,
+          targetTime: document.getElementById('countdownTime').value || '12:00',
+          sound: document.getElementById('countdownSound').value || 'soft_chime',
+          volume: parseInt(document.getElementById('countdownVolume').value) || 50,
+          vibrate: vibrateCdBtn ? vibrateCdBtn.dataset.vibrateCd === 'on' : true,
+          message: document.getElementById('countdownMessage').value.trim()
+        };
       }
 
       habitLabels[editingHabit] = newLabel;
@@ -1826,8 +2797,10 @@
       saveColors();
       saveTypes();
       saveDescriptions();
+      saveTimerSettings();
       saveWeekData();
       saveDurationStates();
+      saveTimerStates();
 
       closeCellEditModal();
       openEditModal();
@@ -1852,6 +2825,8 @@
       loadColors();
       loadDescriptions();
       loadDurationStates();
+      loadTimerSettings();
+      loadTimerStates();
       
       // Check if week changed - reset duration states for new week
       const lastWeekKey = localStorage.getItem('trckng_last_week_key');
@@ -1894,9 +2869,32 @@
 
       document.querySelectorAll('.type-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
+          // Handle type selection
+          if (btn.dataset.type) {
+            document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateTimerFieldsVisibility(btn.dataset.type);
+          }
+          // Handle format selection
+          else if (btn.dataset.format) {
+            document.querySelectorAll('[data-format]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          }
+          // Handle vibrate selection
+          else if (btn.dataset.vibrate) {
+            document.querySelectorAll('[data-vibrate]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          }
         });
+      });
+
+      // Volume sliders
+      document.getElementById('timerVolume').addEventListener('input', (e) => {
+        document.getElementById('volumeValue').textContent = `${e.target.value}%`;
+      });
+      
+      document.getElementById('countdownVolume').addEventListener('input', (e) => {
+        document.getElementById('countdownVolumeValue').textContent = `${e.target.value}%`;
       });
 
       document.getElementById('fileInput').addEventListener('change', handleFileImport);
