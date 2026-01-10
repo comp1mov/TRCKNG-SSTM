@@ -1,4 +1,4 @@
-# TRCKNG SSTM v0.02
+# TRCKNG SSTM v0.111
 
 Modular weekly habit tracking system. Personal tracking journal built for weekly checkpoints and Obsidian integration.
 
