@@ -30,15 +30,22 @@
       min-height: 100vh;
       padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
     }
+
+    :root {
+      --cell-diagonal-angle: 36.87deg;
+      --cell-line-width: 1px;
+    }
     .container {
       width: 100%;
-      max-width: 600px;
+      /* Adjust max-width below to tune desktop layout width */
+      max-width: 1280px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
     
-    /* Controls group: no vertical gap between rows */
+    /* Controls group - no vertical gap between rows */
     .controls-group {
       display: flex;
       flex-direction: column;
@@ -53,30 +60,41 @@
       padding: 2px 16px 12px;
       gap: 8px;
     }
+    
     .header-content {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       align-items: flex-start;
       width: 100%;
       gap: 16px;
     }
-    .header-left, .header-right {
-      flex: 0 0 auto;
+
+    .header-left,
+    .header-right,
+    .header-center {
       display: flex;
       flex-direction: column;
       gap: 2px;
     }
-    .header-left { align-items: flex-start; }
-    .header-right { align-items: flex-end; text-align: right; }
-    .header-center {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 4px;
+
+    .header-left {
+      align-items: flex-start;
+      text-align: left;
     }
-    .header-week {
+
+    .header-center {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .header-right {
+      align-items: flex-start;
+      text-align: left;
+      justify-self: start;
+    }
+
+.header-week {
       font-family: "Roboto Condensed", -apple-system, sans-serif;
       font-size: 24px;
       font-weight: 700;
@@ -171,6 +189,15 @@
     .btn-control-wide {
       grid-column: span 3;
     }
+    .btn-control-edit {
+      grid-column: span 2;
+    }
+    .btn-control-pin {
+      grid-column: span 1;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #000;
+      color: rgba(255,255,255,0.8);
+    }
     .btn-control {
       border: none;
       background: #000;
@@ -193,10 +220,10 @@
     .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; }
 
     /* ===== HABITS GRID ===== */
-    /* Grid frame setup:
-       - border: frame around the 3x3 grid
+    /* HABITS GRID FRAME SETUP:
+       - border: frame around the full 3x3 grid
        - gap: spacing between cells
-       - background: gridline color behind cells
+       - background: color of the lines between cells
     */
     .buttons-grid {
       display: grid;
@@ -227,48 +254,95 @@
       overflow: hidden;
       -webkit-user-select: none;
       user-select: none;
-      aspect-ratio: 1;
+      aspect-ratio: 4 / 3;
     }
 
-    /* Inactive cells: different patterns per PIN */
+    /* INACTIVE CELLS - different patterns per pin */
     .btn-habit.inactive {
       background: #000;
       cursor: default;
       pointer-events: none;
     }
     
-    /* PIN 01: diamonds (45deg) */
+    /* PIN 01 - diagonal cross (45deg) */
     [data-pin="0"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: 
-        linear-gradient(45deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-        linear-gradient(-45deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+      background:
+        linear-gradient(var(--cell-diagonal-angle),
+          transparent calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          transparent calc(50% + var(--cell-line-width))
+        ),
+        linear-gradient(calc(180deg - var(--cell-diagonal-angle)),
+          transparent calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          transparent calc(50% + var(--cell-line-width))
+        );
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
       pointer-events: none;
     }
-    
-    /* PIN 02: grid (0deg/90deg) */
+
+
+    /* PIN 02 - grid (0deg/90deg) */
+
     [data-pin="1"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: 
-        linear-gradient(0deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-        linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+      background:
+        linear-gradient(0deg,
+          transparent calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          transparent calc(50% + var(--cell-line-width))
+        ),
+        linear-gradient(90deg,
+          transparent calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          transparent calc(50% + var(--cell-line-width))
+        );
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
       pointer-events: none;
     }
-    
-    /* PIN 03: hybrid (left diagonal + right grid) */
+
+    /* PIN 03 - hybrid (left diagonal + right grid) */
+
     [data-pin="2"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: 
-        linear-gradient(45deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-        linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(80,80,80,1) calc(50% - 0.5px), rgba(80,80,80,1) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+      background:
+        linear-gradient(var(--cell-diagonal-angle),
+          transparent calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          transparent calc(50% + var(--cell-line-width))
+        ),
+        linear-gradient(0deg,
+          transparent calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          transparent calc(50% + var(--cell-line-width))
+        ),
+        linear-gradient(90deg,
+          transparent calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
+          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          transparent calc(50% + var(--cell-line-width))
+        );
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
       pointer-events: none;
     }
+
+
 
     /* Cell content structure */
     .btn-status {
@@ -298,7 +372,7 @@
     }
     .btn-value { 
       font-family: "Roboto Condensed", -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: clamp(28px, 12vw, 48px);
+      font-size: clamp(22px, 9vw, 36px);
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       line-height: 1;
@@ -307,10 +381,23 @@
       word-spacing: 0;
       font-feature-settings: "tnum" 1;
     }
-    
+
+    /* Countdown digits: stroke with black fill */
+    .btn-habit[data-type="countdown"] .btn-value {
+      color: #000000;
+      -webkit-text-stroke: 1px var(--btn-color, #ffffff);
+      text-stroke: 1px var(--btn-color, #ffffff);
+    }
+
+    .btn-habit[data-type="countdown"] .btn-value .btn-value-suffix {
+      color: var(--btn-color, #ffffff);
+      -webkit-text-stroke: 0;
+      text-stroke: 0;
+    }
+
     /* Small suffix letters (s, m) - 5x smaller */
     .btn-value-suffix {
-      font-size: 0.2em;
+      font-size: 0.5em;
       opacity: 0.6;
       margin-left: 0.1em;
     }
@@ -321,6 +408,19 @@
       order: 4;
       min-height: 14px;
     }
+    
+    /* Responsive font tuning: phones a bit smaller, desktops a bit larger */
+    @media (max-width: 600px) {
+      .btn-label { font-size: 9px; }
+      .btn-value { font-size: clamp(18px, 8vw, 30px); }
+      .btn-breakdown { font-size: 9px; }
+    }
+    @media (min-width: 1200px) {
+      .btn-label { font-size: 13px; }
+      .btn-value { font-size: clamp(26px, 10vw, 44px); }
+      .btn-breakdown { font-size: 11px; }
+    }
+
 
     /* Running state with animated border */
     
@@ -364,7 +464,7 @@
       background: var(--btn-color, #35f2a3);
       pointer-events: none;
       z-index: 2;
-      animation: timerScan 600s linear infinite;
+      animation: timerScan 60s linear infinite;
     }
 
     @keyframes timerScan {
@@ -382,7 +482,7 @@
       }
     }
 
-    /* COUNTDOWN: perimeter snake segment (one-minute cycle) */
+    /* COUNTDOWN - perimeter snake over one-minute cycle */
     .btn-habit[data-type="countdown"].running {
       border: none;
       background: #000;
@@ -391,23 +491,24 @@
     .btn-habit[data-type="countdown"].running::after {
       content: '';
       position: absolute;
-      inset: 0;
-      border-radius: 0;
-      background: conic-gradient(var(--btn-color, #ffffff) 0 8deg, transparent 8deg 360deg);
-      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
-      mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+      left: 50%;
+      top: 50%;
+      width: 160%;
+      height: 2px;
+      background: var(--btn-color, #ffffff);
       pointer-events: none;
       z-index: 0;
-      opacity: 0.9;
-      animation: countdownSnake 60s linear infinite;
+      transform-origin: center center;
+      transform: translate(-50%, -50%) rotate(var(--progress-angle, 0deg));
+      opacity: 1;
+      animation: none;
     }
 
     @keyframes countdownSnake {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(-360deg); }
-    }
-
-100% {
+      0% {
+        transform: translateX(-50%) rotate(0deg);
+      }
+      100% {
         transform: translateX(-50%) rotate(-360deg);
       }
     }
@@ -422,8 +523,7 @@
     .btn-habit[data-type="duration_sec"].running .btn-value,
     .btn-habit[data-type="duration_min"].running .btn-value,
     .btn-habit[data-type="duration_sec_count"].running .btn-value,
-    .btn-habit[data-type="timer"].running .btn-value,
-    .btn-habit[data-type="countdown"].running .btn-value {
+    .btn-habit[data-type="timer"].running .btn-value {
       color: var(--btn-color, #35f2a3);
     }
 
@@ -472,7 +572,7 @@
 
     /* Stronger tap feedback when value changes */
     .btn-habit.animating {
-      animation: tapPress 780ms cubic-bezier(0.22, 0.61, 0.36, 1);
+      animation: tapPress 1200ms cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 
     /* Countdown click feedback: text color flashes to accent, no background glow */
@@ -480,7 +580,7 @@
     .btn-habit[data-type="countdown"] .btn-status,
     .btn-habit[data-type="countdown"] .btn-value,
     .btn-habit[data-type="countdown"] .btn-breakdown {
-      transition: color 900ms ease-out;
+      transition: color 5000ms ease-out;
     }
 
     .btn-habit[data-type="countdown"].animating .btn-label,
@@ -488,12 +588,7 @@
     .btn-habit[data-type="countdown"].animating .btn-value,
     .btn-habit[data-type="countdown"].animating .btn-breakdown {
       color: var(--btn-color, #ffffff);
-    }
-
-    /* Disable background flash for countdown: keep only text + perimeter line */
-    .btn-habit[data-type="countdown"].animating::before {
-      animation: none;
-      opacity: 0;
+      transition: none;
     }
 
 
@@ -504,7 +599,7 @@
         filter: brightness(1);
       }
       30% {
-        transform: scale(0.97);
+        transform: scale(0.96);
         filter: brightness(1.6);
       }
       100% {
@@ -654,7 +749,7 @@
     .modal-content {
       background: #000;
       border: 1px solid rgba(255,255,255,0.3);
-      max-height: 90vh;
+      max-height: 80vh;
       overflow-y: auto;
       max-width: 500px;
       width: 100%;
@@ -665,9 +760,11 @@
     }
 
     .modal-header {
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       border: 0px solid rgba(255,255,255,0.3);
-      padding: 20px;
+      padding: 16px 20px 12px;
     }
     .modal-title {
       font-size: 10px;
@@ -676,13 +773,57 @@
       margin-bottom: 8px;
       text-transform: uppercase;
     }
-    .modal-version {
-      font-size: 32px;
-      font-weight: 300;
-      letter-spacing: 0.04em;
+    .modal-header-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .modal-pin-btn {
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #000;
+      color: rgba(255,255,255,0.8);
+      padding: 6px 10px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .modal-pin-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+    .modal-help-btn {
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #000;
+      color: rgba(255,255,255,0.7);
+      padding: 5px 8px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .modal-help-btn:hover {
+      background: #fff;
+      color: #000;
     }
 
-    .modal-buttons {
+    
+    .modal-help-panel,
+    .cell-help-panel {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.9);
+      font-size: 9px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.75);
+    }
+    .modal-help-panel.visible,
+    .cell-help-panel.visible {
+      display: block;
+    }
+.modal-buttons {
       display: flex;
       gap: 1px;
       border: 1px solid rgba(255,255,255,0.3);
@@ -744,12 +885,94 @@
       background: #000;
       border: 1px solid rgba(255,255,255,0.3);
       padding: 20px;
-      max-width: 350px;
+      max-width: 520px;
       width: 100%;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      position: relative;
     }
+    
+    .cell-edit-help-btn {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #000;
+      color: rgba(255,255,255,0.7);
+      padding: 4px 7px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .cell-edit-help-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    .cell-edit-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .cell-edit-grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px 12px;
+    }
+
+    .cell-edit-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 12px;
+    }
+
+    .cell-edit-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cell-edit-field-full {
+      grid-column: 1 / -1;
+    }
+
+    .cell-edit-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sound-test-btn {
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #050607;
+      color: #fff;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 120ms, transform 120ms;
+    }
+
+    .sound-test-btn:active {
+      transform: scale(0.96);
+    }
+
+    .sound-test-btn:hover {
+      background: rgba(255,255,255,0.12);
+    }
+
+    @media (max-width: 480px) {
+.cell-edit-content {
+        max-width: 100%;
+        padding: 16px;
+      }
+    }
+
     .cell-edit-label {
       font-size: 10px;
       text-transform: uppercase;
@@ -908,171 +1131,7 @@
       animation: btnPulse 1.5s ease-in-out infinite;
       color: #ff8c42;
     }
-  
-
-    /* ===== UI NORMALIZATION (v0.91) ===== */
-    :root {
-      --ui-font: "Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-
-      /* Button internal row heights */
-      --btn-row-status: 14px;
-      --btn-row-label: 28px;
-      --btn-row-break: 18px;
-
-      /* Value sizing (desktop baseline) */
-      --value-min: 22px;
-      --value-fluid: 10vw;
-      --value-max: 48px;
-
-      /* Controls sizing */
-      --ctl-font: 11px;
-      --ctl-pad-y: 12px;
-      --ctl-pad-x: 8px;
-    }
-
-    html, body { font-family: var(--ui-font); }
-
-    /* Unify typography across UI */
-    .btn-control, .pin, .stats-table, .modal, .cell-edit-content, .modal-content {
-      font-family: var(--ui-font);
-    }
-
-    /* Habit button: enforce consistent internal layout */
-    .btn-habit {
-      display: grid !important;
-      grid-template-rows: var(--btn-row-status) var(--btn-row-label) 1fr var(--btn-row-break);
-      align-items: center !important;
-      justify-items: center !important;
-      gap: 2px !important;
-      padding: 10px 8px !important;
-      letter-spacing: 0.04em;
-    }
-
-    .btn-status {
-      grid-row: 1;
-      margin: 0 !important;
-      min-height: var(--btn-row-status);
-    }
-
-    .btn-label {
-      grid-row: 2;
-      margin: 0 !important;
-      width: 100%;
-      max-width: 100%;
-      text-align: center;
-      font-size: 11px;
-      line-height: 1.15;
-      opacity: 0.75;
-      padding: 0 4px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .btn-value {
-      grid-row: 3;
-      display: inline-block;
-      max-width: 100%;
-      white-space: nowrap;
-      font-size: clamp(var(--value-min), var(--value-fluid), var(--value-max));
-      letter-spacing: -0.01em;
-    }
-
-    .btn-breakdown {
-      grid-row: 4;
-      margin: 0 !important;
-      max-width: 100%;
-      padding: 0 4px;
-      font-size: 10px;
-      line-height: 1.1;
-      opacity: 0.5;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* Make controls more compact by default */
-    .btn-control {
-      font-size: var(--ctl-font);
-      padding: var(--ctl-pad-y) var(--ctl-pad-x);
-    }
-    .pin {
-      font-size: 10px;
-      padding: 14px 10px;
-    }
-
-    /* Modals: improve iOS scrolling */
-    .modal-content {
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(20px + env(safe-area-inset-bottom));
-      max-height: calc(100dvh - 32px);
-    }
-    .cell-edit-content {
-      max-height: calc(100dvh - 32px);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(20px + env(safe-area-inset-bottom));
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: calc(14px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.88);
-      border: 1px solid rgba(255,255,255,0.25);
-      color: rgba(255,255,255,0.9);
-      padding: 10px 12px;
-      font-size: 12px;
-      letter-spacing: 0.02em;
-      max-width: min(520px, calc(100vw - 24px));
-      width: max-content;
-      text-align: center;
-      z-index: 999;
-      display: none;
-    }
-    .toast.visible { display: block; }
-
-    /* ===== MOBILE OVERRIDES ===== */
-    @media (max-width: 480px) {
-      :root {
-        --btn-row-status: 12px;
-        --btn-row-label: 24px;
-        --btn-row-break: 16px;
-
-        --value-min: 18px;
-        --value-fluid: 11vw;
-        --value-max: 40px;
-
-        --ctl-font: 10px;
-        --ctl-pad-y: 10px;
-        --ctl-pad-x: 6px;
-      }
-
-      .header { padding: 2px 12px 10px; }
-      .header-week, .header-time { font-size: 20px; }
-      .header-weekdate, .header-week-percent, .header-day { font-size: 9px; }
-
-      .pin { padding: 12px 8px; }
-      .btn-control { letter-spacing: 0.04em; }
-
-      .btn-habit { padding: 8px 6px !important; }
-      .btn-label { font-size: 10px; }
-      .btn-breakdown { font-size: 9px; }
-
-      .stats-table th, .stats-table td { font-size: 9px; padding: 10px 6px; }
-
-      /* Modal alignment: top for easier scrolling on iOS */
-      .modal.visible { align-items: flex-start; }
-      .modal { padding: 12px; }
-      .modal-content, .cell-edit-content { padding: 16px; }
-      .type-btn { padding: 8px 4px; font-size: 9px; }
-      .color-picker { height: 34px; }
-    }
-
-</style>
+  </style>
 </head>
 <body>
   <div class="container">
@@ -1111,7 +1170,7 @@
 
       <div class="controls-edit">
         <button class="btn-control btn-control-wide" id="btnDecrease">DECREASE</button>
-        <button class="btn-control btn-control-wide" id="btnEdit">EDIT</button>
+        <button class="btn-control btn-control-edit" id="btnEdit">EDIT</button>
       </div>
     </div>
 
@@ -1120,29 +1179,36 @@
     <div class="stats" id="stats"></div>
   </div>
 
-  <input type="file" id="fileInput" accept=".json" style="display:none">
+  <input type="file" id="fileInput" accept=".json,.txt" style="display:none">
 
   <!-- EDIT MODAL -->
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM - v0.91</div>
-        <div class="modal-version">EDIT</div>
+        <div class="modal-title">TRCKNG SSTM · v0.99</div>
+        <div class="modal-header-right">
+          <button class="modal-pin-btn" id="btnEditPinName">PIN 01</button>
+          <button class="modal-help-btn" id="btnEditHelp">HELP</button>
+        </div>
+      </div>
+      <div class="modal-help-panel" id="editHelpPanel">
+        <strong>Edit mode help</strong><br>
+        Short placeholder text about how EDIT works. Full help will be added later.
       </div>
       
-      <!-- Instructions in 2 columns -->
+<!-- Instructions in 2 columns -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 9px; color: rgba(255,255,255,0.5); line-height: 1.7; padding: 0 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
         <div>
-          * Tap cell to edit name, type, color, description<br>
-          * Clear name to deactivate cell<br>
-          * <strong style="color: rgba(255,255,255,0.7);">Counter:</strong> tap to +1, DECREASE to -1<br>
-          * <strong style="color: rgba(255,255,255,0.7);">MM:SS:</strong> live stopwatch (minutes:seconds)
+          • Tap cell to edit name, type, color, description<br>
+          • Clear name to deactivate cell<br>
+          • <strong style="color: rgba(255,255,255,0.7);">Counter:</strong> tap to +1, DECREASE to -1<br>
+          • <strong style="color: rgba(255,255,255,0.7);">MM:SS:</strong> live stopwatch (minutes:seconds)
         </div>
         <div>
-          * <strong style="color: rgba(255,255,255,0.7);">Min:</strong> live timer (minutes count)<br>
-          * <strong style="color: rgba(255,255,255,0.7);">Sec:</strong> live timer (seconds count)<br>
-          * Duration timers: DECREASE resets to 0<br>
-          * Switching timer types converts values
+          • <strong style="color: rgba(255,255,255,0.7);">Min:</strong> live timer (minutes count)<br>
+          • <strong style="color: rgba(255,255,255,0.7);">Sec:</strong> live timer (seconds count)<br>
+          • Duration timers: DECREASE resets to 0<br>
+          • Switching timer types converts values
         </div>
       </div>
       
@@ -1156,8 +1222,13 @@
   <!-- CELL EDIT MODAL -->
   <div class="modal" id="cellEditModal">
     <div class="cell-edit-content">
+      <button class="cell-edit-help-btn" id="btnCellEditHelp">HELP</button>
       <div class="cell-edit-label" id="cellEditLabel">CELL 01</div>
       <input type="text" class="cell-edit-input" id="cellEditInput" maxlength="20" autocomplete="off" placeholder="Cell name">
+      <div class="cell-help-panel" id="cellEditHelpPanel">
+        <strong>Cell edit help</strong><br>
+        Placeholder text for cell types and examples. Full help will be added later.
+      </div>
       
       <div style="margin-top: 8px;">
         <div class="cell-edit-label" style="margin-bottom: 8px;">Type</div>
@@ -1171,101 +1242,126 @@
           <button class="type-btn" data-type="timer">Timer</button>
           <button class="type-btn" data-type="countdown">Countdown</button>
         </div>
+        <div class="type-selector" style="margin-top: 1px;">
+          <button class="type-btn" data-type="money_income">Income</button>
+          <button class="type-btn" data-type="money_budget">Budget</button>
+        </div>
+      </div>
+
+      
+
+            <!-- MONEY SETTINGS -->
+      <div id="moneySettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Money</div>
+        <div class="cell-edit-grid-2">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Step</div>
+            <input type="number" class="cell-edit-input" id="moneyStep" min="0" step="1" value="10" autocomplete="off">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Currency</div>
+            <input type="text" class="cell-edit-input" id="moneyCurrency" maxlength="6" autocomplete="off" placeholder="€">
+          </div>
+        </div>
+        <div class="cell-edit-field" id="moneyStartAmountField">
+          <div class="cell-edit-label">Budget start amount</div>
+          <input type="number" class="cell-edit-input" id="moneyStartAmount" min="0" autocomplete="off" placeholder="Optional">
+        </div>
+      </div>
+
+      <!-- TIMER SETTINGS -->
+      <div id="timerSettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Timer</div>
+        <div class="cell-edit-grid-2">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Duration (minutes)</div>
+            <input type="number" class="cell-edit-input" id="timerDuration" min="1" max="999" value="20" autocomplete="off">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Display format</div>
+            <div class="type-selector">
+              <button class="type-btn active" data-format="mm:ss">MM:SS</button>
+              <button class="type-btn" data-format="mm">MM</button>
+            </div>
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Notification sound</div>
+            <div class="cell-edit-inline">
+              <select class="cell-edit-input" id="timerSound" style="padding: 8px;">
+                <option value="soft_chime">Soft Chime</option>
+                <option value="digital_pulse">Digital Pulse</option>
+                <option value="organic_bell">Organic Bell</option>
+                <option value="minimal_beep">Minimal Beep</option>
+                <option value="ascending_trill">Ascending Trill</option>
+              </select>
+              <button type="button" class="sound-test-btn" id="timerSoundTest">▶</button>
+            </div>
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Volume <span id="volumeValue">50%</span></div>
+            <input type="range" id="timerVolume" min="0" max="100" value="50" style="width: 100%; height: 4px; background: rgba(255,255,255,0.2);">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Vibration</div>
+            <div class="type-selector">
+              <button class="type-btn active" data-vibrate="on">ON</button>
+              <button class="type-btn" data-vibrate="off">OFF</button>
+            </div>
+          </div>
+          <div class="cell-edit-field cell-edit-field-full">
+            <div class="cell-edit-label">Custom message (optional)</div>
+            <input type="text" class="cell-edit-input" id="timerMessage" maxlength="50" autocomplete="off" placeholder="Leave empty for default">
+          </div>
+        </div>
+      </div>
+
+      <!-- COUNTDOWN SETTINGS -->
+      <div id="countdownSettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Countdown</div>
+        <div class="cell-edit-grid-2">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Target date</div>
+            <input type="date" class="cell-edit-input" id="countdownDate" autocomplete="off">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Target time</div>
+            <input type="time" class="cell-edit-input" id="countdownTime" value="12:00" autocomplete="off">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Notification sound</div>
+            <div class="cell-edit-inline">
+              <select class="cell-edit-input" id="countdownSound" style="padding: 8px;">
+                <option value="soft_chime">Soft Chime</option>
+                <option value="digital_pulse">Digital Pulse</option>
+                <option value="organic_bell">Organic Bell</option>
+                <option value="minimal_beep">Minimal Beep</option>
+                <option value="ascending_trill">Ascending Trill</option>
+              </select>
+              <button type="button" class="sound-test-btn" id="countdownSoundTest">▶</button>
+            </div>
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Volume <span id="countdownVolumeValue">50%</span></div>
+            <input type="range" id="countdownVolume" min="0" max="100" value="50" style="width: 100%; height: 4px; background: rgba(255,255,255,0.2);">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Vibration</div>
+            <div class="type-selector">
+              <button class="type-btn active" data-vibrate-cd="on">ON</button>
+              <button class="type-btn" data-vibrate-cd="off">OFF</button>
+            </div>
+          </div>
+          <div class="cell-edit-field cell-edit-field-full">
+            <div class="cell-edit-label">Custom message (optional)</div>
+            <input type="text" class="cell-edit-input" id="countdownMessage" maxlength="50" autocomplete="off" placeholder="Leave empty for default">
+          </div>
+        </div>
       </div>
 
       <div style="margin-top: 8px;" id="descriptionField">
         <div class="cell-edit-label" style="margin-bottom: 8px;">Description</div>
         <input type="text" class="cell-edit-input" id="cellEditDescription" maxlength="30" autocomplete="off" placeholder="Optional description">
-      </div>
-
-      <!-- TIMER SETTINGS -->
-      <div id="timerSettingsFields" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Timer Duration (minutes)</div>
-          <input type="number" class="cell-edit-input" id="timerDuration" min="1" max="999" value="20" autocomplete="off">
-        </div>
-        
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Display Format</div>
-          <div class="type-selector">
-            <button class="type-btn active" data-format="mm:ss">MM:SS</button>
-            <button class="type-btn" data-format="mm">MM</button>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Notification Sound</div>
-          <select class="cell-edit-input" id="timerSound" style="padding: 8px;">
-            <option value="soft_chime">Soft Chime</option>
-            <option value="digital_pulse">Digital Pulse</option>
-            <option value="organic_bell">Organic Bell</option>
-            <option value="minimal_beep">Minimal Beep</option>
-            <option value="ascending_trill">Ascending Trill</option>
-          </select>
-        </div>
-
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Volume <span id="volumeValue">50%</span></div>
-          <input type="range" id="timerVolume" min="0" max="100" value="50" style="width: 100%; height: 4px; background: rgba(255,255,255,0.2);">
-        </div>
-
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Vibration</div>
-          <div class="type-selector">
-            <button class="type-btn active" data-vibrate="on">ON</button>
-            <button class="type-btn" data-vibrate="off">OFF</button>
-          </div>
-        </div>
-
-        <div>
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Custom Message (optional)</div>
-          <input type="text" class="cell-edit-input" id="timerMessage" maxlength="50" autocomplete="off" placeholder="Leave empty for default">
-        </div>
-      </div>
-
-      <!-- COUNTDOWN SETTINGS -->
-      <div id="countdownSettingsFields" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Target Date</div>
-          <input type="date" class="cell-edit-input" id="countdownDate" autocomplete="off">
-        </div>
-        
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Target Time</div>
-          <input type="time" class="cell-edit-input" id="countdownTime" value="12:00" autocomplete="off">
-        </div>
-
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Notification Sound</div>
-          <select class="cell-edit-input" id="countdownSound" style="padding: 8px;">
-            <option value="soft_chime">Soft Chime</option>
-            <option value="digital_pulse">Digital Pulse</option>
-            <option value="organic_bell">Organic Bell</option>
-            <option value="minimal_beep">Minimal Beep</option>
-            <option value="ascending_trill">Ascending Trill</option>
-          </select>
-        </div>
-
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Volume <span id="countdownVolumeValue">50%</span></div>
-          <input type="range" id="countdownVolume" min="0" max="100" value="50" style="width: 100%; height: 4px; background: rgba(255,255,255,0.2);">
-        </div>
-
-        <div style="margin-bottom: 12px;">
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Vibration</div>
-          <div class="type-selector">
-            <button class="type-btn active" data-vibrate-cd="on">ON</button>
-            <button class="type-btn" data-vibrate-cd="off">OFF</button>
-          </div>
-        </div>
-
-        <div>
-          <div class="cell-edit-label" style="margin-bottom: 8px;">Custom Message (optional)</div>
-          <input type="text" class="cell-edit-input" id="countdownMessage" maxlength="50" autocomplete="off" placeholder="Leave empty for default">
-        </div>
-      </div>
-
-      <div class="color-picker-wrap">
+      </div><div class="color-picker-wrap">
         <div class="color-picker-label">Color</div>
         <input type="color" class="color-picker" id="cellEditColor" value="#ffffff">
       </div>
@@ -1282,23 +1378,26 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V0.91</div>
+        <div class="info-version">V0.99</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v0.91</div>
+        <div class="info-section-title">What's New in v0.99</div>
         <div class="info-text">
-          <strong>ENCODING AND SOURCE:</strong><br>
-          * All source comments are English (ASCII only)<br>
-          * Replaced non-ASCII UI glyphs (arrows, bullets) with ASCII-safe text<br>
+          <strong>UI IMPROVEMENTS:</strong><br>
+          • Suffixes (s, m) now 5x smaller for cleaner look<br>
+          • Fixed dash encoding in EDIT modal<br>
+          • Duration Min now shows seconds in breakdown (0h 12m 32s)<br>
           <br>
-          <strong>COUNTDOWN BORDER:</strong><br>
-          * Perimeter snake segment rotates once per minute<br>
-          * Accent color follows the active duration color<br>
+          <strong>ANIMATED PROGRESS BORDER:</strong><br>
+          • Timer/Countdown show animated circular progress<br>
+          • Border completes full circle every 60 seconds<br>
+          • Visual indicator for active timers/countdowns<br>
           <br>
-          <strong>HOUSEKEEPING:</strong><br>
-          * Version labels unified to v0.91<br>
+          <strong>v0.63 FEATURES:</strong><br>
+          • Countdown notifications with sound & vibration<br>
+          • Click expired countdown to stop pulsing
         </div>
       </div>
       
@@ -1332,8 +1431,8 @@
       <div class="info-section">
         <div class="info-section-title">Install as App</div>
         <div class="info-text">
-          <strong>iOS:</strong> Safari -> Share -> Add to Home Screen<br>
-          <strong>Android:</strong> Chrome -> Menu -> Install app
+          <strong>iOS:</strong> Safari → Share → Add to Home Screen<br>
+          <strong>Android:</strong> Chrome → Menu → Install app
         </div>
       </div>
 
@@ -1357,7 +1456,9 @@
       DURATION_MIN: 'duration_min',
       DURATION_SEC_COUNT: 'duration_sec_count',
       TIMER: 'timer',
-      COUNTDOWN: 'countdown'
+      COUNTDOWN: 'countdown',
+      MONEY_INCOME: 'money_income',
+      MONEY_BUDGET: 'money_budget'
     };
 
     const STORAGE_KEYS = {
@@ -1369,6 +1470,9 @@
       DURATION: 'trckng_sstm_duration',
       TIMER_SETTINGS: 'trckng_sstm_timer_settings',
       TIMER_STATES: 'trckng_sstm_timer_states',
+      COUNTER_LAST_UPDATE: 'trckng_sstm_counter_last_update',
+      MONEY_SETTINGS: 'trckng_sstm_money_settings',
+      PIN_NAMES: 'trckng_sstm_pin_names',
       SEEN_INFO: 'trckng_has_seen_info'
     };
 
@@ -1407,6 +1511,9 @@
     let durationStates = {};
     let timerSettings = {}; // Timer/Countdown configurations
     let timerStates = {}; // Runtime state (iterations, running status)
+    let moneySettings = {}; // Money configs per habit
+    let pinNames = {}; // Custom pin names
+    let counterLastUpdate = {}; // Last update timestamps for simple counters
     let globalInterval = null;
     let clockInterval = null;
     let editingHabit = null;
@@ -1449,91 +1556,19 @@
     }
 
     // ===== NOTIFICATION SOUNDS =====
-
-
-    // ===== MOBILE FIXES (v0.91) =====
-    let toastEl = null;
-    let toastTimer = null;
-    let audioUnlocked = false;
-
-    function ensureToast() {
-      if (toastEl) return toastEl;
-      toastEl = document.createElement('div');
-      toastEl.id = 'toast';
-      toastEl.className = 'toast';
-      document.body.appendChild(toastEl);
-      return toastEl;
-    }
-
-    function showToast(message, ms = 3500) {
-      if (!message) return;
-      const el = ensureToast();
-      el.textContent = message;
-      el.classList.add('visible');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.classList.remove('visible'), ms);
-    }
-
-    async function ensureNotificationPermission() {
-      if (!('Notification' in window)) return 'unsupported';
-      if (Notification.permission === 'default') {
-        try {
-          return await Notification.requestPermission();
-        } catch (e) {
-          return Notification.permission;
-        }
-      }
-      return Notification.permission;
-    }
-
-    function unlockAudio() {
-      if (audioUnlocked) return;
-      try {
-        const ctx = getAudioContext();
-        if (ctx.state === 'suspended') {
-          ctx.resume().catch(() => {});
-        }
-        // tiny silent tick to unlock iOS audio
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        gain.gain.value = 0.0001;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.01);
-        audioUnlocked = true;
-      } catch (e) {}
-    }
-
-    function autoFitText(el, minPx = 16) {
-      if (!el) return;
-      // Reset before fitting
-      el.style.fontSize = '';
-      // Force measurement in current layout
-      const maxLoops = 24;
-      let size = parseFloat(getComputedStyle(el).fontSize) || 24;
-      let loops = 0;
-      while (el.scrollWidth > el.clientWidth + 1 && size > minPx && loops < maxLoops) {
-        size -= 1;
-        el.style.fontSize = `${size}px`;
-        loops += 1;
-      }
-    }
-
-    function autoFitAllValues() {
-      document.querySelectorAll('.btn-value').forEach(el => autoFitText(el, 16));
-    }
     function getAudioContext() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      // Try to resume if context is suspended (some browsers pause it in background)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
       }
       return audioContext;
     }
 
     function playNotificationSound(soundType, volume) {
       const ctx = getAudioContext();
-      if (ctx && ctx.state === 'suspended') { ctx.resume().catch(() => {}); }
-
       const vol = volume / 100;
 
       switch(soundType) {
@@ -1803,6 +1838,32 @@
       if (stored) {
         try { timerSettings = JSON.parse(stored); } catch(e) {}
       }
+
+      // Ensure default settings for all TIMER / COUNTDOWN cells
+      HABITS.forEach(habit => {
+        const type = habitTypes[habit];
+        if ((type === CELL_TYPES.TIMER || type === CELL_TYPES.COUNTDOWN) && !timerSettings[habit]) {
+          if (type === CELL_TYPES.TIMER) {
+            timerSettings[habit] = {
+              duration: 20,
+              format: 'mm:ss',
+              sound: 'soft_chime',
+              volume: 50,
+              vibrate: true,
+              message: ''
+            };
+          } else if (type === CELL_TYPES.COUNTDOWN) {
+            timerSettings[habit] = {
+              targetDate: '',
+              targetTime: '12:00',
+              sound: 'soft_chime',
+              volume: 50,
+              vibrate: true,
+              message: ''
+            };
+          }
+        }
+      });
     }
 
     function saveTimerSettings() {
@@ -1824,16 +1885,75 @@
       localStorage.setItem(key, JSON.stringify(timerStates));
     }
 
+    function loadMoneySettings() {
+      moneySettings = {};
+      const key = `${STORAGE_KEYS.MONEY_SETTINGS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try { moneySettings = JSON.parse(stored); } catch(e) {}
+      }
+    }
+
+    function saveMoneySettings() {
+      const key = `${STORAGE_KEYS.MONEY_SETTINGS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(moneySettings));
+    }
+
+
+    function loadCounterLastUpdate() {
+      counterLastUpdate = {};
+      const key = `${STORAGE_KEYS.COUNTER_LAST_UPDATE}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try { counterLastUpdate = JSON.parse(stored); } catch (e) {}
+      }
+    }
+
+    function saveCounterLastUpdate() {
+      const key = `${STORAGE_KEYS.COUNTER_LAST_UPDATE}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(counterLastUpdate));
+    }
+
+
+    function loadPinNames() {
+      pinNames = {};
+      const stored = localStorage.getItem(STORAGE_KEYS.PIN_NAMES);
+      if (stored) {
+        try { pinNames = JSON.parse(stored) || {}; } catch (e) { pinNames = {}; }
+      }
+    }
+
+    function savePinNames() {
+      localStorage.setItem(STORAGE_KEYS.PIN_NAMES, JSON.stringify(pinNames));
+    }
+
+    function getDefaultPinName(index) {
+      const num = String(index + 1).padStart(2, '0');
+      return `PIN ${num}`;
+    }
+
+    function applyPinNamesToUI() {
+      for (let i = 0; i < 3; i++) {
+        const btn = document.getElementById(`pin${i}`);
+        const raw = (pinNames && pinNames[i] != null) ? String(pinNames[i]) : '';
+        const name = raw.trim() || getDefaultPinName(i);
+        if (btn) btn.textContent = name;
+      }
+
+      const renameBtn = document.getElementById('btnEditPinName');
+      if (renameBtn) {
+        const raw = (pinNames && pinNames[currentPin] != null) ? String(pinNames[currentPin]) : '';
+        const name = raw.trim() || getDefaultPinName(currentPin);
+        renameBtn.textContent = name;
+      }
+    }
+
+
     function ensureWeekExists() {
       if (!weekData[currentWeekKey] || typeof weekData[currentWeekKey] !== 'object') {
         weekData[currentWeekKey] = {};
+        saveWeekData();
       }
-      HABITS.forEach(h => {
-        if (weekData[currentWeekKey][h] === undefined) {
-          weekData[currentWeekKey][h] = 0;
-        }
-      });
-      saveWeekData();
     }
 
     // ===== FORMATTING =====
@@ -1870,6 +1990,38 @@
       return { main, breakdown };
     }
 
+    function formatCounterLastUpdate(habit) {
+      const ts = counterLastUpdate[habit];
+      if (!ts) return '';
+      const now = Date.now();
+      let diffSec = Math.floor((now - ts) / 1000);
+      if (diffSec < 0) diffSec = 0;
+
+      const oneMinute = 60;
+      const oneHour = 3600;
+      const oneDay = 86400;
+
+      if (diffSec < oneMinute) {
+        return `${diffSec}s ago`;
+      } else if (diffSec < oneHour) {
+        const m = Math.floor(diffSec / 60);
+        const s = diffSec % 60;
+        return `${m}:${String(s).padStart(2, '0')}s ago`;
+      } else if (diffSec < oneDay) {
+        const h = Math.floor(diffSec / 3600);
+        const m = Math.floor((diffSec % 3600) / 60);
+        return `${h}h ${String(m).padStart(2, '0')}m ago`;
+      } else {
+        const d = new Date(ts);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${day}.${month} ${hours}:${minutes}`;
+      }
+    }
+
+
     // ===== CLICK HANDLERS =====
     function handleHabitClick(habit) {
       const label = habitLabels[habit];
@@ -1879,6 +2031,8 @@
 
       if (type === CELL_TYPES.COUNTER) {
         handleCounterClick(habit);
+      } else if (type === CELL_TYPES.MONEY_INCOME || type === CELL_TYPES.MONEY_BUDGET) {
+        handleMoneyClick(habit, type);
       } else if (type === CELL_TYPES.TIMER) {
         handleTimerClick(habit);
       } else if (type === CELL_TYPES.COUNTDOWN) {
@@ -1895,16 +2049,92 @@
       } else {
         weekData[currentWeekKey][habit] = (weekData[currentWeekKey][habit] || 0) + 1;
       }
+
+      // Track last update time for simple counters
+      counterLastUpdate[habit] = Date.now();
+
       saveWeekData();
+      saveCounterLastUpdate();
       updateCellDisplay(habit);
       animateButton(habit);
     }
 
-    function handleDurationClick(habit, type) {
-      const state = durationStates[habit] || { startTime: null, isRunning: false, accumulated: 0 };
+    
+    function handleMoneyClick(habit, type) {
+      ensureWeekExists();
+
+      const cfg = moneySettings[habit] || {};
+      const baseStep = cfg.step != null ? Math.abs(cfg.step) : 10;
+      const step = baseStep === 0 ? 1 : baseStep;
+
+      const isIncome = type === CELL_TYPES.MONEY_INCOME;
+
+      // Базовое направление: income увеличивает, budget уменьшает
+      let delta = isIncome ? step : -step;
+
+      // В режиме DECREASE инвертируем знак
+      if (decreaseMode) {
+        delta = -delta;
+      }
+
+      let weekObj = weekData[currentWeekKey] || {};
+      if (!weekObj || typeof weekObj !== 'object') {
+        weekObj = {};
+        weekData[currentWeekKey] = weekObj;
+      }
+
+      if (weekObj[habit] === undefined || weekObj[habit] === null) {
+        if (!isIncome && cfg.startAmount != null) {
+          weekObj[habit] = Number(cfg.startAmount) || 0;
+        } else {
+          weekObj[habit] = 0;
+        }
+      }
+
+      let next = (Number(weekObj[habit]) || 0) + delta;
+
+      // Для бюджета не даем уйти в минус
+      if (!isIncome && next < 0) next = 0;
+
+      weekObj[habit] = next;
+
+      saveWeekData();
+      updateMoneyCellDisplay(habit, type);
+      animateButton(habit);
+    }
+function attachMoneyPressHandlers(btn, habit, type) {
+      let pressTimer = null;
+
+      const stepOnce = () => handleMoneyClick(habit, type);
+
+      const startPress = (event) => {
+        event.preventDefault();
+        stepOnce();
+        if (pressTimer) clearInterval(pressTimer);
+        pressTimer = setInterval(stepOnce, 160);
+      };
+
+      const stopPress = () => {
+        if (pressTimer) {
+          clearInterval(pressTimer);
+          pressTimer = null;
+        }
+      };
+
+      btn.addEventListener('mousedown', startPress);
+      btn.addEventListener('touchstart', startPress);
+
+      ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(ev => {
+        btn.addEventListener(ev, stopPress);
+      });
+    }
+
+
+function handleDurationClick(habit, type) {
+      const state = durationStates[habit] || { startTime: null, isRunning: false, accumulated: 0, lastSession: 0 };
 
       if (decreaseMode) {
-        durationStates[habit] = { startTime: null, isRunning: false, accumulated: 0 };
+        durationStates[habit] = { startTime: null, isRunning: false, accumulated: 0, lastSession: 0 };
         saveDurationStates();
         renderHabits();
         animateButton(habit);
@@ -1916,18 +2146,26 @@
         durationStates[habit] = {
           startTime: now,
           isRunning: true,
-          accumulated: state.accumulated || 0
+          accumulated: state.accumulated || 0,
+          lastSession: 0
         };
         startGlobalInterval();
       } else {
-        const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+        const elapsed = Math.max(0, Math.floor((Date.now() - state.startTime) / 1000));
         const newAccumulated = (state.accumulated || 0) + elapsed;
-        
-        durationStates[habit] = {
+
+        const nextState = {
           startTime: null,
           isRunning: false,
           accumulated: newAccumulated
         };
+
+        // For second-based duration, remember the last session length
+        if (type === CELL_TYPES.DURATION_SEC) {
+          nextState.lastSession = elapsed;
+        }
+
+        durationStates[habit] = nextState;
 
         ensureWeekExists();
         if (type === CELL_TYPES.DURATION_MIN) {
@@ -1958,8 +2196,6 @@
 
       if (!state.isRunning) {
         // Start timer
-        unlockAudio();
-        ensureNotificationPermission();
         const durationMs = (settings.duration || 20) * 60 * 1000;
         timerStates[habit] = {
           isRunning: true,
@@ -1985,9 +2221,8 @@
     }
 
     function handleCountdownClick(habit) {
-      // If countdown has expired and is pulsing:
-      // - stop pulsing
-      // - reset notification flag (so it can notify again later)
+      // If countdown expired and pulsing - stop pulsing and reset notification flag,
+      // и в любом случае даём визуальный отклик на клик
       const settings = timerSettings[habit] || {};
       if (settings.targetDate) {
         const targetDateTime = new Date(`${settings.targetDate}T${settings.targetTime || '12:00'}`);
@@ -2006,7 +2241,7 @@
         }
       }
 
-      // Click feedback (same as other slots)
+      // Лёгкий клик-фидбек по аналогии с другими слотами
       animateButton(habit);
     }
 
@@ -2018,11 +2253,11 @@
       }
 
       const messages = [
-        `Timer complete * ${duration}min`,
-        `Session 2 finished * ${duration}min`,
-        `Round 3 done * ${duration}min`,
-        `Cycle 4 complete * ${duration}min`,
-        `Phase 5 finished * ${duration}min`
+        `Timer complete • ${duration}min`,
+        `Session 2 finished • ${duration}min`,
+        `Round 3 done • ${duration}min`,
+        `Cycle 4 complete • ${duration}min`,
+        `Phase 5 finished • ${duration}min`
       ];
 
       if (iterations === 0) return messages[0];
@@ -2030,7 +2265,7 @@
       if (iterations === 2) return messages[2];
       if (iterations === 3) return messages[3];
       if (iterations === 4) return messages[4];
-      return `Session ${iterations + 1} complete * ${duration}min`;
+      return `Session ${iterations + 1} complete • ${duration}min`;
     }
 
     function sendTimerNotification(habit) {
@@ -2044,18 +2279,17 @@
         settings.message
       );
 
-      // Play sound
-      if (settings.sound && settings.volume) {
-        playNotificationSound(settings.sound, settings.volume);
+      // Play sound with defaults
+      const soundType = settings.sound || 'soft_chime';
+      const volume = typeof settings.volume === 'number' ? settings.volume : 50;
+      if (volume > 0) {
+        playNotificationSound(soundType, volume);
       }
 
       // Vibrate
       if (settings.vibrate && navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
-
-      // Always show in-app toast (works on mobile)
-      showToast(`${label}: ${message}`);
 
       // Browser notification
       if (Notification.permission === 'granted') {
@@ -2076,18 +2310,17 @@
         ? settings.message 
         : 'Time is up!';
 
-      // Play sound
-      if (settings.sound && settings.volume) {
-        playNotificationSound(settings.sound, settings.volume);
+      // Play sound with defaults
+      const soundType = settings.sound || 'soft_chime';
+      const volume = typeof settings.volume === 'number' ? settings.volume : 50;
+      if (volume > 0) {
+        playNotificationSound(soundType, volume);
       }
 
       // Vibrate
       if (settings.vibrate && navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
-
-      // Always show in-app toast (works on mobile)
-      showToast(`${label}: ${message}`);
 
       // Browser notification
       if (Notification.permission === 'granted') {
@@ -2129,7 +2362,17 @@
     function updateLiveDisplays() {
       HABITS.forEach(habit => {
         const type = habitTypes[habit];
-        
+
+        // Live update for simple counters: "X ago" label
+        if (type === CELL_TYPES.COUNTER) {
+          const breakdownEl = document.getElementById(`breakdown-${habit}`);
+          if (breakdownEl) {
+            const description = habitDescriptions[habit] || '';
+            const lastUpdateLabel = formatCounterLastUpdate(habit);
+            breakdownEl.textContent = lastUpdateLabel || description;
+          }
+        }
+
         // Handle duration types
         const state = durationStates[habit];
         if (state?.isRunning) {
@@ -2149,9 +2392,13 @@
           }
 
           if (type === CELL_TYPES.DURATION_SEC) {
-            const fmt = formatDurationSec(total);
-            if (valueEl) valueEl.innerHTML = formatValueWithSuffix(fmt.main, 's');
-            if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
+            // Live update: main value shows current session, breakdown shows total
+            const sessionSeconds = elapsed;
+            const fmtSession = formatDurationSec(sessionSeconds);
+            if (valueEl) valueEl.innerHTML = formatValueWithSuffix(fmtSession.main, 's');
+
+            const fmtTotal = formatDurationSec(total);
+            if (breakdownEl) breakdownEl.textContent = description || fmtTotal.breakdown;
           } else if (type === CELL_TYPES.DURATION_MIN) {
             const totalMin = Math.floor(total / 60);
             const fmt = formatDurationMin(totalMin, total);
@@ -2213,7 +2460,7 @@
             }
             
             if (breakdownEl) {
-              breakdownEl.textContent = `cycles ${(timerState.iterations || 0) + 1}`;
+              breakdownEl.textContent = `timer cycles ${(timerState.iterations || 0) + 1}`;
             }
           }
         }
@@ -2263,11 +2510,13 @@
               
               const btn = document.getElementById(`btn-${habit}`);
               if (btn) {
-                // Perimeter animation: full loop each minute
-                const angle = ((60 - seconds) / 60) * 360;
+                // Thin line synced with current hour: full rotation every 60 minutes, counter-clockwise
+                const nowClock = new Date();
+                const minuteOfHour = nowClock.getMinutes() + nowClock.getSeconds() / 60;
+                const angle = -90 - 360 * (minuteOfHour / 60);
                 btn.style.setProperty('--progress-angle', `${angle}deg`);
 
-                // Hourly flash once when a new hour boundary is reached
+                // Hourly flash once when a new hour boundary of the countdown is reached
                 const minutesLeftInHour = totalMinutes % 60;
                 const lastPing = btn.dataset.lastPingMinute ? parseInt(btn.dataset.lastPingMinute, 10) : null;
 
@@ -2286,9 +2535,7 @@
           }
         }
       });
-    
-      autoFitAllValues();
-}
+    }
 
     // ===== RENDER =====
     function renderHabits() {
@@ -2327,10 +2574,55 @@
           const weekObj = weekData[currentWeekKey];
           const value = (weekObj && typeof weekObj === 'object') ? (weekObj[habit] || 0) : 0;
           const description = habitDescriptions[habit] || '';
+          const lastUpdateLabel = formatCounterLastUpdate(habit);
+          const breakdown = lastUpdateLabel || description;
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
             <span class="btn-value" id="value-${habit}">${value}</span>
-            <span class="btn-breakdown">${description}</span>
+            <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
+          `;
+        } else if (type === CELL_TYPES.MONEY_INCOME || type === CELL_TYPES.MONEY_BUDGET) {
+          let weekObj = weekData[currentWeekKey];
+          const cfg = moneySettings[habit] || {};
+          const currency = cfg.currency || '€';
+          const isIncome = type === CELL_TYPES.MONEY_INCOME;
+          const description = habitDescriptions[habit] || '';
+
+          let value = 0;
+
+          // Ensure current week object exists so we can store values
+          if (!weekObj || typeof weekObj !== 'object') {
+            ensureWeekExists();
+            weekObj = weekData[currentWeekKey];
+          }
+
+          if (weekObj && typeof weekObj === 'object') {
+            if (weekObj[habit] == null) {
+              if (!isIncome && cfg.startAmount != null) {
+                value = cfg.startAmount;
+                weekObj[habit] = value;
+                saveWeekData();
+              } else {
+                value = 0;
+              }
+            } else {
+              value = weekObj[habit] || 0;
+            }
+          } else {
+            // Fallback, should not normally happen
+            value = !isIncome && cfg.startAmount != null ? cfg.startAmount : 0;
+          }
+
+          const displayMain = formatValueWithSuffix(value, currency);
+          const parts = [];
+          parts.push(currency);
+          if (description) parts.push(description);
+          const breakdown = parts.join(' · ');
+
+          btn.innerHTML = `
+            <span class="btn-label">${label}</span>
+            <span class="btn-value" id="value-${habit}">${displayMain}</span>
+            <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
           `;
         } else if (type === CELL_TYPES.TIMER) {
           const timerState = timerStates[habit] || {};
@@ -2360,11 +2652,14 @@
               displayValue = `${String(m).padStart(2, '0')}:00`;
             }
           }
-          
-          const breakdown = `cycles ${(timerState.iterations || 0) + 1}`;
+
+          if (settings.format !== 'mm') {
+            displayValue = formatValueWithSuffix(displayValue, 's');
+          }
+
+          const breakdown = `timer cycles ${(timerState.iterations || 0) + 1}`;
 
           btn.innerHTML = `
-            <span class="btn-status">timer</span>
             <span class="btn-label">${label}</span>
             <span class="btn-value" id="value-${habit}">${displayValue}</span>
             <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
@@ -2402,20 +2697,25 @@
               const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
               const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
               const seconds = totalSeconds % 60;
-              
+
               displayValue = formatValueWithSuffix(totalMinutes, 'm');
               breakdown = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-              
-              // Add running class and set initial progress
+
+              // Mark as running
               btn.classList.add('running');
-              const progress = ((60 - seconds) / 60) * 100;
-              btn.style.setProperty('--progress', progress);
+
+              // Set initial orientation of the thin line based on current clock minute
+              const nowClock = new Date();
+              const minuteOfHour = nowClock.getMinutes() + nowClock.getSeconds() / 60;
+              const angle = -90 - 360 * (minuteOfHour / 60);
+              btn.style.setProperty('--progress-angle', `${angle}deg`);
             }
           }
-          
+
+          const labelText = label ? `until ${label}` : 'until';
+
           btn.innerHTML = `
-            <span class="btn-status">until</span>
-            <span class="btn-label">${label}</span>
+            <span class="btn-label">${labelText}</span>
             <span class="btn-value" id="value-${habit}">${displayValue}</span>
             <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
           `;
@@ -2424,27 +2724,41 @@
           const isRunning = state.isRunning;
           const accumulated = state.accumulated || 0;
           let total = accumulated;
-          
+          let runtimeSeconds = 0;
+
           if (isRunning && state.startTime) {
-            total += Math.floor((Date.now() - state.startTime) / 1000);
+            runtimeSeconds = Math.floor((Date.now() - state.startTime) / 1000);
+            total += runtimeSeconds;
           }
 
-          let fmt;
           let displayValue;
+          let breakdown;
+
           if (type === CELL_TYPES.DURATION_SEC) {
-            fmt = formatDurationSec(total);
-            displayValue = formatValueWithSuffix(fmt.main, 's');
+            // Show current session length as main value
+            const sessionSeconds = (isRunning && state.startTime)
+              ? runtimeSeconds
+              : (state.lastSession || 0);
+
+            const fmtSession = formatDurationSec(sessionSeconds);
+            displayValue = formatValueWithSuffix(fmtSession.main, 's');
+
+            // Breakdown shows total accumulated time
+            const fmtTotal = formatDurationSec(total);
+            breakdown = fmtTotal.breakdown;
           } else if (type === CELL_TYPES.DURATION_MIN) {
             const totalMin = Math.floor(total / 60);
-            fmt = formatDurationMin(totalMin, total);
+            const fmt = formatDurationMin(totalMin, total);
             displayValue = formatValueWithSuffix(fmt.main, 'm');
+            breakdown = fmt.breakdown;
           } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
-            fmt = formatDurationSec(total);
+            const fmt = formatDurationSec(total);
             displayValue = formatValueWithSuffix(total, 's');
+            breakdown = fmt.breakdown;
           }
-          
-          const description = habitDescriptions[habit] || fmt.breakdown;
-          
+
+          const description = habitDescriptions[habit] || breakdown;
+
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
             <span class="btn-value" id="value-${habit}">${displayValue}</span>
@@ -2457,12 +2771,14 @@
             const secondsInMinute = total % 60;
             const progress = ((60 - secondsInMinute) / 60) * 100;
             btn.style.setProperty('--progress', progress);
-          } else if (accumulated > 0) {
-            btn.classList.add('paused');
           }
         }
 
-        btn.addEventListener('click', () => handleHabitClick(habit));
+        if (type === CELL_TYPES.MONEY_INCOME || type === CELL_TYPES.MONEY_BUDGET) {
+          attachMoneyPressHandlers(btn, habit, type);
+        } else {
+          btn.addEventListener('click', () => handleHabitClick(habit));
+        }
         grid.appendChild(btn);
       });
 
@@ -2472,7 +2788,6 @@
       if (hasRunning) startGlobalInterval();
       else stopGlobalIntervalIfNeeded();
 
-      autoFitAllValues();
       updateStats();
     }
 
@@ -2486,10 +2801,73 @@
         const value = (weekObj && typeof weekObj === 'object') ? (weekObj[habit] || 0) : 0;
         valueEl.textContent = value;
       }
+
+      const breakdownEl = document.getElementById(`breakdown-${habit}`);
+      if (breakdownEl) {
+        const description = habitDescriptions[habit] || '';
+        const lastUpdateLabel = formatCounterLastUpdate(habit);
+        breakdownEl.textContent = lastUpdateLabel || description;
+      }
+
       updateStats();
     }
 
-    // ===== HEADER =====
+
+    
+function updateMoneyCellDisplay(habit, type) {
+      const valueEl = document.getElementById(`value-${habit}`);
+      const breakdownEl = document.getElementById(`breakdown-${habit}`);
+
+      const cfg = moneySettings[habit] || {};
+      const currency = cfg.currency || '€';
+      const isIncome = type === CELL_TYPES.MONEY_INCOME;
+      const description = habitDescriptions[habit] || '';
+      const baseStep = cfg.step != null ? Math.abs(cfg.step) : 10;
+      const step = baseStep === 0 ? 1 : baseStep;
+
+      let rawValue = 0;
+      const weekObj = weekData[currentWeekKey];
+
+      if (weekObj && typeof weekObj === 'object') {
+        const stored = weekObj[habit];
+
+        if (stored == null) {
+          if (!isIncome && cfg.startAmount != null) {
+            const startAmount = Number(cfg.startAmount) || 0;
+            rawValue = startAmount;
+            weekObj[habit] = rawValue;
+            saveWeekData();
+          } else {
+            rawValue = 0;
+          }
+        } else {
+          rawValue = Number(stored) || 0;
+        }
+      }
+
+      if (valueEl) {
+        valueEl.innerHTML = formatValueWithSuffix(rawValue, currency);
+      }
+
+      if (breakdownEl) {
+        const parts = [];
+        if (step) {
+          const sign = isIncome ? '+' : '−';
+          if (currency) {
+            parts.push(`${sign}${step} ${currency}`);
+          } else {
+            parts.push(`${sign}${step}`);
+          }
+        } else if (currency) {
+          parts.push(currency);
+        }
+        if (description) parts.push(description);
+        breakdownEl.textContent = parts.join(' · ');
+      }
+
+      updateStats();
+    }
+// ===== HEADER =====
     function updateHeader() {
       const weekEl = document.getElementById('weekDisplay');
       const dateEl = document.getElementById('dateDisplay');
@@ -2530,7 +2908,7 @@
 
       // Combined day info (7 96%)
       const dayInfoEl = document.getElementById('dayInfo');
-      if (dayInfoEl) dayInfoEl.textContent = `${dayNumber} ${dayProgress}%`;
+      if (dayInfoEl) dayInfoEl.textContent = `DAY ${dayNumber} ${dayProgress}%`;
 
       // Day date (04 JAN SUNDAY in one line)
       const dayDateEl = document.getElementById('headerDayDate');
@@ -2695,7 +3073,7 @@
         }
         text += `${label}: ${display}\n`;
       });
-      navigator.clipboard?.writeText(text).then(() => alert('OK: Current week copied'));
+      navigator.clipboard?.writeText(text).then(() => alert('âœ“ Current week copied'));
     }
 
     function copyPreviousWeek() {
@@ -2721,7 +3099,7 @@
         }
         text += `${label}: ${display}\n`;
       });
-      navigator.clipboard?.writeText(text).then(() => alert('OK: Previous week copied'));
+      navigator.clipboard?.writeText(text).then(() => alert('âœ“ Previous week copied'));
     }
 
     function exportData() {
@@ -2737,17 +3115,17 @@
       };
       
       const dataStr = JSON.stringify(exportObj, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const dataBlob = new Blob([dataStr], { type: 'text/plain' });
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `trckng_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `trckng_backup_${new Date().toISOString().slice(0, 10)}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      alert('OK: Backup downloaded');
+      alert('Backup downloaded');
     }
 
     function importData() {
@@ -2776,9 +3154,9 @@
           
           renderHabits();
           updateHeader();
-          alert('OK: Data imported successfully');
+          alert('Data imported successfully');
         } catch(err) {
-          alert('ERR: Import failed: Invalid file format');
+          alert('Import failed: Invalid file format');
         }
       };
       reader.readAsText(file);
@@ -2788,23 +3166,71 @@
     }
 
     function resetAll() {
-      if (!confirm('DELETE ALL DATA?\n\nThis cannot be undone.')) return;
+      const pinNameRaw = (pinNames && pinNames[currentPin] != null) ? String(pinNames[currentPin]) : '';
+      const pinName = pinNameRaw.trim() || getDefaultPinName(currentPin);
+      if (!confirm(`RESET ${pinName}?
+\nThis will clear all cells and data for this pin.`)) return;
 
-      for (let pin = 0; pin < 3; pin++) {
-        localStorage.removeItem(`${STORAGE_KEYS.DATA}_pin${pin}`);
-        localStorage.removeItem(`${STORAGE_KEYS.LABELS}_pin${pin}`);
-        localStorage.removeItem(`${STORAGE_KEYS.TYPES}_pin${pin}`);
-        localStorage.removeItem(`${STORAGE_KEYS.COLORS}_pin${pin}`);
-        localStorage.removeItem(`${STORAGE_KEYS.DURATION}_pin${pin}`);
-      }
-      localStorage.removeItem(STORAGE_KEYS.SEEN_INFO);
+      // Remove all per-pin data from storage
+      const pin = currentPin;
+      const suffix = `_pin${pin}`;
 
-      alert('OK: All data deleted');
-      window.location.reload();
+      const perPinKeys = [
+        STORAGE_KEYS.DATA,
+        STORAGE_KEYS.LABELS,
+        STORAGE_KEYS.TYPES,
+        STORAGE_KEYS.COLORS,
+        STORAGE_KEYS.DESCRIPTIONS,
+        STORAGE_KEYS.DURATION,
+        STORAGE_KEYS.TIMER_SETTINGS,
+        STORAGE_KEYS.TIMER_STATES,
+        STORAGE_KEYS.COUNTER_LAST_UPDATE,
+        STORAGE_KEYS.MONEY_SETTINGS
+      ];
+
+      perPinKeys.forEach(base => {
+        localStorage.removeItem(`${base}${suffix}`);
+      });
+
+      // Prepare a blank layout for this pin
+      const emptyLabels = {};
+      const emptyDescriptions = {};
+      const emptyTypes = {};
+      const emptyColors = {};
+
+      HABITS.forEach(habit => {
+        emptyLabels[habit] = '';
+        emptyDescriptions[habit] = '';
+        emptyTypes[habit] = CELL_TYPES.COUNTER;
+        emptyColors[habit] = '#ffffff';
+      });
+
+      localStorage.setItem(`${STORAGE_KEYS.LABELS}${suffix}`, JSON.stringify(emptyLabels));
+      localStorage.setItem(`${STORAGE_KEYS.DESCRIPTIONS}${suffix}`, JSON.stringify(emptyDescriptions));
+      localStorage.setItem(`${STORAGE_KEYS.TYPES}${suffix}`, JSON.stringify(emptyTypes));
+      localStorage.setItem(`${STORAGE_KEYS.COLORS}${suffix}`, JSON.stringify(emptyColors));
+
+      // Reload state for current pin
+      loadWeekData();
+      loadLabels();
+      loadTypes();
+      loadColors();
+      loadDescriptions();
+      loadDurationStates();
+      loadTimerSettings();
+      loadTimerStates();
+      loadMoneySettings();
+      loadCounterLastUpdate();
+
+      currentWeekKey = getWeekKey();
+      ensureWeekExists();
+      renderHabits();
+      updateHeader();
+      applyPinNamesToUI();
     }
 
     // ===== PIN SWITCH =====
-    function switchPin(pinNum) {
+      function switchPin(pinNum) {
       if (globalInterval) {
         clearInterval(globalInterval);
         globalInterval = null;
@@ -2826,14 +3252,14 @@
       loadDurationStates();
       loadTimerSettings();
       loadTimerStates();
+      loadMoneySettings();
+      loadCounterLastUpdate();
+      loadPinNames();
       currentWeekKey = getWeekKey();
       ensureWeekExists();
       renderHabits();
       updateHeader();
-
-      // Unlock audio on first user gesture (iOS requirement)
-      document.addEventListener('pointerdown', unlockAudio, { once: true });
-      document.addEventListener('touchstart', unlockAudio, { once: true });
+      applyPinNamesToUI();
     }
 
     // ===== EDIT MODALS =====
@@ -2862,7 +3288,8 @@
       document.getElementById('editModal').classList.remove('visible');
     }
 
-    function openCellEditModal(habit, index) {
+
+function openCellEditModal(habit, index) {
       editingHabit = habit;
       const cellNum = String(index + 1).padStart(2, '0');
 
@@ -2872,6 +3299,14 @@
       document.getElementById('cellEditDescription').value = habitDescriptions[habit] || '';
 
       const type = habitTypes[habit] || CELL_TYPES.COUNTER;
+
+      const moneyCfg = moneySettings[habit] || {};
+      const stepField = document.getElementById('moneyStep');
+      const currencyField = document.getElementById('moneyCurrency');
+      const startField = document.getElementById('moneyStartAmount');
+      if (stepField) stepField.value = moneyCfg.step != null ? moneyCfg.step : 10;
+      if (currencyField) currencyField.value = moneyCfg.currency || '€';
+      if (startField) startField.value = moneyCfg.startAmount != null ? moneyCfg.startAmount : '';
       document.querySelectorAll('.type-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.type === type);
       });
@@ -2933,61 +3368,98 @@
     function updateTimerFieldsVisibility(type) {
       const timerFields = document.getElementById('timerSettingsFields');
       const countdownFields = document.getElementById('countdownSettingsFields');
+      const moneyFields = document.getElementById('moneySettingsFields');
       const descField = document.getElementById('descriptionField');
+      const moneyStartField = document.getElementById('moneyStartAmountField');
 
-      if (type === CELL_TYPES.TIMER) {
-        timerFields.style.display = 'block';
-        countdownFields.style.display = 'none';
-        descField.style.display = 'none';
-      } else if (type === CELL_TYPES.COUNTDOWN) {
-        timerFields.style.display = 'none';
-        countdownFields.style.display = 'block';
-        descField.style.display = 'none';
+      const t = typeof type === 'string' ? type : (type || '');
+
+      if (t === CELL_TYPES.TIMER || t === 'timer') {
+        if (timerFields) timerFields.style.display = 'block';
+        if (countdownFields) countdownFields.style.display = 'none';
+        if (moneyFields) moneyFields.style.display = 'none';
+        if (descField) descField.style.display = 'none';
+        if (moneyStartField) moneyStartField.style.display = 'none';
+      } else if (t === CELL_TYPES.COUNTDOWN || t === 'countdown') {
+        if (timerFields) timerFields.style.display = 'none';
+        if (countdownFields) countdownFields.style.display = 'block';
+        if (moneyFields) moneyFields.style.display = 'none';
+        if (descField) descField.style.display = 'none';
+        if (moneyStartField) moneyStartField.style.display = 'none';
+      } else if (
+        t === CELL_TYPES.MONEY_INCOME ||
+        t === CELL_TYPES.MONEY_BUDGET ||
+        t === 'money_income' ||
+        t === 'money_budget'
+      ) {
+        if (timerFields) timerFields.style.display = 'none';
+        if (countdownFields) countdownFields.style.display = 'none';
+        if (moneyFields) moneyFields.style.display = 'block';
+        if (descField) descField.style.display = 'block';
+        if (moneyStartField) {
+          const isBudget = t === CELL_TYPES.MONEY_BUDGET || t === 'money_budget';
+          moneyStartField.style.display = isBudget ? 'block' : 'none';
+        }
       } else {
-        timerFields.style.display = 'none';
-        countdownFields.style.display = 'none';
-        descField.style.display = 'block';
+        if (timerFields) timerFields.style.display = 'none';
+        if (countdownFields) countdownFields.style.display = 'none';
+        if (moneyFields) moneyFields.style.display = 'none';
+        if (descField) descField.style.display = 'block';
+        if (moneyStartField) moneyStartField.style.display = 'none';
       }
     }
-
+    
     function closeCellEditModal() {
       document.getElementById('cellEditModal').classList.remove('visible');
       editingHabit = null;
     }
-
-    function saveCellEdit() {
+function saveCellEdit() {
       if (!editingHabit) return;
 
       const newLabel = document.getElementById('cellEditInput').value.trim();
       const newColor = document.getElementById('cellEditColor').value;
       const newDescription = document.getElementById('cellEditDescription').value.trim();
       const activeTypeBtn = document.querySelector('.type-btn.active');
-      const newType = activeTypeBtn?.dataset.type || CELL_TYPES.COUNTER;
+      const newType = (activeTypeBtn && activeTypeBtn.dataset.type) ? activeTypeBtn.dataset.type : CELL_TYPES.COUNTER;
 
       const oldType = habitTypes[editingHabit];
-      const wasActive = habitLabels[editingHabit]?.trim();
+      const wasActive = habitLabels[editingHabit] && habitLabels[editingHabit].trim();
       const typeChanged = oldType !== newType;
 
-      // Check if we need to reset or convert
-      const oldIsDuration = oldType === CELL_TYPES.DURATION_SEC || oldType === CELL_TYPES.DURATION_MIN || oldType === CELL_TYPES.DURATION_SEC_COUNT;
-      const newIsDuration = newType === CELL_TYPES.DURATION_SEC || newType === CELL_TYPES.DURATION_MIN || newType === CELL_TYPES.DURATION_SEC_COUNT;
-      const oldIsTimer = oldType === CELL_TYPES.TIMER || oldType === CELL_TYPES.COUNTDOWN;
-      const newIsTimer = newType === CELL_TYPES.TIMER || newType === CELL_TYPES.COUNTDOWN;
+      const oldIsDuration =
+        oldType === CELL_TYPES.DURATION_SEC ||
+        oldType === CELL_TYPES.DURATION_MIN ||
+        oldType === CELL_TYPES.DURATION_SEC_COUNT;
+
+      const newIsDuration =
+        newType === CELL_TYPES.DURATION_SEC ||
+        newType === CELL_TYPES.DURATION_MIN ||
+        newType === CELL_TYPES.DURATION_SEC_COUNT;
+
+      const oldIsTimer =
+        oldType === CELL_TYPES.TIMER ||
+        oldType === CELL_TYPES.COUNTDOWN;
+
+      const newIsTimer =
+        newType === CELL_TYPES.TIMER ||
+        newType === CELL_TYPES.COUNTDOWN;
 
       if (wasActive && !newLabel) {
-        // Deactivating cell - reset everything
+        // Deactivating cell - wipe all stored values for this habit across weeks
+        // If you ever want to change this behavior, adjust deletion logic here
         Object.keys(weekData).forEach(week => {
           if (weekData[week] && typeof weekData[week] === 'object') {
-            weekData[week][editingHabit] = 0;
+            delete weekData[week][editingHabit];
           }
         });
         delete durationStates[editingHabit];
         delete timerStates[editingHabit];
         delete timerSettings[editingHabit];
+        delete moneySettings[editingHabit];
       } else if (typeChanged) {
         // Type changed
         if (oldIsDuration && newIsDuration) {
-          // Duration to duration - CONVERT values
+          // Duration to duration - convert values
           Object.keys(weekData).forEach(week => {
             if (weekData[week] && typeof weekData[week] === 'object') {
               const oldValue = weekData[week][editingHabit] || 0;
@@ -3003,14 +3475,25 @@
             }
           });
         } else {
-          // Any other type change - RESET
-          Object.keys(weekData).forEach(week => {
-            if (weekData[week] && typeof weekData[week] === 'object') {
-              weekData[week][editingHabit] = 0;
-            }
-          });
+          // Any other type change - reset
+          if (newType === CELL_TYPES.MONEY_INCOME || newType === CELL_TYPES.MONEY_BUDGET) {
+            // For money cells, start "empty" so budget can apply start amount on first display
+            Object.keys(weekData).forEach(week => {
+              if (weekData[week] && typeof weekData[week] === 'object') {
+                delete weekData[week][editingHabit];
+              }
+            });
+          } else {
+            Object.keys(weekData).forEach(week => {
+              if (weekData[week] && typeof weekData[week] === 'object') {
+                weekData[week][editingHabit] = 0;
+              }
+            });
+          }
           delete durationStates[editingHabit];
           delete timerStates[editingHabit];
+          delete timerSettings[editingHabit];
+          delete moneySettings[editingHabit];
         }
       }
 
@@ -3018,32 +3501,47 @@
       if (newType === CELL_TYPES.TIMER) {
         const formatBtn = document.querySelector('[data-format].active');
         const vibrateBtn = document.querySelector('[data-vibrate].active');
-        
         timerSettings[editingHabit] = {
-          duration: parseInt(document.getElementById('timerDuration').value) || 20,
+          duration: parseInt(document.getElementById('timerDuration').value, 10) || 20,
           format: formatBtn ? formatBtn.dataset.format : 'mm:ss',
           sound: document.getElementById('timerSound').value || 'soft_chime',
-          volume: parseInt(document.getElementById('timerVolume').value) || 50,
+          volume: parseInt(document.getElementById('timerVolume').value, 10) || 50,
           vibrate: vibrateBtn ? vibrateBtn.dataset.vibrate === 'on' : true,
           message: document.getElementById('timerMessage').value.trim()
         };
-
-        unlockAudio();
-        ensureNotificationPermission();
       } else if (newType === CELL_TYPES.COUNTDOWN) {
         const vibrateCdBtn = document.querySelector('[data-vibrate-cd].active');
-        
         timerSettings[editingHabit] = {
           targetDate: document.getElementById('countdownDate').value,
           targetTime: document.getElementById('countdownTime').value || '12:00',
           sound: document.getElementById('countdownSound').value || 'soft_chime',
-          volume: parseInt(document.getElementById('countdownVolume').value) || 50,
+          volume: parseInt(document.getElementById('countdownVolume').value, 10) || 50,
           vibrate: vibrateCdBtn ? vibrateCdBtn.dataset.vibrateCd === 'on' : true,
           message: document.getElementById('countdownMessage').value.trim()
         };
+      } else {
+        delete timerSettings[editingHabit];
+      }
 
-        unlockAudio();
-        ensureNotificationPermission();
+      // Save money settings
+      if (newType === CELL_TYPES.MONEY_INCOME || newType === CELL_TYPES.MONEY_BUDGET) {
+        const stepInput = parseFloat(document.getElementById('moneyStep').value);
+        const currencyInput = document.getElementById('moneyCurrency').value.trim();
+        const startInputRaw = document.getElementById('moneyStartAmount').value;
+        const startInput = startInputRaw === '' ? NaN : parseFloat(startInputRaw);
+
+        moneySettings[editingHabit] = {
+          step: !isNaN(stepInput) && stepInput !== 0 ? stepInput : 10,
+          currency: currencyInput || '€'
+        };
+
+        if (!isNaN(startInput)) {
+          moneySettings[editingHabit].startAmount = startInput;
+        } else {
+          delete moneySettings[editingHabit].startAmount;
+        }
+      } else {
+        delete moneySettings[editingHabit];
       }
 
       habitLabels[editingHabit] = newLabel;
@@ -3056,16 +3554,19 @@
       saveTypes();
       saveDescriptions();
       saveTimerSettings();
+      saveMoneySettings();
       saveWeekData();
       saveDurationStates();
       saveTimerStates();
+      saveCounterLastUpdate();
 
       closeCellEditModal();
       openEditModal();
       renderHabits();
     }
 
-    function openInfoModal() {
+
+function openInfoModal() {
       localStorage.setItem(STORAGE_KEYS.SEEN_INFO, 'true');
       document.getElementById('btnInfo').classList.remove('pulse');
       document.getElementById('infoModal').classList.add('visible');
@@ -3075,7 +3576,24 @@
       document.getElementById('infoModal').classList.remove('visible');
     }
 
-    // ===== INIT =====
+    // Simple helper to toggle help panels
+    function togglePanelVisibility(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('visible');
+    }
+
+// ===== INIT =====
+    function updateCellDiagonalAngle() {
+      const sampleCell = document.querySelector('.buttons-grid .btn-habit');
+      if (!sampleCell) return;
+      const rect = sampleCell.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const angleRad = Math.atan(rect.height / rect.width);
+      const angleDeg = angleRad * 180 / Math.PI;
+      document.documentElement.style.setProperty('--cell-diagonal-angle', angleDeg + 'deg');
+    }
+
     function init() {
       loadWeekData();
       loadLabels();
@@ -3085,6 +3603,9 @@
       loadDurationStates();
       loadTimerSettings();
       loadTimerStates();
+      loadMoneySettings();
+      loadCounterLastUpdate();
+      loadPinNames();
       
       // Check if week changed - reset duration states for new week
       const lastWeekKey = localStorage.getItem('trckng_last_week_key');
@@ -3113,6 +3634,31 @@
 
       document.getElementById('btnDecrease').addEventListener('click', toggleDecrease);
       document.getElementById('btnEdit').addEventListener('click', openEditModal);
+      const pinRenameBtn = document.getElementById('btnEditPinName');
+      if (pinRenameBtn) {
+        pinRenameBtn.addEventListener('click', () => {
+          const raw = (pinNames && pinNames[currentPin] != null) ? String(pinNames[currentPin]) : '';
+          const currentName = raw.trim() || getDefaultPinName(currentPin);
+          const newName = prompt('Pin name', currentName);
+          if (newName === null) return;
+          const trimmed = newName.trim();
+          if (trimmed) {
+            pinNames[currentPin] = trimmed;
+          } else {
+            delete pinNames[currentPin];
+          }
+          savePinNames();
+          applyPinNamesToUI();
+        });
+      }
+      const editHelpBtn = document.getElementById('btnEditHelp');
+      if (editHelpBtn) {
+        editHelpBtn.addEventListener('click', () => togglePanelVisibility('editHelpPanel'));
+      }
+      const cellEditHelpBtn = document.getElementById('btnCellEditHelp');
+      if (cellEditHelpBtn) {
+        cellEditHelpBtn.addEventListener('click', () => togglePanelVisibility('cellEditHelpPanel'));
+      }
       document.getElementById('btnCopy').addEventListener('click', copyCurrentWeek);
       document.getElementById('btnCopyPrev').addEventListener('click', copyPreviousWeek);
       document.getElementById('btnExport').addEventListener('click', exportData);
@@ -3155,7 +3701,29 @@
         document.getElementById('countdownVolumeValue').textContent = `${e.target.value}%`;
       });
 
-      document.getElementById('fileInput').addEventListener('change', handleFileImport);
+      
+      // Sound preview buttons
+      const timerSoundSelect = document.getElementById('timerSound');
+      const timerSoundTestBtn = document.getElementById('timerSoundTest');
+      if (timerSoundSelect && timerSoundTestBtn) {
+        timerSoundTestBtn.addEventListener('click', () => {
+          const volume = parseInt(document.getElementById('timerVolume').value) || 50;
+          const sound = timerSoundSelect.value || 'soft_chime';
+          playNotificationSound(sound, volume);
+        });
+      }
+
+      const countdownSoundSelect = document.getElementById('countdownSound');
+      const countdownSoundTestBtn = document.getElementById('countdownSoundTest');
+      if (countdownSoundSelect && countdownSoundTestBtn) {
+        countdownSoundTestBtn.addEventListener('click', () => {
+          const volume = parseInt(document.getElementById('countdownVolume').value) || 50;
+          const sound = countdownSoundSelect.value || 'soft_chime';
+          playNotificationSound(sound, volume);
+        });
+      }
+
+document.getElementById('fileInput').addEventListener('change', handleFileImport);
 
       document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
@@ -3168,6 +3736,10 @@
           document.querySelectorAll('.modal.visible').forEach(m => m.classList.remove('visible'));
         }
       });
+
+      applyPinNamesToUI();
+      updateCellDiagonalAngle();
+      window.addEventListener('resize', updateCellDiagonalAngle);
     }
 
     if (document.readyState === 'loading') {
