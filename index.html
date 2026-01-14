@@ -19,8 +19,8 @@
       padding: 0;
       height: 100%;
       width: 100%;
-      background: #000000;
-      color: #ffffff;
+      background: var(--app-bg, #000000);
+      color: var(--app-text, #ffffff);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     body {
@@ -178,30 +178,38 @@
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 0px;
-      background: #000;
-    }
+      background: var(--app-bg, #000000);
+      border-bottom: 1px solid var(--stroke-soft, rgba(255,255,255,0.15));
+      }
     .controls-edit {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 0px;
-      background: #000;
-    }
+      background: var(--app-bg, #000000);
+      border-bottom: 1px solid var(--stroke-soft, rgba(255,255,255,0.15));
+      }
     .btn-control-wide {
       grid-column: span 3;
     }
     .btn-control-edit {
       grid-column: span 2;
     }
-    .btn-control-pin {
+    
+    .btn-control-mini {
       grid-column: span 1;
-      border: 1px solid rgba(255,255,255,0.4);
-      background: #000;
-      color: rgba(255,255,255,0.8);
-    }
+      border: 1px solid var(--stroke-soft, rgba(255,255,255,0.15)) !important;
+      }
+.btn-control-pin {
+      grid-column: span 1;
+      border: 1px solid var(--stroke-strong, rgba(255,255,255,0.35));
+      background: transparent;
+      color: var(--app-text, #ffffff);
+      }
     .btn-control {
       border: none;
-      background: #000;
-      color: rgba(255,255,255,0.7);
+      background: transparent;
+      color: var(--app-text, #ffffff);
+      border: 1px solid var(--stroke-soft, rgba(255,255,255,0.15));
       padding: 8px 6px;
       cursor: pointer;
       font-size: 8px;
@@ -235,8 +243,8 @@
 
     .btn-habit {
       border: none;
-      background: #000;
-      color: #fff;
+      background: var(--btn-bg, #000);
+      color: var(--btn-text, #fff);
       padding: 8px;
       cursor: pointer;
       font-size: 13px;
@@ -609,7 +617,7 @@
     }
 /* Paused state */
     .btn-habit.paused {
-      border: 2px solid rgba(255,255,255,0.15);
+      border: 2px solid var(--stroke-soft, rgba(255,255,255,0.15));
     }
     .btn-habit.paused .btn-value,
     .btn-habit.paused .btn-label,
@@ -1002,9 +1010,9 @@
     .type-btn {
       flex: 1;
       padding: 10px 4px;
-      background: #050607;
+      background: var(--panel-bg, #050607);
       border: none;
-      color: rgba(255,255,255,0.6);
+      color: var(--panel-text-muted, rgba(255,255,255,0.6));
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -1171,6 +1179,7 @@
       <div class="controls-edit">
         <button class="btn-control btn-control-wide" id="btnDecrease">DECREASE</button>
         <button class="btn-control btn-control-edit" id="btnEdit">EDIT</button>
+        <button class="btn-control btn-control-mini" id="btnTheme">THEME</button>
       </div>
     </div>
 
@@ -1188,27 +1197,26 @@
         <div class="modal-title">TRCKNG SSTM · v0.99</div>
         <div class="modal-header-right">
           <button class="modal-pin-btn" id="btnEditPinName">PIN 01</button>
-          <button class="modal-help-btn" id="btnEditHelp">HELP</button>
+          <button class="modal-help-btn" id="btnEditHelp">?</button>
         </div>
       </div>
       <div class="modal-help-panel" id="editHelpPanel">
-        <strong>Edit mode help</strong><br>
-        Short placeholder text about how EDIT works. Full help will be added later.
-      </div>
-      
-<!-- Instructions in 2 columns -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 9px; color: rgba(255,255,255,0.5); line-height: 1.7; padding: 0 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-        <div>
-          • Tap cell to edit name, type, color, description<br>
-          • Clear name to deactivate cell<br>
-          • <strong style="color: rgba(255,255,255,0.7);">Counter:</strong> tap to +1, DECREASE to -1<br>
-          • <strong style="color: rgba(255,255,255,0.7);">MM:SS:</strong> live stopwatch (minutes:seconds)
-        </div>
-        <div>
-          • <strong style="color: rgba(255,255,255,0.7);">Min:</strong> live timer (minutes count)<br>
-          • <strong style="color: rgba(255,255,255,0.7);">Sec:</strong> live timer (seconds count)<br>
-          • Duration timers: DECREASE resets to 0<br>
-          • Switching timer types converts values
+        <strong>EDIT mode · layout for current PIN</strong><br>
+        You edit the 3×3 grid for the selected PIN. Each cell can track one thing: a counter, a timer, a duration, a countdown or money.
+        <br><br>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.7; padding: 0 2px 4px;">
+          <div>
+            • Tap a cell to edit name, type, color, description<br>
+            • Clear the name to deactivate the cell<br>
+            • <strong style="color: rgba(255,255,255,0.9);">Counter:</strong> tap to +1, DECREASE to -1<br>
+            • <strong style="color: rgba(255,255,255,0.9);">MM:SS:</strong> live stopwatch (minutes:seconds)
+          </div>
+          <div>
+            • <strong style="color: rgba(255,255,255,0.9);">Min / Sec:</strong> live timers in minutes or seconds<br>
+            • <strong style="color: rgba(255,255,255,0.9);">Timer:</strong> countdown with sound / vibration<br>
+            • <strong style="color: rgba(255,255,255,0.9);">Countdown:</strong> target date & time in hours left<br>
+            • <strong style="color: rgba(255,255,255,0.9);">Money:</strong> income / budget with custom step and currency
+          </div>
         </div>
       </div>
       
@@ -1222,23 +1230,29 @@
   <!-- CELL EDIT MODAL -->
   <div class="modal" id="cellEditModal">
     <div class="cell-edit-content">
-      <button class="cell-edit-help-btn" id="btnCellEditHelp">HELP</button>
+      <button class="cell-edit-help-btn" id="btnCellEditHelp">?</button>
       <div class="cell-edit-label" id="cellEditLabel">CELL 01</div>
       <input type="text" class="cell-edit-input" id="cellEditInput" maxlength="20" autocomplete="off" placeholder="Cell name">
       <div class="cell-help-panel" id="cellEditHelpPanel">
-        <strong>Cell edit help</strong><br>
-        Placeholder text for cell types and examples. Full help will be added later.
+        <strong>Cell editor</strong><br>
+        Here you configure one cell of the grid.<br>
+        • Name and optional description define the label under the number.<br>
+        • Type switches behaviour: counter, MM:SS / MIN / SEC, timer, countdown, income or budget.<br>
+        • Money types use step, currency symbol and optional budget start amount.<br>
+        This is a draft help text – final version will describe all types and use cases in detail.
       </div>
       
       <div style="margin-top: 8px;">
         <div class="cell-edit-label" style="margin-bottom: 8px;">Type</div>
         <div class="type-selector">
-          <button class="type-btn active" data-type="counter">Counter</button>
+          <button class="type-btn active" data-type="unit">Unit</button>
           <button class="type-btn" data-type="duration_sec">MM:SS</button>
           <button class="type-btn" data-type="duration_min">Min</button>
           <button class="type-btn" data-type="duration_sec_count">Sec</button>
         </div>
         <div class="type-selector" style="margin-top: 1px;">
+          <button class="type-btn" data-type="value">Value</button>
+          <button class="type-btn" data-type="math">Math</button>
           <button class="type-btn" data-type="timer">Timer</button>
           <button class="type-btn" data-type="countdown">Countdown</button>
         </div>
@@ -1250,7 +1264,124 @@
 
       
 
-            <!-- MONEY SETTINGS -->
+            
+      <!-- UNIT SETTINGS -->
+      <div id="unitSettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Unit</div>
+        <div class="cell-edit-grid-2">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Step</div>
+            <input type="number" class="cell-edit-input" id="unitStep" min="0" step="1" value="1" autocomplete="off">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Total across weeks</div>
+            <label style="display:flex; align-items:center; gap:8px; padding: 10px 6px; background: rgba(255,255,255,0.04); border-radius: 10px;">
+              <input type="checkbox" id="unitTotal" />
+              <span style="opacity:0.75; font-size: 12px;">Sum all weeks</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- VALUE SETTINGS -->
+      <div id="valueSettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Value</div>
+        <div class="cell-edit-grid-2">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Display</div>
+            <select class="cell-edit-input" id="valueFormat">
+              <option value="raw">Raw</option>
+              <option value="int">Integer</option>
+              <option value="2dp">2 decimals</option>
+              <option value="3dp">3 decimals</option>
+              <option value="time_mmss">Time MM:SS</option>
+              <option value="time_m">Time minutes</option>
+              <option value="time_h">Time hours</option>
+              <option value="time_s">Time seconds</option>
+            </select>
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Tap</div>
+            <div style="opacity:0.75; font-size: 12px; padding: 10px 6px; background: rgba(255,255,255,0.04); border-radius: 10px;">
+              opens numeric input
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATH SETTINGS -->
+      <div id="mathSettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Math</div>
+        <div class="cell-edit-grid-2">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Source A</div>
+            <select class="cell-edit-input" id="mathSourceA"></select>
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Operation</div>
+            <select class="cell-edit-input" id="mathOp">
+              <option value="add">A + B</option>
+              <option value="sub">A - B</option>
+              <option value="mul">A × B</option>
+              <option value="div">A ÷ B</option>
+              <option value="min">min(A,B)</option>
+              <option value="max">max(A,B)</option>
+              <option value="pow2">A²</option>
+              <option value="abs">abs(A)</option>
+              <option value="round">round(A)</option>
+              <option value="floor">floor(A)</option>
+              <option value="ceil">ceil(A)</option>
+              <option value="cos">cos(A)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="cell-edit-grid-2" style="margin-top: 8px;">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">B mode</div>
+            <div class="type-selector">
+              <button class="type-btn" id="mathBModeCell" data-math-bmode="cell">Cell</button>
+              <button class="type-btn" id="mathBModeNumber" data-math-bmode="number">Number</button>
+            </div>
+          </div>
+          <div class="cell-edit-field" id="mathBCellWrap">
+            <div class="cell-edit-label">Source B</div>
+            <select class="cell-edit-input" id="mathSourceB"></select>
+          </div>
+          <div class="cell-edit-field" id="mathBNumberWrap" style="display:none;">
+            <div class="cell-edit-label">Number B</div>
+            <input type="number" class="cell-edit-input" id="mathNumberB" value="1" step="0.1" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="cell-edit-grid-2" style="margin-top: 8px;">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Format</div>
+            <select class="cell-edit-input" id="mathFormatFrom">
+              <option value="a">Auto like A</option>
+              <option value="b">Auto like B</option>
+              <option value="raw">Raw number</option>
+              <option value="int">Integer</option>
+              <option value="2dp">2 decimals</option>
+              <option value="3dp">3 decimals</option>
+              <option value="time_mmss">Time MM:SS</option>
+              <option value="time_m">Time minutes</option>
+              <option value="time_h">Time hours</option>
+              <option value="time_s">Time seconds</option>
+            </select>
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Tap</div>
+            <label style="display:flex; align-items:center; gap:8px; padding: 10px 6px; background: rgba(255,255,255,0.04); border-radius: 10px;">
+              <input type="checkbox" id="mathTapCycles" />
+              <span style="opacity:0.75; font-size: 12px;">Cycle operation on tap</span>
+            </label>
+          </div>
+        </div>
+        <div style="margin-top: 8px; font-size: 12px; opacity: 0.7;" id="mathStatusLine"></div>
+      </div>
+
+<!-- MONEY SETTINGS -->
       <div id="moneySettingsFields" class="cell-edit-section" style="display: none;">
         <div class="cell-edit-label" style="margin-bottom: 8px;">Money</div>
         <div class="cell-edit-grid-2">
@@ -1446,12 +1577,72 @@
     </div>
   </div>
 
-  <script>
+  
+  <!-- VALUE INPUT MODAL -->
+  <div class="modal" id="valueModal">
+    <div class="modal-content">
+      <div class="modal-title" id="valueModalTitle">VALUE</div>
+      <input type="number" inputmode="decimal" class="cell-edit-input" id="valueModalInput" autocomplete="off" style="font-size: 22px; text-align:center;">
+      <div class="modal-buttons">
+        <button class="modal-btn" id="valueModalClear">CLEAR</button>
+        <button class="modal-btn" id="valueModalCancel">CANCEL</button>
+        <button class="modal-btn" id="valueModalSave">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEME MODAL -->
+  <div class="modal" id="themeModal">
+    <div class="modal-content">
+      <div class="modal-title">THEME</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <div class="cell-edit-label">App background</div>
+          <input type="color" class="color-picker" id="themeBg" value="#000000">
+        </div>
+        <div>
+          <div class="cell-edit-label">Text</div>
+          <input type="color" class="color-picker" id="themeText" value="#ffffff">
+        </div>
+        <div>
+          <div class="cell-edit-label">Button background</div>
+          <input type="color" class="color-picker" id="themeBtnBg" value="#000000">
+        </div>
+        <div>
+          <div class="cell-edit-label">Button text</div>
+          <input type="color" class="color-picker" id="themeBtnText" value="#ffffff">
+        </div>
+      </div>
+      <div style="margin-top: 10px;">
+        <div class="cell-edit-label">Stroke</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <div class="cell-edit-label" style="opacity:0.7;">Soft</div>
+            <input type="color" class="color-picker" id="themeStrokeSoft" value="#ffffff">
+          </div>
+          <div>
+            <div class="cell-edit-label" style="opacity:0.7;">Strong</div>
+            <input type="color" class="color-picker" id="themeStrokeStrong" value="#ffffff">
+          </div>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn" id="themeReset">RESET</button>
+        <button class="modal-btn" id="themeCancel">CANCEL</button>
+        <button class="modal-btn" id="themeSave">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+<script>
     'use strict';
 
     // ===== CONSTANTS =====
     const CELL_TYPES = {
-      COUNTER: 'counter',
+      COUNTER: 'counter',   // legacy
+      UNIT: 'unit',
+      VALUE: 'value',
+      MATH: 'math',
       DURATION_SEC: 'duration_sec',
       DURATION_MIN: 'duration_min',
       DURATION_SEC_COUNT: 'duration_sec_count',
@@ -1474,6 +1665,11 @@
       MONEY_SETTINGS: 'trckng_sstm_money_settings',
       PIN_NAMES: 'trckng_sstm_pin_names',
       SEEN_INFO: 'trckng_has_seen_info'
+    ,
+      UNIT_SETTINGS: 'trckng_sstm_unit_settings',
+      VALUE_FORMATS: 'trckng_sstm_value_formats',
+      MATH_SETTINGS: 'trckng_sstm_math_settings',
+      THEME: 'trckng_sstm_theme_settings'
     };
 
     const WEEKS_TO_KEEP = 52;
@@ -1510,6 +1706,11 @@
     let habitDescriptions = {};
     let durationStates = {};
     let timerSettings = {}; // Timer/Countdown configurations
+    let unitSettings = {};
+    let valueFormats = {};
+    let mathSettings = {};
+    let themeSettings = {};
+
     let timerStates = {}; // Runtime state (iterations, running status)
     let moneySettings = {}; // Money configs per habit
     let pinNames = {}; // Custom pin names
@@ -1540,7 +1741,8 @@
 
     function getAnimationColor(habit) {
       const customColor = habitColors[habit];
-      const type = habitTypes[habit] || CELL_TYPES.COUNTER;
+      const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
       
       if (decreaseMode) return '#ff4f6a';
       
@@ -1842,6 +2044,24 @@
       // Ensure default settings for all TIMER / COUNTDOWN cells
       HABITS.forEach(habit => {
         const type = habitTypes[habit];
+        const normalizedType = (type === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : type;
+
+        // Live update for Math (so it reacts to running timers/durations)
+        if (normalizedType === CELL_TYPES.MATH) {
+          const cfg = mathSettings[habit] || {};
+          const val = computeMathValue(habit, new Set());
+          const valueEl = document.getElementById(`value-${habit}`);
+          const breakdownEl = document.getElementById(`breakdown-${habit}`);
+          if (valueEl) valueEl.innerHTML = formatMathDisplayValue(val, cfg);
+          if (breakdownEl) breakdownEl.textContent = buildMathBreakdown(habit);
+        }
+
+        // Value has a static number but keep formatting stable if something external updates it
+        if (normalizedType === CELL_TYPES.VALUE) {
+          const valueEl = document.getElementById(`value-${habit}`);
+          if (valueEl) valueEl.textContent = getValueDisplay(habit);
+        }
+
         if ((type === CELL_TYPES.TIMER || type === CELL_TYPES.COUNTDOWN) && !timerSettings[habit]) {
           if (type === CELL_TYPES.TIMER) {
             timerSettings[habit] = {
@@ -1898,6 +2118,82 @@
       const key = `${STORAGE_KEYS.MONEY_SETTINGS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(moneySettings));
     }
+
+    function loadUnitSettings() {
+      const key = `${STORAGE_KEYS.UNIT_SETTINGS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      unitSettings = stored ? JSON.parse(stored) : {};
+    }
+    function saveUnitSettings() {
+      const key = `${STORAGE_KEYS.UNIT_SETTINGS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(unitSettings));
+    }
+
+    function loadValueFormats() {
+      const key = `${STORAGE_KEYS.VALUE_FORMATS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      valueFormats = stored ? JSON.parse(stored) : {};
+    }
+    function saveValueFormats() {
+      const key = `${STORAGE_KEYS.VALUE_FORMATS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(valueFormats));
+    }
+
+    function loadMathSettings() {
+      const key = `${STORAGE_KEYS.MATH_SETTINGS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      mathSettings = stored ? JSON.parse(stored) : {};
+    }
+    function saveMathSettings() {
+      const key = `${STORAGE_KEYS.MATH_SETTINGS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(mathSettings));
+    }
+
+    function defaultThemeSettings() {
+      return {
+        bg: '#000000',
+        text: '#ffffff',
+        btnBg: '#000000',
+        btnText: '#ffffff',
+        strokeSoft: '#ffffff',
+        strokeStrong: '#ffffff'
+      };
+    }
+
+    function loadThemeSettings() {
+      const key = `${STORAGE_KEYS.THEME}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      themeSettings = stored ? JSON.parse(stored) : defaultThemeSettings();
+    }
+    function saveThemeSettings() {
+      const key = `${STORAGE_KEYS.THEME}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(themeSettings));
+    }
+
+    
+    function hexToRgba(hex, alpha) {
+      if (!hex) return `rgba(255,255,255,${alpha})`;
+      if (typeof hex === 'string' && hex.startsWith('rgba')) return hex;
+      const h = hex.replace('#', '');
+      if (h.length !== 6) return `rgba(255,255,255,${alpha})`;
+      const r = parseInt(h.substring(0,2), 16);
+      const g = parseInt(h.substring(2,4), 16);
+      const b = parseInt(h.substring(4,6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+function applyTheme() {
+      const t = themeSettings || defaultThemeSettings();
+      document.documentElement.style.setProperty('--app-bg', t.bg || '#000000');
+      document.documentElement.style.setProperty('--app-text', t.text || '#ffffff');
+      document.documentElement.style.setProperty('--btn-bg', t.btnBg || '#000000');
+      document.documentElement.style.setProperty('--btn-text', t.btnText || '#ffffff');
+
+      const strokeSoft = hexToRgba(t.strokeSoft || '#ffffff', 0.15);
+      const strokeStrong = hexToRgba(t.strokeStrong || '#ffffff', 0.35);
+      document.documentElement.style.setProperty('--stroke-soft', strokeSoft);
+      document.documentElement.style.setProperty('--stroke-strong', strokeStrong);
+    }
+
 
 
     function loadCounterLastUpdate() {
@@ -2027,10 +2323,18 @@
       const label = habitLabels[habit];
       if (!label?.trim()) return;
 
-      const type = habitTypes[habit] || CELL_TYPES.COUNTER;
+      const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
 
-      if (type === CELL_TYPES.COUNTER) {
-        handleCounterClick(habit);
+      if (type === CELL_TYPES.UNIT) {
+        handleUnitClick(habit);
+      } else if (type === CELL_TYPES.VALUE) {
+        openValueModal(habit);
+      } else if (type === CELL_TYPES.MATH) {
+        const cfg = mathSettings[habit] || {};
+        if (cfg.tapCycles === true) {
+          cycleMathOp(habit);
+        }
       } else if (type === CELL_TYPES.MONEY_INCOME || type === CELL_TYPES.MONEY_BUDGET) {
         handleMoneyClick(habit, type);
       } else if (type === CELL_TYPES.TIMER) {
@@ -2058,6 +2362,394 @@
       updateCellDisplay(habit);
       animateButton(habit);
     }
+
+    function handleUnitClick(habit) {
+      ensureWeekExists();
+      const step = getUnitStep(habit);
+
+      if (decreaseMode) {
+        weekData[currentWeekKey][habit] = Math.max(0, (weekData[currentWeekKey][habit] || 0) - step);
+      } else {
+        weekData[currentWeekKey][habit] = (weekData[currentWeekKey][habit] || 0) + step;
+      }
+
+      counterLastUpdate[habit] = Date.now();
+      saveWeekData();
+      saveCounterLastUpdate();
+
+      // Update display depending on total flag
+      const el = document.getElementById(`value-${habit}`);
+      if (el) el.textContent = String(getUnitDisplayValue(habit));
+      scheduleMathRefresh();
+      animateButton(habit);
+    }
+
+    let editingValueHabit = null;
+
+    function openValueModal(habit) {
+      editingValueHabit = habit;
+      const label = habitLabels[habit] || habit;
+      document.getElementById('valueModalTitle').textContent = `VALUE · ${label}`;
+      ensureWeekExists();
+      const weekObj = weekData[currentWeekKey] || {};
+      const current = Number(weekObj[habit] || 0);
+      document.getElementById('valueModalInput').value = Number.isFinite(current) ? current : 0;
+      document.getElementById('valueModal').classList.add('visible');
+      setTimeout(() => document.getElementById('valueModalInput').focus(), 60);
+    }
+
+    function closeValueModal() {
+      document.getElementById('valueModal').classList.remove('visible');
+      editingValueHabit = null;
+    }
+
+
+
+    // ===== UNIT / VALUE / MATH HELPERS =====
+    function getUnitStep(habit) {
+      const cfg = unitSettings[habit] || {};
+      const step = Number(cfg.step);
+      if (!Number.isFinite(step) || step <= 0) return 1;
+      return Math.floor(step);
+    }
+
+    function getUnitTotalFlag(habit) {
+      const cfg = unitSettings[habit] || {};
+      return cfg.total === true;
+    }
+
+    function getUnitDisplayValue(habit) {
+      if (getUnitTotalFlag(habit)) {
+        let sum = 0;
+        Object.keys(weekData || {}).forEach(weekKey => {
+          const w = weekData[weekKey];
+          if (w && typeof w === 'object') sum += Number(w[habit] || 0);
+        });
+        return sum;
+      }
+      const weekObj = weekData[currentWeekKey];
+      return (weekObj && typeof weekObj === 'object') ? Number(weekObj[habit] || 0) : 0;
+    }
+
+    function formatValueByFormat(value, fmt) {
+      if (!Number.isFinite(value)) return '--';
+
+      // Numeric formats
+      if (fmt === 'int') return String(Math.round(value));
+      if (fmt === '2dp') return String(Math.round(value * 100) / 100);
+      if (fmt === '3dp') return String(Math.round(value * 1000) / 1000);
+
+      // Time display helpers (Value stores a plain number; for time formats we interpret it as seconds)
+      if (fmt === 'time_mmss') {
+        const secs = Math.max(0, Math.floor(value));
+        return formatDurationSec(secs).main;
+      }
+      if (fmt === 'time_m') {
+        const mins = Math.max(0, (value / 60));
+        const rounded = Math.round(mins * 100) / 100;
+        return formatValueWithSuffix(rounded, 'm');
+      }
+      if (fmt === 'time_h') {
+        const hrs = Math.max(0, (value / 3600));
+        const rounded = Math.round(hrs * 100) / 100;
+        return formatValueWithSuffix(rounded, 'h');
+      }
+      if (fmt === 'time_s') {
+        const secs = Math.max(0, Math.floor(value));
+        return formatValueWithSuffix(secs, 's');
+      }
+
+      return String(value);
+    }
+
+    function getValueDisplay(habit) {
+      const weekObj = weekData[currentWeekKey];
+      const v = (weekObj && typeof weekObj === 'object') ? Number(weekObj[habit] || 0) : 0;
+      const fmt = valueFormats[habit] || 'raw';
+      return formatValueByFormat(v, fmt);
+    }
+
+    function computeDurationTotalSeconds(habit) {
+      const state = durationStates[habit] || {};
+      const accumulated = Number(state.accumulated || 0);
+      let total = accumulated;
+      if (state.isRunning && state.startTime) {
+        total += Math.floor((Date.now() - state.startTime) / 1000);
+      }
+      return Math.max(0, Math.floor(total));
+    }
+
+    function computeTimerElapsedSeconds(habit) {
+      const st = timerStates[habit] || {};
+      if (!st.isRunning || !st.startTime) return 0;
+      const elapsedMs = Date.now() - st.startTime;
+      return Math.max(0, Math.floor(elapsedMs / 1000));
+    }
+
+    function computeCountdownSecondsLeft(habit) {
+      const cfg = timerSettings[habit] || {};
+      if (!cfg.targetDate || !cfg.targetTime) return 0;
+      const dt = new Date(`${cfg.targetDate}T${cfg.targetTime}:00`);
+      if (isNaN(dt.getTime())) return 0;
+      const diffMs = dt.getTime() - Date.now();
+      return Math.max(0, Math.floor(diffMs / 1000));
+    }
+
+    function getNumericForHabit(habit, visited = new Set()) {
+      if (!habit) return NaN;
+      if (visited.has(habit)) return NaN;
+      visited.add(habit);
+
+      const tRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+      const t = (tRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : tRaw;
+
+      if (t === CELL_TYPES.UNIT) return getUnitDisplayValue(habit);
+      if (t === CELL_TYPES.VALUE) {
+        const weekObj = weekData[currentWeekKey];
+        return (weekObj && typeof weekObj === 'object') ? Number(weekObj[habit] || 0) : 0;
+      }
+      if (t === CELL_TYPES.MONEY_INCOME || t === CELL_TYPES.MONEY_BUDGET) {
+        const weekObj = weekData[currentWeekKey];
+        return (weekObj && typeof weekObj === 'object') ? Number(weekObj[habit] || 0) : 0;
+      }
+      if (t === CELL_TYPES.DURATION_SEC || t === CELL_TYPES.DURATION_SEC_COUNT) return computeDurationTotalSeconds(habit);
+      if (t === CELL_TYPES.DURATION_MIN) return computeDurationTotalSeconds(habit); // unified: seconds
+      if (t === CELL_TYPES.TIMER) return computeTimerElapsedSeconds(habit); // unified: seconds elapsed while running
+      if (t === CELL_TYPES.COUNTDOWN) return computeCountdownSecondsLeft(habit); // unified: seconds left
+      if (t === CELL_TYPES.MATH) return computeMathValue(habit, visited);
+
+      return NaN;
+    }
+
+    function computeMathValue(habit, visited = new Set()) {
+      const cfg = mathSettings[habit] || {};
+      const a = cfg.a;
+      const op = cfg.op || 'add';
+      const bMode = cfg.bMode || 'cell';
+      const bCell = cfg.b;
+      const bNum = Number(cfg.bNum != null ? cfg.bNum : 1);
+
+      const av = getNumericForHabit(a, visited);
+      let bv = NaN;
+
+      const isUnary = (op === 'pow2' || op === 'cos' || op === 'abs' || op === 'round' || op === 'floor' || op === 'ceil');
+      if (isUnary) {
+        bv = 0;
+      } else {
+        bv = (bMode === 'number') ? bNum : getNumericForHabit(bCell, visited);
+      }
+
+      if (!Number.isFinite(av) || (!isUnary && !Number.isFinite(bv))) return NaN;
+
+      switch (op) {
+        case 'add': return av + bv;
+        case 'sub': return av - bv;
+        case 'mul': return av * bv;
+        case 'div': return bv === 0 ? NaN : (av / bv);
+        case 'min': return Math.min(av, bv);
+        case 'max': return Math.max(av, bv);
+        case 'pow2': return av * av;
+        case 'abs': return Math.abs(av);
+        case 'round': return Math.round(av);
+        case 'floor': return Math.floor(av);
+        case 'ceil': return Math.ceil(av);
+        case 'cos': return Math.cos(av);
+        default: return NaN;
+      }
+    }
+
+
+
+    function mathOpToHuman(op) {
+      switch (op) {
+        case 'add': return '+';
+        case 'sub': return '−';
+        case 'mul': return '×';
+        case 'div': return '÷';
+        case 'min': return 'min';
+        case 'max': return 'max';
+        case 'pow2': return 'x²';
+        case 'abs': return 'abs';
+        case 'round': return 'round';
+        case 'floor': return 'floor';
+        case 'ceil': return 'ceil';
+        case 'cos': return 'cos';
+        default: return op || '?';
+      }
+    }
+
+    function formatMathDisplayValue(value, cfg) {
+      if (!Number.isFinite(value)) return '--';
+
+      const mode = (cfg && cfg.formatFrom) ? cfg.formatFrom : 'a';
+
+      // Explicit formats (do not depend on A/B types)
+      if (mode === 'raw') {
+        const rounded = Math.round(value * 1000) / 1000;
+        return String(rounded);
+      }
+      if (mode === 'int') return String(Math.round(value));
+      if (mode === '2dp') return String(Math.round(value * 100) / 100);
+      if (mode === '3dp') return String(Math.round(value * 1000) / 1000);
+
+      if (mode === 'time_mmss') {
+        const secs = Math.max(0, Math.floor(value));
+        return formatDurationSec(secs).main;
+      }
+      if (mode === 'time_m') {
+        const mins = Math.max(0, (value / 60));
+        const rounded = Math.round(mins * 100) / 100;
+        return formatValueWithSuffix(rounded, 'm');
+      }
+      if (mode === 'time_h') {
+        const hrs = Math.max(0, (value / 3600));
+        const rounded = Math.round(hrs * 100) / 100;
+        return formatValueWithSuffix(rounded, 'h');
+      }
+      if (mode === 'time_s') {
+        const secs = Math.max(0, Math.floor(value));
+        return formatValueWithSuffix(secs, 's');
+      }
+
+      // Auto like A / Auto like B
+      const refHabit = (mode === 'b') ? cfg.b : cfg.a;
+      const refTypeRaw = habitTypes[refHabit] || CELL_TYPES.UNIT;
+      const refType = (refTypeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : refTypeRaw;
+
+      // Money formatting
+      if (refType === CELL_TYPES.MONEY_INCOME || refType === CELL_TYPES.MONEY_BUDGET) {
+        const cur = (moneySettings[refHabit] && moneySettings[refHabit].currency) ? moneySettings[refHabit].currency : '€';
+        const rounded = Math.round(value * 100) / 100;
+        return formatValueWithSuffix(rounded, cur);
+      }
+
+      // Time types (Math uses unified seconds)
+      if (refType === CELL_TYPES.DURATION_SEC || refType === CELL_TYPES.DURATION_SEC_COUNT) {
+        const secs = Math.max(0, Math.floor(value));
+        return formatDurationSec(secs).main;
+      }
+
+      if (refType === CELL_TYPES.DURATION_MIN) {
+        const mins = Math.max(0, Math.floor(value / 60));
+        const fmt = formatDurationMin(mins);
+        return formatValueWithSuffix(fmt.main, 'm');
+      }
+
+      // Timer: unified seconds elapsed while running
+      if (refType === CELL_TYPES.TIMER) {
+        const secs = Math.max(0, Math.floor(value));
+        return formatDurationSec(secs).main;
+      }
+
+      // Countdown: unified seconds left, show hours as the "native" view
+      if (refType === CELL_TYPES.COUNTDOWN) {
+        const hrs = Math.max(0, Math.ceil(value / 3600));
+        return formatValueWithSuffix(hrs, 'h');
+      }
+
+      // Default numeric
+      const rounded = Math.round(value * 1000) / 1000;
+      return String(rounded);
+    }
+
+
+    function buildMathBreakdown(habit) {
+      const cfg = mathSettings[habit] || {};
+      const a = cfg.a;
+      const op = cfg.op || 'add';
+      const bMode = cfg.bMode || 'cell';
+
+      const aLabel = habitLabels[a] || a || 'A';
+      const symbol = mathOpToHuman(op);
+
+      if (op === 'pow2') return `${aLabel} ${symbol}`;
+      if (op === 'cos') return `${symbol}(${aLabel})`;
+      if (op === 'abs' || op === 'round' || op === 'floor' || op === 'ceil') return `${symbol}(${aLabel})`;
+
+      if (bMode === 'number') {
+        const bNum = (cfg.bNum != null) ? cfg.bNum : 1;
+        return (op === 'min' || op === 'max') ? `${symbol}(${aLabel}, ${bNum})` : `${aLabel} ${symbol} ${bNum}`;
+      }
+
+      const b = cfg.b;
+      const bLabel = habitLabels[b] || b || 'B';
+      return (op === 'min' || op === 'max') ? `${symbol}(${aLabel}, ${bLabel})` : `${aLabel} ${symbol} ${bLabel}`;
+    }
+
+    function wouldCreateMathCycle(targetHabit) {
+      const cfg = mathSettings[targetHabit] || {};
+      const deps = [];
+      if (cfg.a) deps.push(cfg.a);
+      if (!(['pow2','cos','abs','round','floor','ceil'].includes(cfg.op)) && cfg.bMode !== 'number' && cfg.b) deps.push(cfg.b);
+
+      const stack = new Set([targetHabit]);
+
+      const dfs = (h) => {
+        if (!h) return false;
+        if (stack.has(h)) return true;
+        const tRaw = habitTypes[h] || CELL_TYPES.UNIT;
+        const t = (tRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : tRaw;
+        if (t !== CELL_TYPES.MATH) return false;
+
+        stack.add(h);
+        const c = mathSettings[h] || {};
+        const next = [];
+        if (c.a) next.push(c.a);
+        if (!(['pow2','cos','abs','round','floor','ceil'].includes(c.op)) && c.bMode !== 'number' && c.b) next.push(c.b);
+
+        for (const n of next) {
+          if (dfs(n)) return true;
+        }
+        stack.delete(h);
+        return false;
+      };
+
+      for (const d of deps) {
+        if (dfs(d)) return true;
+      }
+      return false;
+    }
+
+    function cycleMathOp(habit) {
+      const cfg = mathSettings[habit] || {};
+      const order = ['add', 'sub', 'mul', 'div', 'min', 'max', 'pow2', 'abs', 'round', 'floor', 'ceil', 'cos'];
+      const cur = cfg.op || 'add';
+      const idx = order.indexOf(cur);
+      const next = order[(idx + 1 + order.length) % order.length];
+      cfg.op = next;
+      mathSettings[habit] = cfg;
+      saveMathSettings();
+      renderHabits();
+    }
+
+    function attachUnitPressHandlers(btn, habit) {
+      let pressTimer = null;
+
+      const stepOnce = () => handleUnitClick(habit);
+
+      const startPress = (event) => {
+        event.preventDefault();
+        stepOnce();
+        if (pressTimer) clearInterval(pressTimer);
+        pressTimer = setInterval(stepOnce, 160);
+      };
+
+      const stopPress = () => {
+        if (pressTimer) {
+          clearInterval(pressTimer);
+          pressTimer = null;
+        }
+      };
+
+      btn.addEventListener('mousedown', startPress);
+      btn.addEventListener('touchstart', startPress);
+
+      ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(ev => {
+        btn.addEventListener(ev, stopPress);
+      });
+    }
+
+
 
     
     function handleMoneyClick(habit, type) {
@@ -2100,6 +2792,7 @@
 
       saveWeekData();
       updateMoneyCellDisplay(habit, type);
+      scheduleMathRefresh();
       animateButton(habit);
     }
 function attachMoneyPressHandlers(btn, habit, type) {
@@ -2345,6 +3038,37 @@ function handleDurationClick(habit, type) {
       setTimeout(() => btn.classList.remove('animating'), 1500);
     }
 
+    // ===== COMPUTED CELLS LIVE REFRESH (Math) =====
+let _mathRefreshScheduled = false;
+
+function updateAllMathDisplays() {
+  HABITS.forEach(habit => {
+    const label = habitLabels[habit];
+    if (!label || !label.trim()) return;
+
+    const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+    const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+    if (type !== CELL_TYPES.MATH) return;
+
+    const cfg = mathSettings[habit] || {};
+    const val = computeMathValue(habit, new Set());
+
+    const valueEl = document.getElementById(`value-${habit}`);
+    const breakdownEl = document.getElementById(`breakdown-${habit}`);
+    if (valueEl) valueEl.innerHTML = formatMathDisplayValue(val, cfg);
+    if (breakdownEl) breakdownEl.textContent = buildMathBreakdown(habit);
+  });
+}
+
+function scheduleMathRefresh() {
+  if (_mathRefreshScheduled) return;
+  _mathRefreshScheduled = true;
+  requestAnimationFrame(() => {
+    _mathRefreshScheduled = false;
+    updateAllMathDisplays();
+  });
+}
+
     // ===== INTERVAL =====
     function startGlobalInterval() {
       if (globalInterval) return;
@@ -2364,7 +3088,7 @@ function handleDurationClick(habit, type) {
         const type = habitTypes[habit];
 
         // Live update for simple counters: "X ago" label
-        if (type === CELL_TYPES.COUNTER) {
+        if (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) {
           const breakdownEl = document.getElementById(`breakdown-${habit}`);
           if (breakdownEl) {
             const description = habitDescriptions[habit] || '';
@@ -2535,6 +3259,9 @@ function handleDurationClick(habit, type) {
           }
         }
       });
+
+      // Ensure Math cells stay in sync with changing sources (timers/durations/countdown)
+      scheduleMathRefresh();
     }
 
     // ===== RENDER =====
@@ -2545,7 +3272,8 @@ function handleDurationClick(habit, type) {
       HABITS.forEach(habit => {
         const label = habitLabels[habit];
         const isActive = label?.trim();
-        const type = habitTypes[habit] || CELL_TYPES.COUNTER;
+        const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
         const color = habitColors[habit] || '#ffffff';
         const state = durationStates[habit] || {};
 
@@ -2570,9 +3298,8 @@ function handleDurationClick(habit, type) {
         }
         btn.style.setProperty('--btn-color', btnColor);
 
-        if (type === CELL_TYPES.COUNTER) {
-          const weekObj = weekData[currentWeekKey];
-          const value = (weekObj && typeof weekObj === 'object') ? (weekObj[habit] || 0) : 0;
+        if (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) {
+          const value = getUnitDisplayValue(habit);
           const description = habitDescriptions[habit] || '';
           const lastUpdateLabel = formatCounterLastUpdate(habit);
           const breakdown = lastUpdateLabel || description;
@@ -2581,6 +3308,26 @@ function handleDurationClick(habit, type) {
             <span class="btn-value" id="value-${habit}">${value}</span>
             <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
           `;
+
+        } else if (type === CELL_TYPES.VALUE) {
+          const displayMain = getValueDisplay(habit);
+          const description = habitDescriptions[habit] || '';
+          btn.innerHTML = `
+            <span class="btn-label">${label}</span>
+            <span class="btn-value" id="value-${habit}">${displayMain}</span>
+            <span class="btn-breakdown" id="breakdown-${habit}">${description}</span>
+          `;
+        } else if (type === CELL_TYPES.MATH) {
+          const cfg = mathSettings[habit] || {};
+          const val = computeMathValue(habit, new Set());
+          const displayMain = formatMathDisplayValue(val, cfg);
+          const breakdown = buildMathBreakdown(habit);
+          btn.innerHTML = `
+            <span class="btn-label">${label}</span>
+            <span class="btn-value" id="value-${habit}">${displayMain}</span>
+            <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
+          `;
+
         } else if (type === CELL_TYPES.MONEY_INCOME || type === CELL_TYPES.MONEY_BUDGET) {
           let weekObj = weekData[currentWeekKey];
           const cfg = moneySettings[habit] || {};
@@ -2776,6 +3523,8 @@ function handleDurationClick(habit, type) {
 
         if (type === CELL_TYPES.MONEY_INCOME || type === CELL_TYPES.MONEY_BUDGET) {
           attachMoneyPressHandlers(btn, habit, type);
+        } else if (type === CELL_TYPES.UNIT || type === CELL_TYPES.COUNTER) {
+          attachUnitPressHandlers(btn, habit);
         } else {
           btn.addEventListener('click', () => handleHabitClick(habit));
         }
@@ -2789,16 +3538,17 @@ function handleDurationClick(habit, type) {
       else stopGlobalIntervalIfNeeded();
 
       updateStats();
+      scheduleMathRefresh();
     }
 
     function updateCellDisplay(habit) {
-      const type = habitTypes[habit] || CELL_TYPES.COUNTER;
-      if (type !== CELL_TYPES.COUNTER) return;
+      const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+      if (type !== CELL_TYPES.COUNTER && type !== CELL_TYPES.UNIT) return;
 
       const valueEl = document.getElementById(`value-${habit}`);
       if (valueEl) {
-        const weekObj = weekData[currentWeekKey];
-        const value = (weekObj && typeof weekObj === 'object') ? (weekObj[habit] || 0) : 0;
+        const value = getUnitDisplayValue(habit);
         valueEl.textContent = value;
       }
 
@@ -2807,14 +3557,14 @@ function handleDurationClick(habit, type) {
         const description = habitDescriptions[habit] || '';
         const lastUpdateLabel = formatCounterLastUpdate(habit);
         breakdownEl.textContent = lastUpdateLabel || description;
-      }
+      }      scheduleMathRefresh();
+
 
       updateStats();
     }
 
 
-    
-function updateMoneyCellDisplay(habit, type) {
+    function updateMoneyCellDisplay(habit, type) {
       const valueEl = document.getElementById(`value-${habit}`);
       const breakdownEl = document.getElementById(`breakdown-${habit}`);
 
@@ -3103,34 +3853,114 @@ function updateMoneyCellDisplay(habit, type) {
     }
 
     function exportData() {
+      // Export current PIN state + settings
+      const exportedTypes = { ...habitTypes };
+      Object.keys(exportedTypes).forEach(k => {
+        if (exportedTypes[k] === CELL_TYPES.COUNTER) exportedTypes[k] = CELL_TYPES.UNIT;
+      });
+
       const exportObj = {
-        version: '0.61',
+        version: '1.17',
+        pin: currentPin,
+        exportedAt: new Date().toISOString(),
+
         weekData,
         habitLabels,
-        habitTypes,
+        habitTypes: exportedTypes,
         habitColors,
+        habitDescriptions,
+
         durationStates,
-        pin: currentPin,
-        exportedAt: new Date().toISOString()
+        timerSettings,
+        moneySettings,
+
+        unitSettings,
+        valueFormats,
+        mathSettings,
+
+        themeSettings
       };
-      
+
       const dataStr = JSON.stringify(exportObj, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'text/plain' });
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `trckng_backup_${new Date().toISOString().slice(0, 10)}.txt`;
+      link.download = `trckng_sstm_pin${currentPin}_export_${new Date().toISOString().slice(0,10)}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
-      alert('Backup downloaded');
     }
 
-    function importData() {
-      document.getElementById('fileInput').click();
+function importData() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json,.json,.txt';
+      input.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const imported = JSON.parse(reader.result);
+
+            if (imported.weekData) weekData = imported.weekData;
+            if (imported.habitLabels) habitLabels = { ...habitLabels, ...imported.habitLabels };
+
+            if (imported.habitTypes) {
+              const incoming = { ...imported.habitTypes };
+              Object.keys(incoming).forEach(k => {
+                if (incoming[k] === CELL_TYPES.COUNTER) incoming[k] = CELL_TYPES.UNIT;
+              });
+              habitTypes = { ...habitTypes, ...incoming };
+            }
+
+            if (imported.habitColors) habitColors = { ...habitColors, ...imported.habitColors };
+            if (imported.habitDescriptions) habitDescriptions = { ...habitDescriptions, ...imported.habitDescriptions };
+
+            if (imported.durationStates) durationStates = { ...durationStates, ...imported.durationStates };
+            if (imported.timerSettings) timerSettings = { ...timerSettings, ...imported.timerSettings };
+            if (imported.moneySettings) moneySettings = { ...moneySettings, ...imported.moneySettings };
+
+            // Per-PIN settings (imported as-is into the current PIN)
+            if (imported.unitSettings) unitSettings = imported.unitSettings;
+            if (imported.valueFormats) valueFormats = imported.valueFormats;
+            if (imported.mathSettings) mathSettings = imported.mathSettings;
+            if (imported.themeSettings) themeSettings = imported.themeSettings;
+
+            // Persist
+            saveWeekData();
+            saveLabels();
+            saveTypes();
+            saveColors();
+            saveDescriptions();
+            saveDurationStates();
+            saveTimerSettings();
+            saveMoneySettings();
+            saveUnitSettings();
+            saveValueFormats();
+            saveMathSettings();
+            saveThemeSettings();
+
+            applyTheme();
+
+            renderHabits();
+            updateHeader();
+            alert('Data imported successfully');
+          } catch (err) {
+            console.error(err);
+            alert('Import failed: invalid file');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      input.click();
     }
+
+
 
     function handleFileImport(e) {
       const file = e.target.files?.[0];
@@ -3220,6 +4050,11 @@ function updateMoneyCellDisplay(habit, type) {
       loadTimerSettings();
       loadTimerStates();
       loadMoneySettings();
+      loadUnitSettings();
+      loadValueFormats();
+      loadMathSettings();
+      loadThemeSettings();
+      applyTheme();
       loadCounterLastUpdate();
 
       currentWeekKey = getWeekKey();
@@ -3253,6 +4088,11 @@ function updateMoneyCellDisplay(habit, type) {
       loadTimerSettings();
       loadTimerStates();
       loadMoneySettings();
+      loadUnitSettings();
+      loadValueFormats();
+      loadMathSettings();
+      loadThemeSettings();
+      applyTheme();
       loadCounterLastUpdate();
       loadPinNames();
       currentWeekKey = getWeekKey();
@@ -3298,7 +4138,8 @@ function openCellEditModal(habit, index) {
       document.getElementById('cellEditColor').value = habitColors[habit] || '#ffffff';
       document.getElementById('cellEditDescription').value = habitDescriptions[habit] || '';
 
-      const type = habitTypes[habit] || CELL_TYPES.COUNTER;
+      const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
 
       const moneyCfg = moneySettings[habit] || {};
       const stepField = document.getElementById('moneyStep');
@@ -3307,7 +4148,7 @@ function openCellEditModal(habit, index) {
       if (stepField) stepField.value = moneyCfg.step != null ? moneyCfg.step : 10;
       if (currencyField) currencyField.value = moneyCfg.currency || '€';
       if (startField) startField.value = moneyCfg.startAmount != null ? moneyCfg.startAmount : '';
-      document.querySelectorAll('.type-btn').forEach(btn => {
+      document.querySelectorAll('#cellEditModal .type-btn[data-type]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.type === type);
       });
 
@@ -3336,12 +4177,12 @@ function openCellEditModal(habit, index) {
       document.getElementById('countdownMessage').value = settings.message || '';
 
       // Set format buttons
-      document.querySelectorAll('[data-format]').forEach(btn => {
+      document.querySelectorAll('#cellEditModal [data-format]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.format === (settings.format || 'mm:ss'));
       });
 
       // Set vibrate buttons (timer)
-      document.querySelectorAll('[data-vibrate]').forEach(btn => {
+      document.querySelectorAll('#cellEditModal [data-vibrate]').forEach(btn => {
         const isOn = settings.vibrate !== false;
         btn.classList.toggle('active', 
           (btn.dataset.vibrate === 'on' && isOn) || 
@@ -3350,13 +4191,71 @@ function openCellEditModal(habit, index) {
       });
 
       // Set vibrate buttons (countdown)
-      document.querySelectorAll('[data-vibrate-cd]').forEach(btn => {
+      document.querySelectorAll('#cellEditModal [data-vibrate-cd]').forEach(btn => {
         const isOn = settings.vibrate !== false;
         btn.classList.toggle('active', 
           (btn.dataset.vibrateCd === 'on' && isOn) || 
           (btn.dataset.vibrateCd === 'off' && !isOn)
         );
       });
+
+
+      // Populate Unit fields
+      const uCfg = unitSettings[habit] || { step: 1, total: false };
+      const uStep = document.getElementById('unitStep');
+      const uTotal = document.getElementById('unitTotal');
+      if (uStep) uStep.value = (uCfg.step != null) ? uCfg.step : 1;
+      if (uTotal) uTotal.checked = uCfg.total === true;
+
+      // Populate Value fields
+      const vFmt = valueFormats[habit] || 'raw';
+      const vSel = document.getElementById('valueFormat');
+      if (vSel) vSel.value = vFmt;
+
+      // Populate Math selectors/options
+      const buildOptions = (selectEl) => {
+        if (!selectEl) return;
+        selectEl.innerHTML = '';
+        HABITS.forEach((h, idx) => {
+          const cellNum = String(idx + 1).padStart(2, '0');
+          const name = habitLabels[h] ? habitLabels[h] : `CELL ${cellNum}`;
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.textContent = name;
+          selectEl.appendChild(opt);
+        });
+      };
+
+      buildOptions(document.getElementById('mathSourceA'));
+      buildOptions(document.getElementById('mathSourceB'));
+
+      const mCfg = mathSettings[habit] || { a: HABITS[0], op: 'add', bMode: 'cell', b: HABITS[1], bNum: 1, formatFrom: 'a', tapCycles: false };
+      const mA = document.getElementById('mathSourceA');
+      const mOp = document.getElementById('mathOp');
+      const mB = document.getElementById('mathSourceB');
+      const mBN = document.getElementById('mathNumberB');
+      const mFmt = document.getElementById('mathFormatFrom');
+      const mTap = document.getElementById('mathTapCycles');
+
+      if (mA) mA.value = mCfg.a || HABITS[0];
+      if (mOp) mOp.value = mCfg.op || 'add';
+      if (mB) mB.value = mCfg.b || HABITS[1] || HABITS[0];
+      if (mBN) mBN.value = (mCfg.bNum != null) ? mCfg.bNum : 1;
+      if (mFmt) mFmt.value = mCfg.formatFrom || 'a';
+      if (mTap) mTap.checked = mCfg.tapCycles === true;
+
+      // B mode buttons
+      document.querySelectorAll('#cellEditModal .type-btn[data-math-bmode]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mathBmode === (mCfg.bMode || 'cell'));
+      });
+
+      // Toggle B input UI
+      const bCellWrap = document.getElementById('mathBCellWrap');
+      const bNumWrap = document.getElementById('mathBNumberWrap');
+      const bm = mCfg.bMode || 'cell';
+      if (bCellWrap) bCellWrap.style.display = (bm === 'cell') ? 'block' : 'none';
+      if (bNumWrap) bNumWrap.style.display = (bm === 'number') ? 'block' : 'none';
+
 
       // Show/hide appropriate fields
       updateTimerFieldsVisibility(type);
@@ -3369,44 +4268,28 @@ function openCellEditModal(habit, index) {
       const timerFields = document.getElementById('timerSettingsFields');
       const countdownFields = document.getElementById('countdownSettingsFields');
       const moneyFields = document.getElementById('moneySettingsFields');
+      const unitFields = document.getElementById('unitSettingsFields');
+      const valueFields = document.getElementById('valueSettingsFields');
+      const mathFields = document.getElementById('mathSettingsFields');
       const descField = document.getElementById('descriptionField');
       const moneyStartField = document.getElementById('moneyStartAmountField');
 
       const t = typeof type === 'string' ? type : (type || '');
 
-      if (t === CELL_TYPES.TIMER || t === 'timer') {
-        if (timerFields) timerFields.style.display = 'block';
-        if (countdownFields) countdownFields.style.display = 'none';
-        if (moneyFields) moneyFields.style.display = 'none';
-        if (descField) descField.style.display = 'none';
-        if (moneyStartField) moneyStartField.style.display = 'none';
-      } else if (t === CELL_TYPES.COUNTDOWN || t === 'countdown') {
-        if (timerFields) timerFields.style.display = 'none';
-        if (countdownFields) countdownFields.style.display = 'block';
-        if (moneyFields) moneyFields.style.display = 'none';
-        if (descField) descField.style.display = 'none';
-        if (moneyStartField) moneyStartField.style.display = 'none';
-      } else if (
-        t === CELL_TYPES.MONEY_INCOME ||
-        t === CELL_TYPES.MONEY_BUDGET ||
-        t === 'money_income' ||
-        t === 'money_budget'
-      ) {
-        if (timerFields) timerFields.style.display = 'none';
-        if (countdownFields) countdownFields.style.display = 'none';
-        if (moneyFields) moneyFields.style.display = 'block';
-        if (descField) descField.style.display = 'block';
-        if (moneyStartField) {
-          const isBudget = t === CELL_TYPES.MONEY_BUDGET || t === 'money_budget';
-          moneyStartField.style.display = isBudget ? 'block' : 'none';
-        }
-      } else {
-        if (timerFields) timerFields.style.display = 'none';
-        if (countdownFields) countdownFields.style.display = 'none';
-        if (moneyFields) moneyFields.style.display = 'none';
-        if (descField) descField.style.display = 'block';
-        if (moneyStartField) moneyStartField.style.display = 'none';
-      }
+      const show = (el, on) => { if (el) el.style.display = on ? 'block' : 'none'; };
+
+      show(timerFields, t === CELL_TYPES.TIMER);
+      show(countdownFields, t === CELL_TYPES.COUNTDOWN);
+      show(moneyFields, t === CELL_TYPES.MONEY_INCOME || t === CELL_TYPES.MONEY_BUDGET);
+      show(unitFields, t === CELL_TYPES.UNIT || t === CELL_TYPES.COUNTER);
+      show(valueFields, t === CELL_TYPES.VALUE);
+      show(mathFields, t === CELL_TYPES.MATH);
+
+      // Description is useful for most types, but keep it hidden for pure math by default
+      show(descField, t !== CELL_TYPES.MATH);
+
+      // Budget start amount only for Budget
+      show(moneyStartField, t === CELL_TYPES.MONEY_BUDGET);
     }
     
     function closeCellEditModal() {
@@ -3419,12 +4302,15 @@ function saveCellEdit() {
       const newLabel = document.getElementById('cellEditInput').value.trim();
       const newColor = document.getElementById('cellEditColor').value;
       const newDescription = document.getElementById('cellEditDescription').value.trim();
-      const activeTypeBtn = document.querySelector('.type-btn.active');
-      const newType = (activeTypeBtn && activeTypeBtn.dataset.type) ? activeTypeBtn.dataset.type : CELL_TYPES.COUNTER;
+      const activeTypeBtn = document.querySelector('#cellEditModal .type-btn.active[data-type]');
+      const newType = (activeTypeBtn && activeTypeBtn.dataset.type) ? activeTypeBtn.dataset.type : CELL_TYPES.UNIT;
+      const normalizedType = (newType === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : newType;
 
-      const oldType = habitTypes[editingHabit];
+
+      const oldTypeRaw = habitTypes[editingHabit];
+      const oldType = (oldTypeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : oldTypeRaw;
       const wasActive = habitLabels[editingHabit] && habitLabels[editingHabit].trim();
-      const typeChanged = oldType !== newType;
+      const typeChanged = oldType !== normalizedType;
 
       const oldIsDuration =
         oldType === CELL_TYPES.DURATION_SEC ||
@@ -3432,17 +4318,17 @@ function saveCellEdit() {
         oldType === CELL_TYPES.DURATION_SEC_COUNT;
 
       const newIsDuration =
-        newType === CELL_TYPES.DURATION_SEC ||
-        newType === CELL_TYPES.DURATION_MIN ||
-        newType === CELL_TYPES.DURATION_SEC_COUNT;
+        normalizedType === CELL_TYPES.DURATION_SEC ||
+        normalizedType === CELL_TYPES.DURATION_MIN ||
+        normalizedType === CELL_TYPES.DURATION_SEC_COUNT;
 
       const oldIsTimer =
         oldType === CELL_TYPES.TIMER ||
         oldType === CELL_TYPES.COUNTDOWN;
 
       const newIsTimer =
-        newType === CELL_TYPES.TIMER ||
-        newType === CELL_TYPES.COUNTDOWN;
+        normalizedType === CELL_TYPES.TIMER ||
+        normalizedType === CELL_TYPES.COUNTDOWN;
 
       if (wasActive && !newLabel) {
         // Deactivating cell - wipe all stored values for this habit across weeks
@@ -3467,7 +4353,7 @@ function saveCellEdit() {
               if (oldType === CELL_TYPES.DURATION_MIN) {
                 seconds = oldValue * 60;
               }
-              if (newType === CELL_TYPES.DURATION_MIN) {
+              if (normalizedType === CELL_TYPES.DURATION_MIN) {
                 weekData[week][editingHabit] = Math.floor(seconds / 60);
               } else {
                 weekData[week][editingHabit] = seconds;
@@ -3476,7 +4362,7 @@ function saveCellEdit() {
           });
         } else {
           // Any other type change - reset
-          if (newType === CELL_TYPES.MONEY_INCOME || newType === CELL_TYPES.MONEY_BUDGET) {
+          if (normalizedType === CELL_TYPES.MONEY_INCOME || normalizedType === CELL_TYPES.MONEY_BUDGET) {
             // For money cells, start "empty" so budget can apply start amount on first display
             Object.keys(weekData).forEach(week => {
               if (weekData[week] && typeof weekData[week] === 'object') {
@@ -3498,7 +4384,7 @@ function saveCellEdit() {
       }
 
       // Save timer/countdown settings
-      if (newType === CELL_TYPES.TIMER) {
+      if (normalizedType === CELL_TYPES.TIMER) {
         const formatBtn = document.querySelector('[data-format].active');
         const vibrateBtn = document.querySelector('[data-vibrate].active');
         timerSettings[editingHabit] = {
@@ -3509,7 +4395,7 @@ function saveCellEdit() {
           vibrate: vibrateBtn ? vibrateBtn.dataset.vibrate === 'on' : true,
           message: document.getElementById('timerMessage').value.trim()
         };
-      } else if (newType === CELL_TYPES.COUNTDOWN) {
+      } else if (normalizedType === CELL_TYPES.COUNTDOWN) {
         const vibrateCdBtn = document.querySelector('[data-vibrate-cd].active');
         timerSettings[editingHabit] = {
           targetDate: document.getElementById('countdownDate').value,
@@ -3524,7 +4410,7 @@ function saveCellEdit() {
       }
 
       // Save money settings
-      if (newType === CELL_TYPES.MONEY_INCOME || newType === CELL_TYPES.MONEY_BUDGET) {
+      if (normalizedType === CELL_TYPES.MONEY_INCOME || normalizedType === CELL_TYPES.MONEY_BUDGET) {
         const stepInput = parseFloat(document.getElementById('moneyStep').value);
         const currencyInput = document.getElementById('moneyCurrency').value.trim();
         const startInputRaw = document.getElementById('moneyStartAmount').value;
@@ -3546,7 +4432,7 @@ function saveCellEdit() {
 
       habitLabels[editingHabit] = newLabel;
       habitColors[editingHabit] = newColor;
-      habitTypes[editingHabit] = newType;
+      habitTypes[editingHabit] = normalizedType;
       habitDescriptions[editingHabit] = newDescription;
 
       saveLabels();
@@ -3559,6 +4445,62 @@ function saveCellEdit() {
       saveDurationStates();
       saveTimerStates();
       saveCounterLastUpdate();
+
+      // Persist settings for new types
+      if (normalizedType === CELL_TYPES.UNIT) {
+        const step = Number(document.getElementById('unitStep')?.value);
+        unitSettings[editingHabit] = {
+          step: (Number.isFinite(step) && step > 0) ? Math.floor(step) : 1,
+          total: Boolean(document.getElementById('unitTotal')?.checked)
+        };
+        saveUnitSettings();
+      } else {
+        delete unitSettings[editingHabit];
+        saveUnitSettings();
+      }
+
+      if (normalizedType === CELL_TYPES.VALUE) {
+        const fmt = document.getElementById('valueFormat')?.value || 'raw';
+        valueFormats[editingHabit] = fmt;
+        saveValueFormats();
+      } else {
+        delete valueFormats[editingHabit];
+        saveValueFormats();
+      }
+
+      if (normalizedType === CELL_TYPES.MATH) {
+        const a = document.getElementById('mathSourceA')?.value || '';
+        const op = document.getElementById('mathOp')?.value || 'add';
+        const bMode = document.querySelector('#cellEditModal .type-btn.active[data-math-bmode]')?.dataset.mathBmode || 'cell';
+        const b = document.getElementById('mathSourceB')?.value || '';
+        const bNum = Number(document.getElementById('mathNumberB')?.value);
+        const formatFrom = document.getElementById('mathFormatFrom')?.value || 'a';
+        const tapCycles = Boolean(document.getElementById('mathTapCycles')?.checked);
+
+        mathSettings[editingHabit] = {
+          a,
+          op,
+          bMode,
+          b,
+          bNum: Number.isFinite(bNum) ? bNum : 1,
+          formatFrom,
+          tapCycles
+        };
+
+        if (wouldCreateMathCycle(editingHabit)) {
+          // Revert and warn, keep modal open
+          delete mathSettings[editingHabit];
+          document.getElementById('mathStatusLine').textContent = 'Cycle detected. Settings not saved.';
+          return;
+        } else {
+          document.getElementById('mathStatusLine').textContent = '';
+          saveMathSettings();
+        }
+      } else {
+        delete mathSettings[editingHabit];
+        saveMathSettings();
+      }
+
 
       closeCellEditModal();
       openEditModal();
@@ -3575,6 +4517,28 @@ function openInfoModal() {
     function closeInfoModal() {
       document.getElementById('infoModal').classList.remove('visible');
     }
+
+    function syncThemeModalInputs() {
+      const t = themeSettings || defaultThemeSettings();
+      document.getElementById('themeBg').value = t.bg || '#000000';
+      document.getElementById('themeText').value = t.text || '#ffffff';
+      document.getElementById('themeBtnBg').value = t.btnBg || '#000000';
+      document.getElementById('themeBtnText').value = t.btnText || '#ffffff';
+
+      // If stored as rgba, fall back to white in picker
+      document.getElementById('themeStrokeSoft').value = (typeof t.strokeSoft === 'string' && t.strokeSoft.startsWith('#')) ? t.strokeSoft : '#ffffff';
+      document.getElementById('themeStrokeStrong').value = (typeof t.strokeStrong === 'string' && t.strokeStrong.startsWith('#')) ? t.strokeStrong : '#ffffff';
+    }
+
+    function openThemeModal() {
+      syncThemeModalInputs();
+      document.getElementById('themeModal').classList.add('visible');
+    }
+
+    function closeThemeModal() {
+      document.getElementById('themeModal').classList.remove('visible');
+    }
+
 
     // Simple helper to toggle help panels
     function togglePanelVisibility(id) {
@@ -3604,6 +4568,11 @@ function openInfoModal() {
       loadTimerSettings();
       loadTimerStates();
       loadMoneySettings();
+      loadUnitSettings();
+      loadValueFormats();
+      loadMathSettings();
+      loadThemeSettings();
+      applyTheme();
       loadCounterLastUpdate();
       loadPinNames();
       
@@ -3665,32 +4634,92 @@ function openInfoModal() {
       document.getElementById('btnImport').addEventListener('click', importData);
       document.getElementById('btnReset').addEventListener('click', resetAll);
       document.getElementById('btnInfo').addEventListener('click', openInfoModal);
+    document.getElementById('btnTheme').addEventListener('click', openThemeModal);
+
+    document.getElementById('valueModalCancel').addEventListener('click', closeValueModal);
+    document.getElementById('valueModalClear').addEventListener('click', () => {
+      document.getElementById('valueModalInput').value = 0;
+    });
+    document.getElementById('valueModalSave').addEventListener('click', () => {
+      if (!editingValueHabit) return closeValueModal();
+      ensureWeekExists();
+      const v = Number(document.getElementById('valueModalInput').value);
+      weekData[currentWeekKey][editingValueHabit] = Number.isFinite(v) ? v : 0;
+      saveWeekData();
+      renderHabits();
+      closeValueModal();
+    });
+
+    document.getElementById('themeCancel').addEventListener('click', closeThemeModal);
+    document.getElementById('themeReset').addEventListener('click', () => {
+      themeSettings = defaultThemeSettings();
+      syncThemeModalInputs();
+      applyTheme();
+      saveThemeSettings();
+    });
+    document.getElementById('themeSave').addEventListener('click', () => {
+      themeSettings = {
+        bg: document.getElementById('themeBg').value,
+        text: document.getElementById('themeText').value,
+        btnBg: document.getElementById('themeBtnBg').value,
+        btnText: document.getElementById('themeBtnText').value,
+        strokeSoft: document.getElementById('themeStrokeSoft').value,
+        strokeStrong: document.getElementById('themeStrokeStrong').value
+      };
+      applyTheme();
+      saveThemeSettings();
+      closeThemeModal();
+    });
       document.getElementById('btnInfoClose').addEventListener('click', closeInfoModal);
 
       document.getElementById('editModalClose').addEventListener('click', closeEditModal);
       document.getElementById('cellEditCancel').addEventListener('click', closeCellEditModal);
       document.getElementById('cellEditSave').addEventListener('click', saveCellEdit);
 
-      document.querySelectorAll('.type-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          // Handle type selection
-          if (btn.dataset.type) {
-            document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateTimerFieldsVisibility(btn.dataset.type);
-          }
-          // Handle format selection
-          else if (btn.dataset.format) {
-            document.querySelectorAll('[data-format]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-          }
-          // Handle vibrate selection
-          else if (btn.dataset.vibrate) {
-            document.querySelectorAll('[data-vibrate]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-          }
+      document.querySelectorAll('#cellEditModal .type-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            // Type buttons
+            if (btn.dataset.type) {
+              document.querySelectorAll('#cellEditModal .type-btn[data-type]').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              updateTimerFieldsVisibility(btn.dataset.type);
+              return;
+            }
+    
+            // Format buttons (Duration)
+            if (btn.dataset.format) {
+              document.querySelectorAll('#cellEditModal [data-format]').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              return;
+            }
+    
+            // Vibrate (Timer)
+            if (btn.dataset.vibrate) {
+              document.querySelectorAll('#cellEditModal [data-vibrate]').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              return;
+            }
+    
+            // Vibrate (Countdown)
+            if (btn.dataset.vibrateCd) {
+              document.querySelectorAll('#cellEditModal [data-vibrate-cd]').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              return;
+            }
+    
+            // Math B mode
+            if (btn.dataset.mathBmode) {
+              document.querySelectorAll('#cellEditModal .type-btn[data-math-bmode]').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              const bm = btn.dataset.mathBmode;
+              const bCellWrap = document.getElementById('mathBCellWrap');
+              const bNumWrap = document.getElementById('mathBNumberWrap');
+              if (bCellWrap) bCellWrap.style.display = (bm === 'cell') ? 'block' : 'none';
+              if (bNumWrap) bNumWrap.style.display = (bm === 'number') ? 'block' : 'none';
+              return;
+            }
+          });
         });
-      });
 
       // Volume sliders
       document.getElementById('timerVolume').addEventListener('input', (e) => {
@@ -3740,6 +4769,7 @@ document.getElementById('fileInput').addEventListener('change', handleFileImport
       applyPinNamesToUI();
       updateCellDiagonalAngle();
       window.addEventListener('resize', updateCellDiagonalAngle);
+
     }
 
     if (document.readyState === 'loading') {
