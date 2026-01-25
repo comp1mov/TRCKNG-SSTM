@@ -42,14 +42,14 @@
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 1px;
     }
     
-    /* Controls group - no vertical gap between rows */
+    /* Controls group - consistent 1px gaps */
     .controls-group {
       display: flex;
       flex-direction: column;
-      gap: 0;
+      gap: 4px;
     }
 
     /* ===== HEADER - Progress Strips ===== */
@@ -57,7 +57,7 @@
       display: flex;
       flex-direction: column;
       width: 100%;
-      gap: 1px;
+      gap: 6px;
       padding: 0;
     }
     
@@ -74,8 +74,15 @@
       left: 0;
       top: 0;
       height: 100%;
-      background: var(--strip-color, rgba(255,140,66,0.3));
       transition: width 1s linear;
+    }
+    
+    .progress-strip-fill.day-fill {
+      background: var(--day-strip-color, rgba(102,170,255,0.3));
+    }
+    
+    .progress-strip-fill.week-fill {
+      background: var(--week-strip-color, rgba(255,140,66,0.25));
     }
     
     .progress-strip-content {
@@ -140,6 +147,13 @@
       text-transform: uppercase;
       color: var(--app-text, #fff);
       opacity: 0.7;
+    }
+    
+    /* Controls group with consistent gaps */
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
     }
 
     /* LED Pulse cells */
@@ -270,80 +284,33 @@
       pointer-events: none;
     }
     
-    /* PIN 01 - diagonal cross (45deg) */
+    /* PIN 01 - diagonal cross using SVG for clean intersection */
     [data-pin="0"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
       inset: 0;
-      background:
-        linear-gradient(var(--cell-diagonal-angle),
-          transparent calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
-          transparent calc(50% + var(--cell-line-width))
-        ),
-        linear-gradient(calc(180deg - var(--cell-diagonal-angle)),
-          transparent calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
-          transparent calc(50% + var(--cell-line-width))
-        );
-      background-repeat: no-repeat;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cline x1='0' y1='0' x2='100%25' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3Cline x1='100%25' y1='0' x2='0' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3C/svg%3E");
       background-size: 100% 100%;
       pointer-events: none;
     }
 
 
-    /* PIN 02 - grid (0deg/90deg) */
-
+    /* PIN 02 - grid using SVG */
     [data-pin="1"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
       inset: 0;
-      background:
-        linear-gradient(0deg,
-          transparent calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
-          transparent calc(50% + var(--cell-line-width))
-        ),
-        linear-gradient(90deg,
-          transparent calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
-          transparent calc(50% + var(--cell-line-width))
-        );
-      background-repeat: no-repeat;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cline x1='50%25' y1='0' x2='50%25' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3Cline x1='0' y1='50%25' x2='100%25' y2='50%25' stroke='%23505050' stroke-width='1'/%3E%3C/svg%3E");
       background-size: 100% 100%;
       pointer-events: none;
     }
 
-    /* PIN 03 - hybrid (left diagonal + right grid) */
-
+    /* PIN 03 - diagonal + grid */
     [data-pin="2"] .btn-habit.inactive::after {
       content: '';
       position: absolute;
       inset: 0;
-      background:
-        linear-gradient(var(--cell-diagonal-angle),
-          transparent calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
-          transparent calc(50% + var(--cell-line-width))
-        ),
-        linear-gradient(0deg,
-          transparent calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
-          transparent calc(50% + var(--cell-line-width))
-        ),
-        linear-gradient(90deg,
-          transparent calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
-          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
-          transparent calc(50% + var(--cell-line-width))
-        );
-      background-repeat: no-repeat;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cline x1='0' y1='0' x2='100%25' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3Cline x1='50%25' y1='0' x2='50%25' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3Cline x1='0' y1='50%25' x2='100%25' y2='50%25' stroke='%23505050' stroke-width='1'/%3E%3C/svg%3E");
       background-size: 100% 100%;
       pointer-events: none;
     }
@@ -673,8 +640,8 @@
     .stats-table th, .stats-table td {
       padding: 10px 8px;
       text-align: center;
-      border-right: 1px solid rgba(80,80,80,0.5);
-      border-bottom: 1px solid rgba(80,80,80,0.5);
+      border-right: 1px solid var(--stroke-strong, rgba(80,80,80,1));
+      border-bottom: 1px solid var(--stroke-strong, rgba(80,80,80,1));
       background: transparent;
     }
     
@@ -1144,7 +1111,7 @@
     <div class="header">
       <!-- Day progress strip -->
       <div class="progress-strip" id="dayStrip">
-        <div class="progress-strip-fill" id="dayStripFill" style="width: 0%"></div>
+        <div class="progress-strip-fill day-fill" id="dayStripFill" style="width: 0%"></div>
         <div class="progress-strip-content">
           <span class="strip-left" id="dayPercent">0%</span>
           <span class="strip-center" id="headerTime">--:--:--</span>
@@ -1153,22 +1120,20 @@
       </div>
       <!-- Week progress strip -->
       <div class="progress-strip" id="weekStrip">
-        <div class="progress-strip-fill" id="weekStripFill" style="width: 0%"></div>
+        <div class="progress-strip-fill week-fill" id="weekStripFill" style="width: 0%"></div>
         <div class="progress-strip-content">
           <span class="strip-left" id="weekPercent">0%</span>
           <span class="strip-center" id="weekDisplay">2026W00</span>
           <span class="strip-right" id="dateDisplay">-- --- - -- ---</span>
         </div>
       </div>
-    </div>
-
-    <div class="controls-group">
+      <!-- Pins -->
       <div class="pins">
         <button class="pin active" data-pin="0" id="pin0">PIN 01</button>
         <button class="pin" data-pin="1" id="pin1">PIN 02</button>
         <button class="pin" data-pin="2" id="pin2">PIN 03</button>
       </div>
-
+      <!-- Controls row 1 -->
       <div class="controls">
         <button class="btn-control" id="btnCopy">COPY</button>
         <button class="btn-control" id="btnCopyPrev">COPY PREV</button>
@@ -1177,7 +1142,7 @@
         <button class="btn-control" id="btnReset">RESET</button>
         <button class="btn-control" id="btnQuickInfo">?</button>
       </div>
-
+      <!-- Controls row 2 -->
       <div class="controls-edit">
         <button class="btn-control btn-control-wide" id="btnDecrease">DECREASE</button>
         <button class="btn-control btn-control-wide" id="btnEdit">EDIT</button>
@@ -1195,7 +1160,7 @@
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM · v1.24</div>
+        <div class="modal-title">TRCKNG SSTM · v1.25</div>
         <div class="modal-header-right">
           <button class="modal-pin-btn" id="btnEditPinName">PIN 01</button>
           <button class="modal-help-btn" id="btnEditHelp">?</button>
@@ -1294,21 +1259,16 @@
         <div class="cell-edit-label" style="margin-bottom: 8px;">Value</div>
         <div class="cell-edit-grid-2">
           <div class="cell-edit-field">
-            <div class="cell-edit-label">Display</div>
+            <div class="cell-edit-label">Display format</div>
             <select class="cell-edit-input" id="valueFormat">
-              <option value="raw">Raw</option>
+              <option value="raw">Number (auto)</option>
               <option value="int">Integer</option>
               <option value="2dp">2 decimals</option>
-              <option value="3dp">3 decimals</option>
-              <option value="time_mmss">Time MM:SS</option>
-              <option value="time_m">Time minutes</option>
-              <option value="time_h">Time hours</option>
-              <option value="time_s">Time seconds</option>
             </select>
           </div>
           <div class="cell-edit-field">
-            <div class="cell-edit-label">Tap</div>
-            <div style="opacity:0.75; font-size: 12px; padding: 10px 6px; background: rgba(255,255,255,0.04); border-radius: 10px;">
+            <div class="cell-edit-label">Tap action</div>
+            <div style="opacity:0.6; font-size: 11px; padding: 10px 6px;">
               opens numeric input
             </div>
           </div>
@@ -1545,16 +1505,16 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.24</div>
+        <div class="info-version">V1.25</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v1.24</div>
+        <div class="info-section-title">What's New in v1.25</div>
         <div class="info-text">
           <strong>CRITICAL FIXES:</strong><br>
           • Timer/Duration updates work on mobile after PIN switch<br>
-          • MM:SS shows full time<br>
+          • MM:SS shows full time (H:MM:SS when over 60 min)<br>
           <br>
           <strong>UI IMPROVEMENTS:</strong><br>
           • Theme simplified to 3 colors (bg, text, lines)<br>
@@ -4186,32 +4146,50 @@ function scheduleMathRefresh() {
       const cells = table.querySelectorAll('th, td');
       
       cells.forEach(cell => {
-        cell.addEventListener('mouseenter', function() {
+        const handleHighlight = function() {
           const col = this.dataset.col;
           const row = this.closest('tr');
 
-          // Dimmed row highlight
-          if (row) {
-            row.classList.add('row-highlight');
-          }
-
-          // Medium column highlight
-          if (col !== undefined) {
-            table.querySelectorAll(`th[data-col="${col}"], td[data-col="${col}"]`).forEach(c => {
-              c.classList.add('col-highlight');
-            });
-          }
-
-          // Bright cell highlight (only current cell)
-          this.classList.add('cell-highlight');
-        });
-
-        cell.addEventListener('mouseleave', function() {
-          // Remove all highlights
-          table.querySelectorAll('.row-highlight').forEach(r => r.classList.remove('row-highlight'));
-          table.querySelectorAll('.col-highlight').forEach(c => c.classList.remove('col-highlight'));
+          // Clear existing highlights first
           table.querySelectorAll('.cell-highlight').forEach(c => c.classList.remove('cell-highlight'));
-        });
+
+          // Highlight current cell
+          this.classList.add('cell-highlight');
+          
+          // Highlight week label (first cell in row)
+          if (row) {
+            const weekCell = row.querySelector('td:first-child');
+            if (weekCell && weekCell !== this) {
+              weekCell.classList.add('cell-highlight');
+            }
+          }
+
+          // Highlight column header (habit name)
+          if (col !== undefined) {
+            const headerCell = table.querySelector(`th[data-col="${col}"]`);
+            if (headerCell) {
+              headerCell.classList.add('cell-highlight');
+            }
+          }
+        };
+
+        const clearHighlight = function() {
+          table.querySelectorAll('.cell-highlight').forEach(c => c.classList.remove('cell-highlight'));
+        };
+
+        // Mouse events
+        cell.addEventListener('mouseenter', handleHighlight);
+        cell.addEventListener('mouseleave', clearHighlight);
+        
+        // Touch events for mobile
+        cell.addEventListener('touchstart', function(e) {
+          handleHighlight.call(this);
+        }, { passive: true });
+        
+        cell.addEventListener('touchend', function(e) {
+          // Keep highlight visible for a moment on touch
+          setTimeout(clearHighlight, 500);
+        }, { passive: true });
       });
     }
 
