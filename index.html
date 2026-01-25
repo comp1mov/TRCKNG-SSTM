@@ -52,99 +52,105 @@
       gap: 0;
     }
 
-    /* ===== HEADER ===== */
+    /* ===== HEADER - Progress Strips ===== */
     .header {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 2px 16px 12px;
-      gap: 8px;
+      width: 100%;
+      gap: 1px;
+      padding: 0;
     }
     
-    .header-content {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      align-items: flex-start;
+    .progress-strip {
+      position: relative;
       width: 100%;
-      gap: 16px;
+      height: 32px;
+      background: var(--app-bg, #000);
+      overflow: hidden;
     }
-
-    .header-left,
-    .header-right,
-    .header-center {
+    
+    .progress-strip-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: var(--strip-color, rgba(255,140,66,0.3));
+      transition: width 1s linear;
+    }
+    
+    .progress-strip-content {
+      position: relative;
+      z-index: 1;
       display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .header-left {
-      align-items: flex-start;
-      text-align: left;
-    }
-
-    .header-center {
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      text-align: center;
+      height: 100%;
+      padding: 0 12px;
     }
-
-    .header-right {
-      align-items: flex-start;
-      text-align: left;
-      justify-self: start;
+    
+    /* Sunrise/sunset markers */
+    .sun-marker {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: rgba(255,255,255,0.5);
+      z-index: 2;
     }
-
-.header-week {
+    .sun-marker::after {
+      content: attr(data-label);
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 7px;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.6);
+      white-space: nowrap;
+    }
+    .sun-marker.sunrise::after {
+      left: 4px;
+    }
+    .sun-marker.sunset::after {
+      right: 4px;
+    }
+    
+    .strip-left {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--app-text, #fff);
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .strip-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       font-family: "Roboto Condensed", -apple-system, sans-serif;
-      font-size: 24px;
+      font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.02em;
-      line-height: 1;
       font-variant-numeric: tabular-nums;
+      color: var(--app-text, #fff);
     }
-    .header-weekdate {
+    
+    .strip-right {
       font-size: 10px;
-      letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      line-height: 1.2;
-      margin-top: 3px;
-      font-weight: 400;
+      color: var(--app-text, #fff);
+      opacity: 0.7;
     }
-    .header-week-percent {
-      font-size: 10px;
-      letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.5);
-      line-height: 1.2;
-      margin-top: 2px;
-      font-variant-numeric: tabular-nums;
-      font-weight: 400;
+
+    /* LED Pulse cells */
+    .btn-habit[data-type="led_pulse"] {
+      transition: background 0.08s ease-out;
     }
-    .header-time {
-      font-family: "Roboto Condensed", -apple-system, sans-serif;
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
+    .btn-habit[data-type="led_pulse"].led-on {
+      background: var(--btn-color, #ff8c42) !important;
     }
-    .header-daydate {
-      font-size: 10px;
-      letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.5);
-      text-transform: uppercase;
-      line-height: 1.2;
-      margin-top: 3px;
-      font-weight: 400;
-    }
-    .header-day-info {
-      font-size: 10px;
-      letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.5);
-      line-height: 1.2;
-      margin-top: 2px;
-      font-variant-numeric: tabular-nums;
-      font-weight: 400;
+    .btn-habit[data-type="led_pulse"].led-off {
+      background: var(--app-bg, #000) !important;
     }
 
     /* ===== PINS ===== */
@@ -152,12 +158,13 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 0;
-      background: #000;
+      background: var(--app-bg, #000);
     }
     .pin {
       border: none;
-      background: #000;
-      color: rgba(255,255,255,0.5);
+      background: var(--app-bg, #000);
+      color: var(--app-text, rgba(255,255,255,0.5));
+      opacity: 0.5;
       padding: 8px 6px;
       cursor: pointer;
       font-size: 8px;
@@ -170,8 +177,8 @@
       align-items: center;
       justify-content: center;
     }
-    .pin:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
-    .pin.active { background: rgba(255,140,66,0.2); color: #ff8c42; }
+    .pin:hover { background: rgba(255,255,255,0.06); opacity: 0.8; }
+    .pin.active { background: rgba(255,140,66,0.2); color: #ff8c42; opacity: 1; }
 
     /* ===== CONTROLS ===== */
     .controls {
@@ -179,14 +186,12 @@
       grid-template-columns: repeat(6, 1fr);
       gap: 0px;
       background: var(--app-bg, #000000);
-      border-bottom: 1px solid var(--stroke-soft, rgba(255,255,255,0.15));
       }
     .controls-edit {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 0px;
       background: var(--app-bg, #000000);
-      border-bottom: 1px solid var(--stroke-soft, rgba(255,255,255,0.15));
       }
     .btn-control-wide {
       grid-column: span 3;
@@ -197,11 +202,9 @@
     
     .btn-control-mini {
       grid-column: span 1;
-      border: 1px solid var(--stroke-soft, rgba(255,255,255,0.15)) !important;
       }
 .btn-control-pin {
       grid-column: span 1;
-      border: 1px solid var(--stroke-strong, rgba(255,255,255,0.35));
       background: transparent;
       color: var(--app-text, #ffffff);
       }
@@ -209,7 +212,6 @@
       border: none;
       background: transparent;
       color: var(--app-text, #ffffff);
-      border: 1px solid var(--stroke-soft, rgba(255,255,255,0.15));
       padding: 8px 6px;
       cursor: pointer;
       font-size: 8px;
@@ -222,29 +224,25 @@
       align-items: center;
       justify-content: center;
       white-space: nowrap;
+      opacity: 0.6;
     }
-    .btn-control:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+    .btn-control:hover { background: rgba(255,255,255,0.06); opacity: 0.9; }
     .btn-control:active { background: rgba(255,255,255,0.12); }
-    .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; }
+    .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; opacity: 1; }
 
     /* ===== HABITS GRID ===== */
-    /* HABITS GRID FRAME SETUP:
-       - border: frame around the full 3x3 grid
-       - gap: spacing between cells
-       - background: color of the lines between cells
-    */
     .buttons-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 0;
-      background: #000;
+      background: var(--app-bg, #000);
       border: none;
     }
 
     .btn-habit {
       border: none;
-      background: var(--btn-bg, #000);
-      color: var(--btn-text, #fff);
+      background: var(--app-bg, #000);
+      color: var(--app-text, #fff);
       padding: 8px;
       cursor: pointer;
       font-size: 13px;
@@ -267,7 +265,7 @@
 
     /* INACTIVE CELLS - different patterns per pin */
     .btn-habit.inactive {
-      background: #000;
+      background: var(--app-bg, #000);
       cursor: default;
       pointer-events: none;
     }
@@ -280,14 +278,14 @@
       background:
         linear-gradient(var(--cell-diagonal-angle),
           transparent calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
           transparent calc(50% + var(--cell-line-width))
         ),
         linear-gradient(calc(180deg - var(--cell-diagonal-angle)),
           transparent calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
           transparent calc(50% + var(--cell-line-width))
         );
       background-repeat: no-repeat;
@@ -305,14 +303,14 @@
       background:
         linear-gradient(0deg,
           transparent calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
           transparent calc(50% + var(--cell-line-width))
         ),
         linear-gradient(90deg,
           transparent calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
           transparent calc(50% + var(--cell-line-width))
         );
       background-repeat: no-repeat;
@@ -329,20 +327,20 @@
       background:
         linear-gradient(var(--cell-diagonal-angle),
           transparent calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
           transparent calc(50% + var(--cell-line-width))
         ),
         linear-gradient(0deg,
           transparent calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
           transparent calc(50% + var(--cell-line-width))
         ),
         linear-gradient(90deg,
           transparent calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% - var(--cell-line-width)),
-          rgba(80,80,80,1) calc(50% + var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% - var(--cell-line-width)),
+          var(--stroke-strong, rgba(80,80,80,1)) calc(50% + var(--cell-line-width)),
           transparent calc(50% + var(--cell-line-width))
         );
       background-repeat: no-repeat;
@@ -694,7 +692,8 @@
       font-weight: 400;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
+      color: var(--app-text, rgba(255,255,255,0.5));
+      opacity: 0.5;
     }
     
     .stats-table td {
@@ -702,7 +701,8 @@
       font-size: 13px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
-      color: rgba(255,255,255,0.8);
+      color: var(--app-text, rgba(255,255,255,0.8));
+      opacity: 0.8;
     }
     
     .stats-table td:first-child, 
@@ -713,7 +713,8 @@
       font-weight: 400;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
+      color: var(--app-text, rgba(255,255,255,0.5));
+      opacity: 0.5;
       cursor: pointer;
       transition: color 100ms ease-out;
     }
@@ -755,8 +756,8 @@
     .modal.visible { display: flex; }
 
     .modal-content {
-      background: #000;
-      border: 1px solid rgba(255,255,255,0.3);
+      background: var(--app-bg, #000);
+      border: none;
       max-height: 80vh;
       overflow-y: auto;
       max-width: 500px;
@@ -1005,7 +1006,6 @@
     .type-selector {
       display: flex;
       gap: 1px;
-      border: 1px solid rgba(255,255,255,0.3);
     }
     .type-btn {
       flex: 1;
@@ -1025,7 +1025,6 @@
     .color-picker-wrap {
       margin-top: 8px;
       padding-top: 12px;
-      border-top: 1px solid rgba(255,255,255,0.1);
       text-align: center;
     }
     .color-picker-label {
@@ -1038,7 +1037,7 @@
     .color-picker {
       width: 100%;
       height: 40px;
-      border: 1px solid rgba(255,255,255,0.2);
+      border: none;
       background: #050607;
       cursor: pointer;
       padding: 2px;
@@ -1048,8 +1047,8 @@
 
     /* Info modal */
     .info-modal-content {
-      background: #000;
-      border: 1px solid rgba(255,255,255,0.3);
+      background: var(--app-bg, #000);
+      border: none;
       padding: 24px;
       max-width: 450px;
       width: 100%;
@@ -1060,7 +1059,6 @@
       text-align: center;
       margin-bottom: 20px;
       padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     .info-logo {
       font-size: 24px;
@@ -1144,18 +1142,22 @@
 <body>
   <div class="container">
     <div class="header">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="header-time" id="headerTime">--:--:--</div>
-          <div class="header-daydate" id="headerDayDate"></div>
-          <div class="header-day-info" id="dayInfo">- --%</div>
+      <!-- Day progress strip -->
+      <div class="progress-strip" id="dayStrip">
+        <div class="progress-strip-fill" id="dayStripFill" style="width: 0%"></div>
+        <div class="progress-strip-content">
+          <span class="strip-left" id="dayPercent">0%</span>
+          <span class="strip-center" id="headerTime">--:--:--</span>
+          <span class="strip-right" id="headerDayDate">-- --- ----</span>
         </div>
-        <div class="header-center">
-        </div>
-        <div class="header-right">
-          <div class="header-week" id="weekDisplay"></div>
-          <div class="header-weekdate" id="dateDisplay"></div>
-          <div class="header-week-percent" id="weekPercent">--%</div>
+      </div>
+      <!-- Week progress strip -->
+      <div class="progress-strip" id="weekStrip">
+        <div class="progress-strip-fill" id="weekStripFill" style="width: 0%"></div>
+        <div class="progress-strip-content">
+          <span class="strip-left" id="weekPercent">0%</span>
+          <span class="strip-center" id="weekDisplay">2026W00</span>
+          <span class="strip-right" id="dateDisplay">-- --- - -- ---</span>
         </div>
       </div>
     </div>
@@ -1173,13 +1175,12 @@
         <button class="btn-control" id="btnExport">EXPORT</button>
         <button class="btn-control" id="btnImport">IMPORT</button>
         <button class="btn-control" id="btnReset">RESET</button>
-        <button class="btn-control" id="btnInfo">?</button>
+        <button class="btn-control" id="btnQuickInfo">?</button>
       </div>
 
       <div class="controls-edit">
         <button class="btn-control btn-control-wide" id="btnDecrease">DECREASE</button>
-        <button class="btn-control btn-control-edit" id="btnEdit">EDIT</button>
-        <button class="btn-control btn-control-mini" id="btnTheme">THEME</button>
+        <button class="btn-control btn-control-wide" id="btnEdit">EDIT</button>
       </div>
     </div>
 
@@ -1194,7 +1195,7 @@
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM · v0.99</div>
+        <div class="modal-title">TRCKNG SSTM · v1.24</div>
         <div class="modal-header-right">
           <button class="modal-pin-btn" id="btnEditPinName">PIN 01</button>
           <button class="modal-help-btn" id="btnEditHelp">?</button>
@@ -1221,7 +1222,10 @@
       </div>
       
       <div class="edit-items-grid" id="editItemsContainer"></div>
-      <div class="modal-buttons">
+      <div class="modal-buttons" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1px;">
+        <button class="modal-btn" id="btnTheme">THEME</button>
+        <button class="modal-btn" id="btnNotify">NOTIFY</button>
+        <button class="modal-btn" id="btnInfo">INFO</button>
         <button class="modal-btn" id="editModalClose">DONE</button>
       </div>
     </div>
@@ -1259,6 +1263,8 @@
         <div class="type-selector" style="margin-top: 1px;">
           <button class="type-btn" data-type="money_income">Income</button>
           <button class="type-btn" data-type="money_budget">Budget</button>
+          <button class="type-btn" data-type="led_pulse">LED</button>
+          <button class="type-btn" data-type="currency">FX Rate</button>
         </div>
       </div>
 
@@ -1489,6 +1495,36 @@
         </div>
       </div>
 
+      <!-- LED PULSE SETTINGS -->
+      <div id="ledSettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">LED Pulse</div>
+        <div class="cell-edit-field">
+          <div class="cell-edit-label">Speed (BPM)</div>
+          <input type="number" class="cell-edit-input" id="ledBpm" min="1" max="300" value="60" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- CURRENCY SETTINGS -->
+      <div id="currencySettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Exchange Rate</div>
+        <div class="cell-edit-grid-2">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">From (base)</div>
+            <input type="text" class="cell-edit-input" id="currencyFrom" maxlength="3" autocomplete="off" placeholder="USD" style="text-transform: uppercase;">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">To (quote)</div>
+            <input type="text" class="cell-edit-input" id="currencyTo" maxlength="3" autocomplete="off" placeholder="RUB" style="text-transform: uppercase;">
+          </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 10px; opacity: 0.5; line-height: 1.6;">
+          Examples: USD/RUB, USD/ILS, EUR/USD<br>
+          Shows how much 1 [From] costs in [To]<br>
+          Tap cell to enter amount for conversion<br>
+          Updates hourly · <a href="https://www.exchangerate-api.com" target="_blank" style="color: #ff8c42; text-decoration: none;">exchangerate-api.com</a>
+        </div>
+      </div>
+
       <div style="margin-top: 8px;" id="descriptionField">
         <div class="cell-edit-label" style="margin-bottom: 8px;">Description</div>
         <input type="text" class="cell-edit-input" id="cellEditDescription" maxlength="30" autocomplete="off" placeholder="Optional description">
@@ -1509,26 +1545,26 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V0.99</div>
+        <div class="info-version">V1.24</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v0.99</div>
+        <div class="info-section-title">What's New in v1.24</div>
         <div class="info-text">
+          <strong>CRITICAL FIXES:</strong><br>
+          • Timer/Duration updates work on mobile after PIN switch<br>
+          • MM:SS shows full time<br>
+          <br>
           <strong>UI IMPROVEMENTS:</strong><br>
-          • Suffixes (s, m) now 5x smaller for cleaner look<br>
-          • Fixed dash encoding in EDIT modal<br>
-          • Duration Min now shows seconds in breakdown (0h 12m 32s)<br>
+          • Theme simplified to 3 colors (bg, text, lines)<br>
+          • Day/week progress bars in header<br>
+          • Sunrise/sunset color indicator<br>
+          • NOTIFY button for permission request<br>
           <br>
-          <strong>ANIMATED PROGRESS BORDER:</strong><br>
-          • Timer/Countdown show animated circular progress<br>
-          • Border completes full circle every 60 seconds<br>
-          • Visual indicator for active timers/countdowns<br>
-          <br>
-          <strong>v0.63 FEATURES:</strong><br>
-          • Countdown notifications with sound & vibration<br>
-          • Click expired countdown to stop pulsing
+          <strong>NEW CELL TYPE:</strong><br>
+          • LED Pulse - rhythmic visual feedback<br>
+          • Configurable interval, duty cycle, mode
         </div>
       </div>
       
@@ -1591,39 +1627,39 @@
     </div>
   </div>
 
-  <!-- THEME MODAL -->
+  <!-- CURRENCY INPUT MODAL -->
+  <div class="modal" id="currencyModal">
+    <div class="modal-content">
+      <div class="modal-title" id="currencyModalTitle">CONVERT</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="number" inputmode="decimal" class="cell-edit-input" id="currencyModalInput" autocomplete="off" style="font-size: 22px; text-align:center; flex: 1;">
+        <span id="currencyModalFrom" style="font-size: 14px; opacity: 0.6;">USD</span>
+      </div>
+      <div id="currencyModalResult" style="text-align: center; font-size: 18px; padding: 12px 0; opacity: 0.8;">= ...</div>
+      <div class="modal-buttons">
+        <button class="modal-btn" id="currencyModalReset">RESET</button>
+        <button class="modal-btn" id="currencyModalCancel">CANCEL</button>
+        <button class="modal-btn" id="currencyModalSave">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEME MODAL - simplified to 3 colors -->
   <div class="modal" id="themeModal">
     <div class="modal-content">
       <div class="modal-title">THEME</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
-          <div class="cell-edit-label">App background</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+        <div style="text-align: center;">
+          <div class="cell-edit-label">Background</div>
           <input type="color" class="color-picker" id="themeBg" value="#000000">
         </div>
-        <div>
+        <div style="text-align: center;">
           <div class="cell-edit-label">Text</div>
           <input type="color" class="color-picker" id="themeText" value="#ffffff">
         </div>
-        <div>
-          <div class="cell-edit-label">Button background</div>
-          <input type="color" class="color-picker" id="themeBtnBg" value="#000000">
-        </div>
-        <div>
-          <div class="cell-edit-label">Button text</div>
-          <input type="color" class="color-picker" id="themeBtnText" value="#ffffff">
-        </div>
-      </div>
-      <div style="margin-top: 10px;">
-        <div class="cell-edit-label">Stroke</div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div>
-            <div class="cell-edit-label" style="opacity:0.7;">Soft</div>
-            <input type="color" class="color-picker" id="themeStrokeSoft" value="#ffffff">
-          </div>
-          <div>
-            <div class="cell-edit-label" style="opacity:0.7;">Strong</div>
-            <input type="color" class="color-picker" id="themeStrokeStrong" value="#ffffff">
-          </div>
+        <div style="text-align: center;">
+          <div class="cell-edit-label">Lines</div>
+          <input type="color" class="color-picker" id="themeStroke" value="#ffffff">
         </div>
       </div>
       <div class="modal-buttons">
@@ -1649,7 +1685,9 @@
       TIMER: 'timer',
       COUNTDOWN: 'countdown',
       MONEY_INCOME: 'money_income',
-      MONEY_BUDGET: 'money_budget'
+      MONEY_BUDGET: 'money_budget',
+      LED_PULSE: 'led_pulse',
+      CURRENCY: 'currency'
     };
 
     const STORAGE_KEYS = {
@@ -1669,7 +1707,11 @@
       UNIT_SETTINGS: 'trckng_sstm_unit_settings',
       VALUE_FORMATS: 'trckng_sstm_value_formats',
       MATH_SETTINGS: 'trckng_sstm_math_settings',
-      THEME: 'trckng_sstm_theme_settings'
+      THEME: 'trckng_sstm_theme_settings',
+      LED_SETTINGS: 'trckng_sstm_led_settings',
+      LED_STATES: 'trckng_sstm_led_states',
+      CURRENCY_SETTINGS: 'trckng_sstm_currency_settings',
+      CURRENCY_CACHE: 'trckng_sstm_currency_cache'
     };
 
     const WEEKS_TO_KEEP = 52;
@@ -1715,6 +1757,11 @@
     let moneySettings = {}; // Money configs per habit
     let pinNames = {}; // Custom pin names
     let counterLastUpdate = {}; // Last update timestamps for simple counters
+    let ledSettings = {}; // LED pulse configurations
+    let ledStates = {}; // LED runtime states (active/inactive)
+    let ledIntervals = {}; // Active LED pulse intervals
+    let currencySettings = {}; // Currency pair configurations
+    let currencyCache = {}; // Cached exchange rates
     let globalInterval = null;
     let clockInterval = null;
     let editingHabit = null;
@@ -2149,14 +2196,74 @@
       localStorage.setItem(key, JSON.stringify(mathSettings));
     }
 
+    function loadLedSettings() {
+      const key = `${STORAGE_KEYS.LED_SETTINGS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      ledSettings = stored ? JSON.parse(stored) : {};
+    }
+    function saveLedSettings() {
+      localStorage.setItem(`${STORAGE_KEYS.LED_SETTINGS}_pin${currentPin}`, JSON.stringify(ledSettings));
+    }
+
+    function loadLedStates() {
+      const key = `${STORAGE_KEYS.LED_STATES}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      ledStates = stored ? JSON.parse(stored) : {};
+    }
+    function saveLedStates() {
+      localStorage.setItem(`${STORAGE_KEYS.LED_STATES}_pin${currentPin}`, JSON.stringify(ledStates));
+    }
+
+    function loadCurrencySettings() {
+      const key = `${STORAGE_KEYS.CURRENCY_SETTINGS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      currencySettings = stored ? JSON.parse(stored) : {};
+    }
+    function saveCurrencySettings() {
+      localStorage.setItem(`${STORAGE_KEYS.CURRENCY_SETTINGS}_pin${currentPin}`, JSON.stringify(currencySettings));
+    }
+    
+    function loadCurrencyCache() {
+      const stored = localStorage.getItem(STORAGE_KEYS.CURRENCY_CACHE);
+      currencyCache = stored ? JSON.parse(stored) : {};
+    }
+    function saveCurrencyCache() {
+      localStorage.setItem(STORAGE_KEYS.CURRENCY_CACHE, JSON.stringify(currencyCache));
+    }
+
+    // Fetch exchange rate from free API
+    async function fetchExchangeRate(from, to) {
+      const pair = `${from}_${to}`.toUpperCase();
+      const now = Date.now();
+      
+      // Check cache (valid for 1 hour)
+      if (currencyCache[pair] && (now - currencyCache[pair].timestamp) < 3600000) {
+        return currencyCache[pair].rate;
+      }
+      
+      try {
+        // Using exchangerate-api.com free tier (no key needed for basic)
+        const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${from.toUpperCase()}`);
+        const data = await response.json();
+        
+        if (data.rates && data.rates[to.toUpperCase()]) {
+          const rate = data.rates[to.toUpperCase()];
+          currencyCache[pair] = { rate, timestamp: now };
+          saveCurrencyCache();
+          return rate;
+        }
+      } catch (e) {
+        console.log('Currency fetch error:', e.message);
+      }
+      
+      return currencyCache[pair]?.rate || null;
+    }
+
     function defaultThemeSettings() {
       return {
         bg: '#000000',
         text: '#ffffff',
-        btnBg: '#000000',
-        btnText: '#ffffff',
-        strokeSoft: '#ffffff',
-        strokeStrong: '#ffffff'
+        stroke: '#ffffff'
       };
     }
 
@@ -2183,13 +2290,17 @@
     }
 function applyTheme() {
       const t = themeSettings || defaultThemeSettings();
-      document.documentElement.style.setProperty('--app-bg', t.bg || '#000000');
-      document.documentElement.style.setProperty('--app-text', t.text || '#ffffff');
-      document.documentElement.style.setProperty('--btn-bg', t.btnBg || '#000000');
-      document.documentElement.style.setProperty('--btn-text', t.btnText || '#ffffff');
+      const bg = t.bg || '#000000';
+      const text = t.text || '#ffffff';
+      const stroke = t.stroke || '#ffffff';
+      
+      document.documentElement.style.setProperty('--app-bg', bg);
+      document.documentElement.style.setProperty('--app-text', text);
+      document.documentElement.style.setProperty('--btn-bg', bg);
+      document.documentElement.style.setProperty('--btn-text', text);
 
-      const strokeSoft = hexToRgba(t.strokeSoft || '#ffffff', 0.15);
-      const strokeStrong = hexToRgba(t.strokeStrong || '#ffffff', 0.35);
+      const strokeSoft = hexToRgba(stroke, 0.15);
+      const strokeStrong = hexToRgba(stroke, 0.35);
       document.documentElement.style.setProperty('--stroke-soft', strokeSoft);
       document.documentElement.style.setProperty('--stroke-strong', strokeStrong);
     }
@@ -2262,7 +2373,13 @@ function applyTheme() {
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
       
-      const main = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      // FIXED: Show full time - H:MM:SS when over 60 minutes
+      let main;
+      if (hours > 0) {
+        main = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      } else {
+        main = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
       const breakdown = `${hours}h ${minutes}m ${seconds}s`;
       
       return { main, breakdown };
@@ -2341,9 +2458,58 @@ function applyTheme() {
         handleTimerClick(habit);
       } else if (type === CELL_TYPES.COUNTDOWN) {
         handleCountdownClick(habit);
+      } else if (type === CELL_TYPES.LED_PULSE) {
+        handleLedClick(habit);
+      } else if (type === CELL_TYPES.CURRENCY) {
+        handleCurrencyClick(habit);
       } else {
         handleDurationClick(habit, type);
       }
+    }
+
+    function handleCurrencyClick(habit) {
+      openCurrencyModal(habit);
+    }
+    
+    let editingCurrencyHabit = null;
+    let editingCurrencyRate = null;
+    
+    function openCurrencyModal(habit) {
+      editingCurrencyHabit = habit;
+      const settings = currencySettings[habit] || { from: 'USD', to: 'RUB', amount: 1 };
+      const from = (settings.from || 'USD').toUpperCase();
+      const to = (settings.to || 'RUB').toUpperCase();
+      const amount = settings.amount || 1;
+      const label = habitLabels[habit] || `${from}/${to}`;
+      
+      document.getElementById('currencyModalTitle').textContent = `CONVERT · ${label}`;
+      document.getElementById('currencyModalFrom').textContent = from;
+      document.getElementById('currencyModalInput').value = amount;
+      document.getElementById('currencyModalResult').textContent = '= ...';
+      
+      // Fetch rate and update result
+      fetchExchangeRate(from, to).then(rate => {
+        editingCurrencyRate = rate;
+        updateCurrencyModalResult();
+      });
+      
+      document.getElementById('currencyModal').classList.add('visible');
+      setTimeout(() => document.getElementById('currencyModalInput').focus(), 60);
+    }
+    
+    function updateCurrencyModalResult() {
+      if (!editingCurrencyHabit || editingCurrencyRate === null) return;
+      const settings = currencySettings[editingCurrencyHabit] || {};
+      const to = (settings.to || 'RUB').toUpperCase();
+      const inputVal = parseFloat(document.getElementById('currencyModalInput').value) || 0;
+      const converted = (inputVal * editingCurrencyRate).toFixed(2);
+      document.getElementById('currencyModalResult').textContent = `= ${converted} ${to}`;
+    }
+    
+    function closeCurrencyModal() {
+      document.getElementById('currencyModal').classList.remove('visible');
+      editingCurrencyHabit = null;
+      editingCurrencyRate = null;
     }
 
     function handleCounterClick(habit) {
@@ -2938,6 +3104,76 @@ function handleDurationClick(habit, type) {
       animateButton(habit);
     }
 
+    // ===== LED PULSE HANDLERS =====
+    function bpmToMs(bpm) {
+      return Math.round(60000 / bpm);
+    }
+
+    function handleLedClick(habit) {
+      const settings = ledSettings[habit] || { bpm: 60 };
+      const state = ledStates[habit] || { isActive: false };
+      
+      // Toggle on/off
+      if (state.isActive) {
+        stopLedPulse(habit);
+        ledStates[habit] = { isActive: false };
+      } else {
+        startLedPulse(habit, settings);
+        ledStates[habit] = { isActive: true };
+      }
+      saveLedStates();
+      animateButton(habit);
+    }
+
+    function startLedPulse(habit, settings) {
+      stopLedPulse(habit);
+      
+      const btn = document.getElementById(`btn-${habit}`);
+      if (!btn) return;
+      
+      const intervalMs = bpmToMs(settings.bpm || 60);
+      const halfBeat = intervalMs / 2;
+      
+      let isOn = true;
+      btn.classList.add('led-on');
+      btn.classList.remove('led-off');
+      
+      const doPulse = () => {
+        const currentBtn = document.getElementById(`btn-${habit}`);
+        if (!currentBtn || !ledIntervals[habit]) return;
+        
+        if (isOn) {
+          currentBtn.classList.remove('led-on');
+          currentBtn.classList.add('led-off');
+          isOn = false;
+        } else {
+          currentBtn.classList.add('led-on');
+          currentBtn.classList.remove('led-off');
+          isOn = true;
+        }
+        ledIntervals[habit] = setTimeout(doPulse, halfBeat);
+      };
+      
+      ledIntervals[habit] = setTimeout(doPulse, halfBeat);
+    }
+
+    function stopLedPulse(habit) {
+      if (ledIntervals[habit]) {
+        clearTimeout(ledIntervals[habit]);
+        delete ledIntervals[habit];
+      }
+      
+      const btn = document.getElementById(`btn-${habit}`);
+      if (btn) {
+        btn.classList.remove('led-on');
+        btn.classList.add('led-off');
+      }
+    }
+
+    function stopAllLedPulses() {
+      Object.keys(ledIntervals).forEach(habit => stopLedPulse(habit));
+    }
+
 
     // Timer notification messages
     function getTimerNotificationMessage(iterations, duration, customMessage) {
@@ -2959,6 +3195,40 @@ function handleDurationClick(habit, type) {
       if (iterations === 3) return messages[3];
       if (iterations === 4) return messages[4];
       return `Session ${iterations + 1} complete • ${duration}min`;
+    }
+
+    // Request notification permission
+    function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        alert('This browser does not support notifications');
+        return;
+      }
+      
+      if (Notification.permission === 'granted') {
+        alert('Notifications already enabled!');
+        new Notification('TRCKNG SSTM', {
+          body: 'Notifications are working!',
+          icon: '/TRCKNG-SSTM/icons/icon-192.png'
+        });
+        return;
+      }
+      
+      if (Notification.permission === 'denied') {
+        alert('Notifications blocked. Enable in browser settings.');
+        return;
+      }
+      
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          alert('Notifications enabled!');
+          new Notification('TRCKNG SSTM', {
+            body: 'Notifications are now active',
+            icon: '/TRCKNG-SSTM/icons/icon-192.png'
+          });
+        } else {
+          alert('Notifications denied');
+        }
+      });
     }
 
     function sendTimerNotification(habit) {
@@ -3076,10 +3346,14 @@ function scheduleMathRefresh() {
     }
 
     function stopGlobalIntervalIfNeeded() {
-      const hasRunning = Object.values(durationStates).some(s => s.isRunning);
-      if (!hasRunning && globalInterval) {
-        clearInterval(globalInterval);
-        globalInterval = null;
+      // Always keep interval running for "X ago" updates on counters
+      // So we never stop it anymore
+    }
+    
+    function startGlobalIntervalIfNeeded() {
+      // Always start - we need it for counter "X ago" updates
+      if (!globalInterval) {
+        startGlobalInterval();
       }
     }
 
@@ -3466,6 +3740,59 @@ function scheduleMathRefresh() {
             <span class="btn-value" id="value-${habit}">${displayValue}</span>
             <span class="btn-breakdown" id="breakdown-${habit}">${breakdown}</span>
           `;
+        } else if (type === CELL_TYPES.LED_PULSE) {
+          // LED Pulse cell
+          const settings = ledSettings[habit] || { bpm: 60 };
+          const ledState = ledStates[habit] || { isActive: false };
+          
+          const bpm = settings.bpm || 60;
+          const seconds = (60 / bpm).toFixed(1);
+          
+          btn.innerHTML = `
+            <span class="btn-label">${label}</span>
+            <span class="btn-value" id="value-${habit}"></span>
+            <span class="btn-breakdown" id="breakdown-${habit}">${bpm} bpm / ${seconds}s</span>
+          `;
+          
+          // Start pulse if active
+          if (ledState.isActive) {
+            startLedPulse(habit, settings);
+          } else {
+            btn.classList.add('led-off');
+          }
+        } else if (type === CELL_TYPES.CURRENCY) {
+          // Currency exchange rate cell
+          const settings = currencySettings[habit] || { from: 'USD', to: 'RUB', amount: 1 };
+          const from = (settings.from || 'USD').toUpperCase();
+          const to = (settings.to || 'RUB').toUpperCase();
+          const amount = settings.amount || 1;
+          
+          btn.innerHTML = `
+            <span class="btn-label">${label || to}</span>
+            <span class="btn-value" id="value-${habit}">...</span>
+            <span class="btn-breakdown" id="breakdown-${habit}">loading</span>
+          `;
+          
+          // Fetch and display rate
+          fetchExchangeRate(from, to).then(rate => {
+            const valueEl = document.getElementById(`value-${habit}`);
+            const breakdownEl = document.getElementById(`breakdown-${habit}`);
+            if (rate !== null) {
+              const converted = (amount * rate).toFixed(2);
+              if (valueEl) valueEl.textContent = converted;
+              if (amount === 1) {
+                if (breakdownEl) breakdownEl.textContent = `1 ${from} = ${rate.toFixed(4)} ${to}`;
+              } else {
+                if (breakdownEl) breakdownEl.textContent = `${amount} ${from} → ${to}`;
+              }
+              // Store rate for math calculations
+              if (!weekData[currentWeekKey]) weekData[currentWeekKey] = {};
+              weekData[currentWeekKey][habit] = rate;
+            } else {
+              if (valueEl) valueEl.textContent = '—';
+              if (breakdownEl) breakdownEl.textContent = 'no data';
+            }
+          });
         } else {
           // Duration types (DURATION_SEC, DURATION_MIN, DURATION_SEC_COUNT)
           const isRunning = state.isRunning;
@@ -3618,6 +3945,71 @@ function scheduleMathRefresh() {
       updateStats();
     }
 // ===== HEADER =====
+    let sunData = null; // {sunrise: Date, sunset: Date}
+    
+    async function fetchSunData() {
+      // Try to get user's location
+      if (!navigator.geolocation) return;
+      
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        
+        // Fetch sunrise/sunset from free API
+        const response = await fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`);
+        const data = await response.json();
+        
+        if (data.status === 'OK') {
+          sunData = {
+            sunrise: new Date(data.results.sunrise),
+            sunset: new Date(data.results.sunset)
+          };
+          updateSunMarkers();
+        }
+      } catch (e) {
+        console.log('Sun data not available:', e.message);
+      }
+    }
+    
+    function updateSunMarkers() {
+      if (!sunData) return;
+      
+      const dayStrip = document.getElementById('dayStrip');
+      if (!dayStrip) return;
+      
+      // Remove old markers
+      dayStrip.querySelectorAll('.sun-marker').forEach(m => m.remove());
+      
+      // Calculate positions (% of day)
+      const sunriseMinutes = sunData.sunrise.getHours() * 60 + sunData.sunrise.getMinutes();
+      const sunsetMinutes = sunData.sunset.getHours() * 60 + sunData.sunset.getMinutes();
+      
+      const sunrisePercent = (sunriseMinutes / (24 * 60)) * 100;
+      const sunsetPercent = (sunsetMinutes / (24 * 60)) * 100;
+      
+      // Format times
+      const sunriseTime = sunData.sunrise.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const sunsetTime = sunData.sunset.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      
+      // Create markers
+      const sunriseMarker = document.createElement('div');
+      sunriseMarker.className = 'sun-marker sunrise';
+      sunriseMarker.style.left = `${sunrisePercent}%`;
+      sunriseMarker.dataset.label = sunriseTime;
+      
+      const sunsetMarker = document.createElement('div');
+      sunsetMarker.className = 'sun-marker sunset';
+      sunsetMarker.style.left = `${sunsetPercent}%`;
+      sunsetMarker.dataset.label = sunsetTime;
+      
+      dayStrip.appendChild(sunriseMarker);
+      dayStrip.appendChild(sunsetMarker);
+    }
+
     function updateHeader() {
       const weekEl = document.getElementById('weekDisplay');
       const dateEl = document.getElementById('dateDisplay');
@@ -3637,36 +4029,61 @@ function scheduleMathRefresh() {
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
 
+      // Time display
       const timeEl = document.getElementById('headerTime');
       if (timeEl) timeEl.textContent = `${hours}:${minutes}:${seconds}`;
 
-      // Week progress (under dates on left)
-      const dayOfWeek = now.getDay();
+      // Day calculations
       const minutesInDay = now.getHours() * 60 + now.getMinutes();
+      const dayProgress = Math.round((minutesInDay / (24 * 60)) * 100);
+
+      // Week calculations
+      const dayOfWeek = now.getDay();
       const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       const minutesInWeek = dayIndex * 24 * 60 + minutesInDay;
       const weekProgress = Math.round((minutesInWeek / (7 * 24 * 60)) * 100);
 
-      const percentEl = document.getElementById('weekPercent');
-      if (percentEl) percentEl.textContent = `${weekProgress}%`;
+      // Day percent (left of day strip)
+      const dayPercentEl = document.getElementById('dayPercent');
+      if (dayPercentEl) dayPercentEl.textContent = `${dayProgress}%`;
 
-      // Day progress (0-100%)
-      const dayProgress = Math.round((minutesInDay / (24 * 60)) * 100);
-
-      // Day number (1-7)
-      const dayNumber = dayIndex + 1;
-
-      // Combined day info (7 96%)
-      const dayInfoEl = document.getElementById('dayInfo');
-      if (dayInfoEl) dayInfoEl.textContent = `DAY ${dayNumber} ${dayProgress}%`;
-
-      // Day date (04 JAN SUNDAY in one line)
+      // Day date (right of day strip) - 25 JAN SATURDAY
       const dayDateEl = document.getElementById('headerDayDate');
       if (dayDateEl) {
         const day = String(now.getDate()).padStart(2, '0');
         const monthName = now.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
         const dayNameFull = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
         dayDateEl.textContent = `${day} ${monthName} ${dayNameFull}`;
+      }
+
+      // Week percent (left of week strip)
+      const weekPercentEl = document.getElementById('weekPercent');
+      if (weekPercentEl) weekPercentEl.textContent = `${weekProgress}%`;
+
+      // Update strip fills
+      const dayStripFill = document.getElementById('dayStripFill');
+      const weekStripFill = document.getElementById('weekStripFill');
+      
+      if (dayStripFill) {
+        dayStripFill.style.width = `${dayProgress}%`;
+        // Sunrise/sunset colors
+        const hour = now.getHours();
+        let dayColor;
+        if (hour >= 5 && hour < 8) {
+          dayColor = 'rgba(255,170,68,0.4)'; // Dawn orange
+        } else if (hour >= 8 && hour < 17) {
+          dayColor = 'rgba(102,170,255,0.3)'; // Day blue
+        } else if (hour >= 17 && hour < 20) {
+          dayColor = 'rgba(255,119,68,0.4)'; // Dusk orange
+        } else {
+          dayColor = 'rgba(68,102,170,0.3)'; // Night blue
+        }
+        dayStripFill.style.background = dayColor;
+      }
+      
+      if (weekStripFill) {
+        weekStripFill.style.width = `${weekProgress}%`;
+        weekStripFill.style.background = 'rgba(255,140,66,0.25)';
       }
     }
 
@@ -4070,6 +4487,9 @@ function importData() {
         clearInterval(globalInterval);
         globalInterval = null;
       }
+      
+      // Stop all LED pulses before switching
+      stopAllLedPulses();
 
       currentPin = pinNum;
       document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
@@ -4091,6 +4511,9 @@ function importData() {
       loadUnitSettings();
       loadValueFormats();
       loadMathSettings();
+      loadLedSettings();
+      loadLedStates();
+      loadCurrencySettings();
       loadThemeSettings();
       applyTheme();
       loadCounterLastUpdate();
@@ -4100,6 +4523,8 @@ function importData() {
       renderHabits();
       updateHeader();
       applyPinNamesToUI();
+      // FIXED: Start interval if any timers are running after pin switch
+      startGlobalIntervalIfNeeded();
     }
 
     // ===== EDIT MODALS =====
@@ -4199,6 +4624,17 @@ function openCellEditModal(habit, index) {
         );
       });
 
+      // Populate LED fields
+      const lCfg = ledSettings[habit] || { bpm: 60 };
+      const lBpm = document.getElementById('ledBpm');
+      if (lBpm) lBpm.value = lCfg.bpm || 60;
+
+      // Populate Currency fields
+      const cCfg = currencySettings[habit] || { from: 'USD', to: 'RUB' };
+      const cFrom = document.getElementById('currencyFrom');
+      const cTo = document.getElementById('currencyTo');
+      if (cFrom) cFrom.value = cCfg.from || 'USD';
+      if (cTo) cTo.value = cCfg.to || 'RUB';
 
       // Populate Unit fields
       const uCfg = unitSettings[habit] || { step: 1, total: false };
@@ -4271,6 +4707,8 @@ function openCellEditModal(habit, index) {
       const unitFields = document.getElementById('unitSettingsFields');
       const valueFields = document.getElementById('valueSettingsFields');
       const mathFields = document.getElementById('mathSettingsFields');
+      const ledFields = document.getElementById('ledSettingsFields');
+      const currencyFields = document.getElementById('currencySettingsFields');
       const descField = document.getElementById('descriptionField');
       const moneyStartField = document.getElementById('moneyStartAmountField');
 
@@ -4284,9 +4722,11 @@ function openCellEditModal(habit, index) {
       show(unitFields, t === CELL_TYPES.UNIT || t === CELL_TYPES.COUNTER);
       show(valueFields, t === CELL_TYPES.VALUE);
       show(mathFields, t === CELL_TYPES.MATH);
+      show(ledFields, t === CELL_TYPES.LED_PULSE);
+      show(currencyFields, t === CELL_TYPES.CURRENCY);
 
-      // Description is useful for most types, but keep it hidden for pure math by default
-      show(descField, t !== CELL_TYPES.MATH);
+      // Description is useful for most types, but keep it hidden for pure math and currency
+      show(descField, t !== CELL_TYPES.MATH && t !== CELL_TYPES.CURRENCY);
 
       // Budget start amount only for Budget
       show(moneyStartField, t === CELL_TYPES.MONEY_BUDGET);
@@ -4501,6 +4941,29 @@ function saveCellEdit() {
         saveMathSettings();
       }
 
+      // Save LED settings
+      if (normalizedType === CELL_TYPES.LED_PULSE) {
+        const bpm = Number(document.getElementById('ledBpm')?.value) || 60;
+        ledSettings[editingHabit] = { bpm: Math.max(1, Math.min(300, bpm)) };
+        saveLedSettings();
+      } else {
+        delete ledSettings[editingHabit];
+        delete ledStates[editingHabit];
+        saveLedSettings();
+        saveLedStates();
+      }
+
+      // Save Currency settings
+      if (normalizedType === CELL_TYPES.CURRENCY) {
+        const from = (document.getElementById('currencyFrom')?.value || 'USD').toUpperCase().trim();
+        const to = (document.getElementById('currencyTo')?.value || 'RUB').toUpperCase().trim();
+        currencySettings[editingHabit] = { from, to };
+        saveCurrencySettings();
+      } else {
+        delete currencySettings[editingHabit];
+        saveCurrencySettings();
+      }
+
 
       closeCellEditModal();
       openEditModal();
@@ -4510,7 +4973,8 @@ function saveCellEdit() {
 
 function openInfoModal() {
       localStorage.setItem(STORAGE_KEYS.SEEN_INFO, 'true');
-      document.getElementById('btnInfo').classList.remove('pulse');
+      const quickInfoBtn = document.getElementById('btnQuickInfo');
+      if (quickInfoBtn) quickInfoBtn.classList.remove('pulse');
       document.getElementById('infoModal').classList.add('visible');
     }
 
@@ -4522,12 +4986,7 @@ function openInfoModal() {
       const t = themeSettings || defaultThemeSettings();
       document.getElementById('themeBg').value = t.bg || '#000000';
       document.getElementById('themeText').value = t.text || '#ffffff';
-      document.getElementById('themeBtnBg').value = t.btnBg || '#000000';
-      document.getElementById('themeBtnText').value = t.btnText || '#ffffff';
-
-      // If stored as rgba, fall back to white in picker
-      document.getElementById('themeStrokeSoft').value = (typeof t.strokeSoft === 'string' && t.strokeSoft.startsWith('#')) ? t.strokeSoft : '#ffffff';
-      document.getElementById('themeStrokeStrong').value = (typeof t.strokeStrong === 'string' && t.strokeStrong.startsWith('#')) ? t.strokeStrong : '#ffffff';
+      document.getElementById('themeStroke').value = t.stroke || '#ffffff';
     }
 
     function openThemeModal() {
@@ -4571,6 +5030,10 @@ function openInfoModal() {
       loadUnitSettings();
       loadValueFormats();
       loadMathSettings();
+      loadLedSettings();
+      loadLedStates();
+      loadCurrencySettings();
+      loadCurrencyCache();
       loadThemeSettings();
       applyTheme();
       loadCounterLastUpdate();
@@ -4589,9 +5052,15 @@ function openInfoModal() {
 
       renderHabits();
       updateHeader();
+      
+      // Fetch sunrise/sunset data
+      fetchSunData();
+      
+      // Always start global interval for "X ago" updates
+      startGlobalInterval();
 
       if (!localStorage.getItem(STORAGE_KEYS.SEEN_INFO)) {
-        document.getElementById('btnInfo').classList.add('pulse');
+        document.getElementById('btnQuickInfo').classList.add('pulse');
       }
 
       // Update clock every second (fixes lag issue)
@@ -4633,8 +5102,10 @@ function openInfoModal() {
       document.getElementById('btnExport').addEventListener('click', exportData);
       document.getElementById('btnImport').addEventListener('click', importData);
       document.getElementById('btnReset').addEventListener('click', resetAll);
-      document.getElementById('btnInfo').addEventListener('click', openInfoModal);
-    document.getElementById('btnTheme').addEventListener('click', openThemeModal);
+      document.getElementById('btnQuickInfo').addEventListener('click', openInfoModal);
+    document.getElementById('btnTheme').addEventListener('click', () => { closeEditModal(); openThemeModal(); });
+    document.getElementById('btnNotify').addEventListener('click', requestNotificationPermission);
+    document.getElementById('btnInfo').addEventListener('click', () => { closeEditModal(); openInfoModal(); });
 
     document.getElementById('valueModalCancel').addEventListener('click', closeValueModal);
     document.getElementById('valueModalClear').addEventListener('click', () => {
@@ -4650,6 +5121,24 @@ function openInfoModal() {
       closeValueModal();
     });
 
+    // Currency modal listeners
+    document.getElementById('currencyModalCancel').addEventListener('click', closeCurrencyModal);
+    document.getElementById('currencyModalReset').addEventListener('click', () => {
+      document.getElementById('currencyModalInput').value = 1;
+      updateCurrencyModalResult();
+    });
+    document.getElementById('currencyModalInput').addEventListener('input', updateCurrencyModalResult);
+    document.getElementById('currencyModalSave').addEventListener('click', () => {
+      if (!editingCurrencyHabit) return closeCurrencyModal();
+      const amount = parseFloat(document.getElementById('currencyModalInput').value) || 1;
+      const settings = currencySettings[editingCurrencyHabit] || { from: 'USD', to: 'RUB' };
+      settings.amount = amount;
+      currencySettings[editingCurrencyHabit] = settings;
+      saveCurrencySettings();
+      renderHabits();
+      closeCurrencyModal();
+    });
+
     document.getElementById('themeCancel').addEventListener('click', closeThemeModal);
     document.getElementById('themeReset').addEventListener('click', () => {
       themeSettings = defaultThemeSettings();
@@ -4661,10 +5150,7 @@ function openInfoModal() {
       themeSettings = {
         bg: document.getElementById('themeBg').value,
         text: document.getElementById('themeText').value,
-        btnBg: document.getElementById('themeBtnBg').value,
-        btnText: document.getElementById('themeBtnText').value,
-        strokeSoft: document.getElementById('themeStrokeSoft').value,
-        strokeStrong: document.getElementById('themeStrokeStrong').value
+        stroke: document.getElementById('themeStroke').value
       };
       applyTheme();
       saveThemeSettings();
@@ -4716,6 +5202,13 @@ function openInfoModal() {
               const bNumWrap = document.getElementById('mathBNumberWrap');
               if (bCellWrap) bCellWrap.style.display = (bm === 'cell') ? 'block' : 'none';
               if (bNumWrap) bNumWrap.style.display = (bm === 'number') ? 'block' : 'none';
+              return;
+            }
+
+            // LED mode
+            if (btn.dataset.ledMode) {
+              document.querySelectorAll('#cellEditModal .type-btn[data-led-mode]').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
               return;
             }
           });
