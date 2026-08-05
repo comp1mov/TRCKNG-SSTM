@@ -151,7 +151,14 @@
 - Re-anchored the roadmap order: Responsive Field Shell, LAYOUT cleanup, Cell Cycle Architecture, Header / Week / PIN polish, then drag reorder and resize handles.
 - Added responsive field shell variables for field width and cell row height across phone, laptop, desktop, and short desktop screens.
 - Removed the default button aspect-ratio dependency so field cells keep a stable row rhythm instead of ballooning on wide screens.
-- Fixed PIN fill styling so every PIN has its own color glow, with a stronger version on the active PIN.
+- Fixed PIN fill styling, then corrected it to use brighter color fills instead of separate glow/shadow effects.
 - Doubled PIN button height for clearer touch targets and stronger workspace presence.
 - Made the desktop utility row quieter and narrower so COPY / COPY PREV / EXPORT / IMPORT / RESET do not compete with the field.
 - Bumped app/export/cache version to `v1.32.0`.
+
+### Phase 2D PIN Fill Correction
+
+- Removed separate `box-shadow` and `text-shadow` glow effects from PIN buttons.
+- Returned PIN states to a simpler fill-color principle: inactive PINs are darker color fills, active PIN is a brighter version of the selected fill.
+- Corrected desktop field row heights so responsive cells do not become wide, flattened rectangles.
+- Bumped app/export/cache version to `v1.32.1`.

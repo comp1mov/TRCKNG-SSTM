@@ -186,34 +186,20 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       justify-content: center;
     }
     .pin {
-      background: color-mix(in srgb, var(--pin-fill, #ffffff) 34%, var(--app-bg, #000));
-      color: color-mix(in srgb, var(--pin-fill, #ffffff) 58%, var(--app-text, #ffffff));
-      opacity: 0.82;
-      border-top: 2px solid color-mix(in srgb, var(--pin-fill, #ffffff) 74%, transparent);
-      box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--pin-fill, #ffffff) 42%, transparent),
-        inset 0 -10px 22px color-mix(in srgb, var(--pin-fill, #ffffff) 16%, transparent),
-        0 0 10px color-mix(in srgb, var(--pin-fill, #ffffff) 24%, transparent);
-      text-shadow: 0 0 8px color-mix(in srgb, var(--pin-fill, #ffffff) 62%, transparent);
+      background: color-mix(in srgb, var(--pin-fill, #ffffff) 30%, var(--app-bg, #000));
+      color: color-mix(in srgb, var(--pin-fill, #ffffff) 64%, var(--app-text, #ffffff));
+      opacity: 0.78;
+      border-top: 2px solid color-mix(in srgb, var(--pin-fill, #ffffff) 68%, transparent);
     }
     .pin:hover {
-      background: color-mix(in srgb, var(--pin-fill, #ffffff) 45%, var(--app-bg, #000));
-      opacity: 0.96;
-      box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--pin-fill, #ffffff) 64%, transparent),
-        inset 0 -10px 22px color-mix(in srgb, var(--pin-fill, #ffffff) 22%, transparent),
-        0 0 14px color-mix(in srgb, var(--pin-fill, #ffffff) 36%, transparent);
+      background: color-mix(in srgb, var(--pin-fill, #ffffff) 42%, var(--app-bg, #000));
+      opacity: 0.9;
     }
     .pin.active {
-      background: var(--pin-fill, rgba(255,140,66,0.2));
+      background: color-mix(in srgb, var(--pin-fill, #ff8c42) 76%, #ffffff);
       color: var(--pin-text, #000);
       opacity: 1;
-      box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--pin-fill, #ff8c42) 84%, #ffffff),
-        inset 0 -12px 24px color-mix(in srgb, var(--pin-fill, #ff8c42) 28%, transparent),
-        0 0 18px color-mix(in srgb, var(--pin-fill, #ff8c42) 62%, transparent),
-        0 0 32px color-mix(in srgb, var(--pin-fill, #ff8c42) 28%, transparent);
-      text-shadow: 0 0 10px color-mix(in srgb, var(--pin-fill, #ff8c42) 72%, transparent);
+      border-top-color: color-mix(in srgb, var(--pin-fill, #ff8c42) 64%, #ffffff);
     }
     .pin-sync-btn {
       border-left: 1px solid rgba(255,255,255,0.08);
@@ -314,14 +300,14 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     @media (min-width: 700px) {
       :root {
         --field-max-width: 820px;
-        --field-cell-min: 116px;
+        --field-cell-min: 160px;
       }
     }
 
     @media (min-width: 1100px) {
       :root {
         --field-max-width: 1080px;
-        --field-cell-min: 142px;
+        --field-cell-min: 210px;
       }
 
       body {
@@ -333,13 +319,13 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     @media (min-width: 1500px) {
       :root {
         --field-max-width: 1220px;
-        --field-cell-min: 156px;
+        --field-cell-min: 240px;
       }
     }
 
     @media (min-width: 900px) and (max-height: 780px) {
       :root {
-        --field-cell-min: 124px;
+        --field-cell-min: 176px;
       }
     }
 
