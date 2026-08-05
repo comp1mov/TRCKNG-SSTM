@@ -176,3 +176,9 @@
 - Moved the PIN switcher below the active work surface so PIN navigation becomes the bottom control layer.
 - Started `UI_CHANGE_NOTES.md` as a separate running list for incoming small UI corrections.
 - Bumped app/export/cache version to `v1.32.3`.
+
+### Phase 2D PIN Placement Correction
+
+- Corrected the PIN switcher position to sit between `TRACK / LAYOUT / HISTORY` and the active work surface, not at the page bottom.
+- Returned PIN label text to the normal compact `8px` size.
+- Bumped app/export/cache version to `v1.32.4`.

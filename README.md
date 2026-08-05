@@ -1,4 +1,4 @@
-# TRCKNG SSTM v1.32.3
+# TRCKNG SSTM v1.32.4
 
 Local-first modular tracking field for weekly habits, timers, money, formulas, and small personal metrics.
 
@@ -42,9 +42,9 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `l
 - Empty cells are created/edited from LAYOUT
 - PIN fill colors use brighter active fills without separate glow effects
 - Responsive field shell with stable cell row height across phone, laptop, and desktop
-- Larger PIN labels, taller PIN buttons, and quieter desktop utility controls
+- Compact PIN labels, taller PIN buttons, and quieter desktop utility controls
 - Main-screen SYNC/OK button moved next to ACCOUNT
-- PIN switcher moved to the bottom of the work surface
+- PIN switcher sits between view tabs and the active work surface
 - JSON export/import for backups
 - PWA install support
 - Mobile fixes for iOS safe areas, double-tap zoom, and Safari active states
@@ -64,7 +64,7 @@ Main stored groups:
 
 ## Backup
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.32.3 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.32.4 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
 
 ## Supabase
 
