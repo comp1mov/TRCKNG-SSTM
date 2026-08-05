@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trckng-sstm-v1.30.1';
+const CACHE_NAME = 'trckng-sstm-v1.31.0';
 const urlsToCache = [
   '/TRCKNG-SSTM/',
   '/TRCKNG-SSTM/index.html',

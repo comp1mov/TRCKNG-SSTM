@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.30.1`.
+Current working app target: `v1.31`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -99,8 +99,8 @@ Deferred:
 
 ## Next Phases
 
-1. Finish Phase 4A Supabase manual account/snapshot flow.
-2. Phase 5A: safe autosync with dirty-state debounce and last-write metadata.
-3. Phase 5B: mobile install/update polish for phone use.
+1. Done: Phase 4A Supabase manual account/snapshot flow.
+2. Done: Phase 5A safe autosync with dirty-state debounce and cloud update checks.
+3. Next: Phase 5B mobile install/update polish for phone use.
 4. Return to Phase 2c drag/resize only after sync is stable.
 5. Phase 3: weekly cycle review and Goal Time.

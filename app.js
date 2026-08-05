@@ -1,8 +1,10 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.30.1';
+    const APP_VERSION = '1.31';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
+    const CLOUD_SYNC_DEBOUNCE_MS = 8000;
+    const CLOUD_PULL_COOLDOWN_MS = 15000;
     const SUPABASE_DEFAULT_TABLE = 'trckng_snapshots';
 
     const CELL_TYPES = {
@@ -47,7 +49,10 @@
       VIEW_MODE: 'trckng_sstm_view_mode',
       SUPABASE_URL: 'trckng_sstm_supabase_url',
       SUPABASE_ANON_KEY: 'trckng_sstm_supabase_anon_key',
-      SUPABASE_DEVICE_ID: 'trckng_sstm_supabase_device_id'
+      SUPABASE_DEVICE_ID: 'trckng_sstm_supabase_device_id',
+      CLOUD_DIRTY: 'trckng_sstm_cloud_dirty',
+      CLOUD_DIRTY_AT: 'trckng_sstm_cloud_dirty_at',
+      CLOUD_LAST_SYNC_AT: 'trckng_sstm_cloud_last_sync_at'
     };
 
     const VIEW_MODES = {
@@ -159,6 +164,12 @@
     let cloudSnapshotMeta = null;
     let cloudBusy = false;
     let accountStatusOverride = null;
+    let cloudDirty = false;
+    let cloudDirtyAt = 0;
+    let cloudSyncTimer = null;
+    let cloudPullCheckInFlight = false;
+    let lastCloudPullCheckAt = 0;
+    let suppressCloudDirty = 0;
 
     // ===== COLOR PALETTE =====
     function generateColorPalette() {
@@ -401,6 +412,7 @@
         keys.slice(WEEKS_TO_KEEP).forEach(k => delete weekData[k]);
       }
       localStorage.setItem(key, JSON.stringify(weekData));
+      markCloudDirty('week data');
     }
 
     function loadLabels() {
@@ -415,6 +427,7 @@
     function saveLabels() {
       const key = `${STORAGE_KEYS.LABELS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(habitLabels));
+      markCloudDirty('labels');
     }
 
     function loadTypes() {
@@ -429,6 +442,7 @@
     function saveTypes() {
       const key = `${STORAGE_KEYS.TYPES}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(habitTypes));
+      markCloudDirty('types');
     }
 
     function loadColors() {
@@ -443,6 +457,7 @@
     function saveColors() {
       const key = `${STORAGE_KEYS.COLORS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(habitColors));
+      markCloudDirty('colors');
     }
 
     function loadDescriptions() {
@@ -457,6 +472,7 @@
     function saveDescriptions() {
       const key = `${STORAGE_KEYS.DESCRIPTIONS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(habitDescriptions));
+      markCloudDirty('descriptions');
     }
 
     function loadDurationStates() {
@@ -471,6 +487,7 @@
     function saveDurationStates() {
       const key = `${STORAGE_KEYS.DURATION}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(durationStates));
+      markCloudDirty('duration states');
     }
 
     function loadTimerSettings() {
@@ -529,6 +546,7 @@
     function saveTimerSettings() {
       const key = `${STORAGE_KEYS.TIMER_SETTINGS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(timerSettings));
+      markCloudDirty('timer settings');
     }
 
     function loadTimerStates() {
@@ -543,6 +561,7 @@
     function saveTimerStates() {
       const key = `${STORAGE_KEYS.TIMER_STATES}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(timerStates));
+      markCloudDirty('timer states');
     }
 
     function loadMoneySettings() {
@@ -557,6 +576,7 @@
     function saveMoneySettings() {
       const key = `${STORAGE_KEYS.MONEY_SETTINGS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(moneySettings));
+      markCloudDirty('money settings');
     }
 
     function loadUnitSettings() {
@@ -567,6 +587,7 @@
     function saveUnitSettings() {
       const key = `${STORAGE_KEYS.UNIT_SETTINGS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(unitSettings));
+      markCloudDirty('unit settings');
     }
 
     function loadValueFormats() {
@@ -577,6 +598,7 @@
     function saveValueFormats() {
       const key = `${STORAGE_KEYS.VALUE_FORMATS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(valueFormats));
+      markCloudDirty('value formats');
     }
 
     function loadMathSettings() {
@@ -587,6 +609,7 @@
     function saveMathSettings() {
       const key = `${STORAGE_KEYS.MATH_SETTINGS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(mathSettings));
+      markCloudDirty('math settings');
     }
 
     function normalizeCellFlags(rawFlags) {
@@ -619,6 +642,7 @@
     function saveCellFlags() {
       const key = `${STORAGE_KEYS.CELL_FLAGS}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(normalizeCellFlags(cellFlags)));
+      markCloudDirty('cell flags');
     }
 
     function getCellFlags(habit) {
@@ -769,6 +793,7 @@
       const key = `${STORAGE_KEYS.CELL_LAYOUT}_pin${currentPin}`;
       cellLayout = normalizeCellLayout(cellLayout);
       localStorage.setItem(key, JSON.stringify(cellLayout));
+      markCloudDirty('cell layout');
     }
 
     function setCellLayoutSize(habit, sizeId) {
@@ -955,6 +980,7 @@
     }
     function saveLedSettings() {
       localStorage.setItem(`${STORAGE_KEYS.LED_SETTINGS}_pin${currentPin}`, JSON.stringify(ledSettings));
+      markCloudDirty('led settings');
     }
 
     function loadLedStates() {
@@ -964,6 +990,7 @@
     }
     function saveLedStates() {
       localStorage.setItem(`${STORAGE_KEYS.LED_STATES}_pin${currentPin}`, JSON.stringify(ledStates));
+      markCloudDirty('led states');
     }
 
     function loadCurrencySettings() {
@@ -973,6 +1000,7 @@
     }
     function saveCurrencySettings() {
       localStorage.setItem(`${STORAGE_KEYS.CURRENCY_SETTINGS}_pin${currentPin}`, JSON.stringify(currencySettings));
+      markCloudDirty('currency settings');
     }
     
     function loadCurrencyCache() {
@@ -981,6 +1009,7 @@
     }
     function saveCurrencyCache() {
       localStorage.setItem(STORAGE_KEYS.CURRENCY_CACHE, JSON.stringify(currencyCache));
+      markCloudDirty('currency cache');
     }
 
     // Fetch exchange rate from free API
@@ -1027,6 +1056,7 @@
     function saveThemeSettings() {
       const key = `${STORAGE_KEYS.THEME}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(themeSettings));
+      markCloudDirty('theme settings');
     }
 
     function loadViewMode() {
@@ -1036,6 +1066,149 @@
 
     function saveViewMode() {
       localStorage.setItem(STORAGE_KEYS.VIEW_MODE, currentView);
+    }
+
+    function loadCloudSyncState() {
+      cloudDirty = localStorage.getItem(STORAGE_KEYS.CLOUD_DIRTY) === 'true';
+      cloudDirtyAt = Number(localStorage.getItem(STORAGE_KEYS.CLOUD_DIRTY_AT)) || 0;
+    }
+
+    function getCloudLastSyncMs() {
+      const stored = localStorage.getItem(STORAGE_KEYS.CLOUD_LAST_SYNC_AT);
+      if (!stored) return 0;
+      const parsed = Date.parse(stored);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function setCloudLastSyncAt(value) {
+      const iso = value || new Date().toISOString();
+      localStorage.setItem(STORAGE_KEYS.CLOUD_LAST_SYNC_AT, iso);
+    }
+
+    function runWithoutCloudDirty(fn) {
+      suppressCloudDirty += 1;
+      try {
+        return fn();
+      } finally {
+        suppressCloudDirty = Math.max(0, suppressCloudDirty - 1);
+      }
+    }
+
+    function setCloudDirty(isDirty, reason = '') {
+      cloudDirty = Boolean(isDirty);
+      if (cloudDirty) {
+        cloudDirtyAt = Date.now();
+        localStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY, 'true');
+        localStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY_AT, String(cloudDirtyAt));
+        accountStatusOverride = null;
+        scheduleCloudAutosync(reason);
+      } else {
+        cloudDirtyAt = 0;
+        localStorage.removeItem(STORAGE_KEYS.CLOUD_DIRTY);
+        localStorage.removeItem(STORAGE_KEYS.CLOUD_DIRTY_AT);
+        if (cloudSyncTimer) {
+          clearTimeout(cloudSyncTimer);
+          cloudSyncTimer = null;
+        }
+      }
+      renderAccountPanel();
+    }
+
+    function markCloudDirty(reason = 'local change') {
+      if (suppressCloudDirty > 0) return;
+      setCloudDirty(true, reason);
+    }
+
+    function scheduleCloudAutosync(reason = '') {
+      if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+      if (!cloudDirty || !accountSession || !accountSession.user || cloudBusy) {
+        renderAccountPanel();
+        return;
+      }
+      if (!navigator.onLine) {
+        setAccountStatus('OFFLINE - SYNC WAITING', 'warn');
+        return;
+      }
+
+      cloudSyncTimer = setTimeout(() => {
+        cloudSyncTimer = null;
+        uploadCloudSnapshot({ automatic: true, reason });
+      }, CLOUD_SYNC_DEBOUNCE_MS);
+      renderAccountPanel();
+    }
+
+    function getCloudSyncLabel() {
+      if (!hasSupabaseConfig()) return 'OFF';
+      if (!accountSession || !accountSession.user) return cloudDirty ? 'UNSAVED LOCAL' : 'SIGN IN';
+      if (cloudBusy) return 'SYNCING';
+      if (cloudDirty && cloudSyncTimer) return 'QUEUED';
+      if (cloudDirty) return 'UNSAVED';
+      if (cloudSnapshotMeta) return 'SYNCED';
+      return 'READY';
+    }
+
+    function compareCloudToLocal(row) {
+      if (!row || !row.updated_at) return 'none';
+      const cloudMs = Date.parse(row.updated_at);
+      if (!Number.isFinite(cloudMs)) return 'unknown';
+      const localSyncMs = getCloudLastSyncMs();
+      if (!localSyncMs) return 'unknown';
+      return cloudMs > localSyncMs + 1000 ? 'newer' : 'current';
+    }
+
+    async function checkCloudForUpdates(options = {}) {
+      const silent = options.silent !== false;
+      const now = Date.now();
+      if (cloudPullCheckInFlight) return;
+      if (silent && now - lastCloudPullCheckAt < CLOUD_PULL_COOLDOWN_MS) return;
+      if (!ensureSupabaseClient() || !accountSession || !accountSession.user) return;
+      if (!navigator.onLine) {
+        if (!silent) setAccountStatus('OFFLINE - CANNOT CHECK CLOUD', 'warn');
+        return;
+      }
+
+      cloudPullCheckInFlight = true;
+      lastCloudPullCheckAt = now;
+
+      try {
+        const config = getSupabaseConfig();
+        const { data, error } = await supabaseClient
+          .from(config.table)
+          .select('app_state, updated_at, device_id')
+          .eq('user_id', accountSession.user.id)
+          .maybeSingle();
+        if (error) throw error;
+
+        cloudSnapshotMeta = data ? {
+          updatedAt: data.updated_at,
+          deviceId: data.device_id,
+          version: data.app_state && data.app_state.version
+        } : null;
+
+        const relation = compareCloudToLocal(data);
+        if (data && relation === 'newer') {
+          if (cloudDirty) {
+            setAccountStatus('CLOUD NEWER - LOCAL UNSAVED', 'warn');
+          } else {
+            const applied = data.app_state?.snapshotType === 'fullApp'
+              ? applyCloudSnapshot(data.app_state, { fromCloudSync: true })
+              : applyCurrentPinSnapshot(data.app_state, { fromCloudSync: true });
+            if (applied) {
+              setCloudLastSyncAt(data.updated_at);
+              setCloudDirty(false);
+              setAccountStatus('CLOUD UPDATE LOADED', 'ok');
+            }
+          }
+        } else if (data && relation === 'unknown' && !cloudDirty) {
+          setAccountStatus('CLOUD SNAPSHOT READY', 'warn');
+        }
+      } catch (error) {
+        console.error(error);
+        if (!silent) setAccountStatus(`CHECK ERROR: ${error.message}`, 'error');
+      } finally {
+        cloudPullCheckInFlight = false;
+        renderAccountPanel();
+      }
     }
 
     function readStoredJson(key, fallback = {}) {
@@ -1174,7 +1347,7 @@
     }
 
     function buildCloudSnapshot() {
-      persistCurrentPinState();
+      runWithoutCloudDirty(() => persistCurrentPinState());
 
       return {
         version: APP_VERSION,
@@ -1191,96 +1364,100 @@
       };
     }
 
-    function applyCurrentPinSnapshot(imported) {
+    function applyCurrentPinSnapshot(imported, options = {}) {
       if (!imported || typeof imported !== 'object') return false;
 
-      if (imported.weekData) weekData = imported.weekData;
-      if (imported.habitLabels) habitLabels = { ...habitLabels, ...imported.habitLabels };
+      return runWithoutCloudDirty(() => {
+        if (imported.weekData) weekData = imported.weekData;
+        if (imported.habitLabels) habitLabels = { ...habitLabels, ...imported.habitLabels };
 
-      if (imported.habitTypes) {
-        const incoming = { ...imported.habitTypes };
-        Object.keys(incoming).forEach(k => {
-          if (incoming[k] === CELL_TYPES.COUNTER) incoming[k] = CELL_TYPES.UNIT;
-        });
-        habitTypes = { ...habitTypes, ...incoming };
-      }
+        if (imported.habitTypes) {
+          const incoming = { ...imported.habitTypes };
+          Object.keys(incoming).forEach(k => {
+            if (incoming[k] === CELL_TYPES.COUNTER) incoming[k] = CELL_TYPES.UNIT;
+          });
+          habitTypes = { ...habitTypes, ...incoming };
+        }
 
-      if (imported.habitColors) habitColors = { ...habitColors, ...imported.habitColors };
-      if (imported.habitDescriptions) habitDescriptions = { ...habitDescriptions, ...imported.habitDescriptions };
+        if (imported.habitColors) habitColors = { ...habitColors, ...imported.habitColors };
+        if (imported.habitDescriptions) habitDescriptions = { ...habitDescriptions, ...imported.habitDescriptions };
 
-      if (imported.durationStates) durationStates = { ...durationStates, ...imported.durationStates };
-      if (imported.timerSettings) timerSettings = { ...timerSettings, ...imported.timerSettings };
-      if (imported.moneySettings) moneySettings = { ...moneySettings, ...imported.moneySettings };
+        if (imported.durationStates) durationStates = { ...durationStates, ...imported.durationStates };
+        if (imported.timerSettings) timerSettings = { ...timerSettings, ...imported.timerSettings };
+        if (imported.moneySettings) moneySettings = { ...moneySettings, ...imported.moneySettings };
 
-      if (imported.unitSettings) unitSettings = imported.unitSettings;
-      if (imported.valueFormats) valueFormats = imported.valueFormats;
-      if (imported.mathSettings) mathSettings = imported.mathSettings;
-      if (imported.cellFlags) cellFlags = normalizeCellFlags(imported.cellFlags);
-      if (imported.cellLayout) cellLayout = normalizeCellLayout(imported.cellLayout);
-      if (imported.cells) applyCellsSnapshot(imported.cells);
-      if (imported.themeSettings) themeSettings = imported.themeSettings;
-      if (imported.ledSettings) ledSettings = imported.ledSettings;
-      if (imported.ledStates) ledStates = imported.ledStates;
-      if (imported.currencySettings) currencySettings = imported.currencySettings;
-      if (imported.currencyCache) currencyCache = imported.currencyCache;
-      if (imported.counterLastUpdate) counterLastUpdate = imported.counterLastUpdate;
-      if (imported.pinNames) pinNames = { ...pinNames, ...imported.pinNames };
+        if (imported.unitSettings) unitSettings = imported.unitSettings;
+        if (imported.valueFormats) valueFormats = imported.valueFormats;
+        if (imported.mathSettings) mathSettings = imported.mathSettings;
+        if (imported.cellFlags) cellFlags = normalizeCellFlags(imported.cellFlags);
+        if (imported.cellLayout) cellLayout = normalizeCellLayout(imported.cellLayout);
+        if (imported.cells) applyCellsSnapshot(imported.cells);
+        if (imported.themeSettings) themeSettings = imported.themeSettings;
+        if (imported.ledSettings) ledSettings = imported.ledSettings;
+        if (imported.ledStates) ledStates = imported.ledStates;
+        if (imported.currencySettings) currencySettings = imported.currencySettings;
+        if (imported.currencyCache) currencyCache = imported.currencyCache;
+        if (imported.counterLastUpdate) counterLastUpdate = imported.counterLastUpdate;
+        if (imported.pinNames) pinNames = { ...pinNames, ...imported.pinNames };
 
-      persistCurrentPinState();
-      reloadCurrentPinState();
-      return true;
+        persistCurrentPinState();
+        reloadCurrentPinState();
+        return true;
+      });
     }
 
-    function applyCloudSnapshot(snapshot) {
+    function applyCloudSnapshot(snapshot, options = {}) {
       if (!snapshot || snapshot.snapshotType !== 'fullApp' || !Array.isArray(snapshot.pinData)) {
         return false;
       }
 
-      snapshot.pinData.forEach(pinSnapshot => {
-        const pin = normalizeInt(pinSnapshot.pin, 0, 0, PIN_COUNT - 1);
-        PER_PIN_SYNC_FIELDS.forEach(field => {
-          localStorage.removeItem(`${field.key}_pin${pin}`);
-          if (pinSnapshot[field.prop] !== undefined) {
-            let value = pinSnapshot[field.prop];
-            if (field.prop === 'habitTypes') {
-              value = { ...value };
-              Object.keys(value).forEach(k => {
-                if (value[k] === CELL_TYPES.COUNTER) value[k] = CELL_TYPES.UNIT;
-              });
+      return runWithoutCloudDirty(() => {
+        snapshot.pinData.forEach(pinSnapshot => {
+          const pin = normalizeInt(pinSnapshot.pin, 0, 0, PIN_COUNT - 1);
+          PER_PIN_SYNC_FIELDS.forEach(field => {
+            localStorage.removeItem(`${field.key}_pin${pin}`);
+            if (pinSnapshot[field.prop] !== undefined) {
+              let value = pinSnapshot[field.prop];
+              if (field.prop === 'habitTypes') {
+                value = { ...value };
+                Object.keys(value).forEach(k => {
+                  if (value[k] === CELL_TYPES.COUNTER) value[k] = CELL_TYPES.UNIT;
+                });
+              }
+              if (field.prop === 'cellFlags') value = normalizeCellFlags(value);
+              if (field.prop === 'cellLayout') value = normalizeCellLayout(value);
+              writeStoredJson(`${field.key}_pin${pin}`, value);
             }
-            if (field.prop === 'cellFlags') value = normalizeCellFlags(value);
-            if (field.prop === 'cellLayout') value = normalizeCellLayout(value);
-            writeStoredJson(`${field.key}_pin${pin}`, value);
-          }
+          });
         });
+
+        if (snapshot.pinNames && typeof snapshot.pinNames === 'object') {
+          pinNames = snapshot.pinNames;
+          savePinNames();
+        }
+
+        if (snapshot.currencyCache && typeof snapshot.currencyCache === 'object') {
+          currencyCache = snapshot.currencyCache;
+          saveCurrencyCache();
+        }
+
+        currentPin = normalizeInt(snapshot.currentPin, currentPin, 0, PIN_COUNT - 1);
+        currentView = Object.values(VIEW_MODES).includes(snapshot.currentView)
+          ? snapshot.currentView
+          : VIEW_MODES.TRACK;
+        saveViewMode();
+
+        document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
+        const activePin = document.getElementById(`pin${currentPin}`);
+        if (activePin) activePin.classList.add('active');
+        const grid = document.getElementById('habitsGrid');
+        if (grid) grid.setAttribute('data-pin', currentPin);
+        const layoutGrid = document.getElementById('layoutGrid');
+        if (layoutGrid) layoutGrid.setAttribute('data-pin', currentPin);
+
+        reloadCurrentPinState();
+        return true;
       });
-
-      if (snapshot.pinNames && typeof snapshot.pinNames === 'object') {
-        pinNames = snapshot.pinNames;
-        savePinNames();
-      }
-
-      if (snapshot.currencyCache && typeof snapshot.currencyCache === 'object') {
-        currencyCache = snapshot.currencyCache;
-        saveCurrencyCache();
-      }
-
-      currentPin = normalizeInt(snapshot.currentPin, currentPin, 0, PIN_COUNT - 1);
-      currentView = Object.values(VIEW_MODES).includes(snapshot.currentView)
-        ? snapshot.currentView
-        : VIEW_MODES.TRACK;
-      saveViewMode();
-
-      document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
-      const activePin = document.getElementById(`pin${currentPin}`);
-      if (activePin) activePin.classList.add('active');
-      const grid = document.getElementById('habitsGrid');
-      if (grid) grid.setAttribute('data-pin', currentPin);
-      const layoutGrid = document.getElementById('layoutGrid');
-      if (layoutGrid) layoutGrid.setAttribute('data-pin', currentPin);
-
-      reloadCurrentPinState();
-      return true;
     }
 
     function getSupabaseConfig() {
@@ -1383,6 +1560,8 @@
 
       const cloudMeta = document.getElementById('accountCloudMeta');
       if (cloudMeta) cloudMeta.textContent = formatCloudMeta(cloudSnapshotMeta);
+      const syncMeta = document.getElementById('accountSyncMeta');
+      if (syncMeta) syncMeta.textContent = getCloudSyncLabel();
 
       const needsConfig = !configured || !sdkLoaded;
       ['accountEmail', 'accountPassword', 'accountSignIn', 'accountSignUp'].forEach(id => {
@@ -1406,8 +1585,22 @@
         statusMessage = 'SUPABASE SDK OFFLINE';
         statusTone = 'error';
       } else if (signedIn) {
-        statusMessage = 'SIGNED IN';
-        statusTone = 'ok';
+        if (cloudBusy) {
+          statusMessage = 'SYNCING...';
+          statusTone = 'idle';
+        } else if (cloudDirty && cloudSyncTimer) {
+          statusMessage = 'UNSAVED - AUTO SYNC QUEUED';
+          statusTone = 'warn';
+        } else if (cloudDirty) {
+          statusMessage = navigator.onLine ? 'UNSAVED - SYNC WAITING' : 'OFFLINE - SYNC WAITING';
+          statusTone = 'warn';
+        } else if (cloudSnapshotMeta) {
+          statusMessage = 'SYNCED';
+          statusTone = 'ok';
+        } else {
+          statusMessage = 'SIGNED IN';
+          statusTone = 'ok';
+        }
       }
       applyAccountStatus(
         accountStatusOverride?.message || statusMessage,
@@ -1447,7 +1640,11 @@
         }
         renderAccountPanel();
         if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
-          setTimeout(() => refreshCloudSnapshotMeta(), 0);
+          setTimeout(async () => {
+            await refreshCloudSnapshotMeta();
+            await checkCloudForUpdates({ reason: 'auth' });
+            if (cloudDirty) scheduleCloudAutosync('auth');
+          }, 0);
         }
       });
       supabaseAuthSubscription = data && data.subscription ? data.subscription : null;
@@ -1519,7 +1716,11 @@
         accountSession = data.session;
         document.getElementById('accountPassword').value = '';
         await refreshCloudSnapshotMeta();
-        setAccountStatus('SIGNED IN', 'ok');
+        await checkCloudForUpdates({ reason: 'sign in', silent: false });
+        if (cloudDirty) scheduleCloudAutosync('sign in');
+        if (!accountStatusOverride || accountStatusOverride.message === 'SIGNING IN...') {
+          setAccountStatus(cloudSnapshotMeta ? 'SYNCED' : 'SIGNED IN', 'ok');
+        }
       } catch (error) {
         console.error(error);
         setAccountStatus(`SIGN IN ERROR: ${error.message}`, 'error');
@@ -1558,7 +1759,11 @@
         document.getElementById('accountPassword').value = '';
         if (accountSession) {
           await refreshCloudSnapshotMeta();
-          setAccountStatus('ACCOUNT READY', 'ok');
+          await checkCloudForUpdates({ reason: 'sign up', silent: false });
+          if (cloudDirty) scheduleCloudAutosync('sign up');
+          if (!accountStatusOverride || accountStatusOverride.message === 'CREATING ACCOUNT...') {
+            setAccountStatus(cloudSnapshotMeta ? 'SYNCED' : 'ACCOUNT READY', 'ok');
+          }
         } else {
           setAccountStatus('CHECK EMAIL TO CONFIRM', 'warn');
         }
@@ -1633,7 +1838,8 @@
       }
     }
 
-    async function uploadCloudSnapshot() {
+    async function uploadCloudSnapshot(options = {}) {
+      const automatic = Boolean(options.automatic);
       if (!ensureSupabaseClient()) {
         renderAccountPanel();
         return;
@@ -1647,7 +1853,7 @@
 
       cloudBusy = true;
       renderAccountPanel();
-      setAccountStatus('UPLOADING SNAPSHOT...', 'idle');
+      setAccountStatus(automatic ? 'AUTO SYNCING...' : 'UPLOADING SNAPSHOT...', 'idle');
 
       try {
         const config = getSupabaseConfig();
@@ -1670,12 +1876,23 @@
           deviceId: data?.device_id || getSupabaseDeviceId(),
           version: APP_VERSION
         };
-        setAccountStatus('CLOUD SNAPSHOT UPDATED', 'ok');
+        setCloudLastSyncAt(cloudSnapshotMeta.updatedAt);
+        setCloudDirty(false);
+        setAccountStatus(automatic ? 'AUTO SYNCED' : 'CLOUD SNAPSHOT UPDATED', 'ok');
       } catch (error) {
         console.error(error);
-        setAccountStatus(`UPLOAD ERROR: ${error.message}`, 'error');
+        if (automatic) {
+          cloudDirty = true;
+          cloudDirtyAt = Date.now();
+          localStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY, 'true');
+          localStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY_AT, String(cloudDirtyAt));
+          setAccountStatus(`AUTO SYNC ERROR: ${error.message}`, 'error');
+        } else {
+          setAccountStatus(`UPLOAD ERROR: ${error.message}`, 'error');
+        }
       } finally {
         cloudBusy = false;
+        if (automatic && cloudDirty) scheduleCloudAutosync('autosync retry');
         renderAccountPanel();
       }
     }
@@ -1714,6 +1931,8 @@
           deviceId: row.device_id,
           version: row.app_state.version
         };
+        setCloudLastSyncAt(row.updated_at);
+        setCloudDirty(false);
         setAccountStatus('CLOUD SNAPSHOT LOADED', 'ok');
       } catch (error) {
         console.error(error);
@@ -1766,6 +1985,7 @@ function applyTheme() {
     function saveCounterLastUpdate() {
       const key = `${STORAGE_KEYS.COUNTER_LAST_UPDATE}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(counterLastUpdate));
+      markCloudDirty('counter last update');
     }
 
 
@@ -1779,6 +1999,7 @@ function applyTheme() {
 
     function savePinNames() {
       localStorage.setItem(STORAGE_KEYS.PIN_NAMES, JSON.stringify(pinNames));
+      markCloudDirty('pin names');
     }
 
     function getDefaultPinName(index) {
@@ -3936,9 +4157,11 @@ function importData() {
             if (imported.snapshotType === 'fullApp') {
               const ok = applyCloudSnapshot(imported);
               if (!ok) throw new Error('Unsupported full app snapshot');
+              markCloudDirty('file import');
               alert('Full app snapshot imported successfully');
             } else {
               applyCurrentPinSnapshot(imported);
+              markCloudDirty('file import');
               alert('Data imported successfully');
             }
           } catch (err) {
@@ -4040,6 +4263,7 @@ function importData() {
       renderLayoutEditor();
       updateHeader();
       applyPinNamesToUI();
+      markCloudDirty('reset pin');
     }
 
     // ===== PIN SWITCH =====
@@ -4615,30 +4839,33 @@ function openInfoModal() {
       // Enable CSS :active selector on iOS devices
       document.addEventListener('touchstart', () => {}, { passive: true });
 
-      loadWeekData();
-      loadLabels();
-      loadTypes();
-      loadColors();
-      loadDescriptions();
-      loadDurationStates();
-      loadTimerSettings();
-      loadTimerStates();
-      loadMoneySettings();
-      loadUnitSettings();
-      loadValueFormats();
-      loadMathSettings();
-      loadCellFlags();
-      loadCellLayout();
-      loadLedSettings();
-      loadLedStates();
-      loadCurrencySettings();
-      loadCurrencyCache();
-      loadThemeSettings();
-      loadViewMode();
-      applyTheme();
-      loadCounterLastUpdate();
-      loadPinNames();
-      syncPinsFromState();
+      loadCloudSyncState();
+      runWithoutCloudDirty(() => {
+        loadWeekData();
+        loadLabels();
+        loadTypes();
+        loadColors();
+        loadDescriptions();
+        loadDurationStates();
+        loadTimerSettings();
+        loadTimerStates();
+        loadMoneySettings();
+        loadUnitSettings();
+        loadValueFormats();
+        loadMathSettings();
+        loadCellFlags();
+        loadCellLayout();
+        loadLedSettings();
+        loadLedStates();
+        loadCurrencySettings();
+        loadCurrencyCache();
+        loadThemeSettings();
+        loadViewMode();
+        applyTheme();
+        loadCounterLastUpdate();
+        loadPinNames();
+        syncPinsFromState();
+      });
       
       // Check if week changed - reset duration states for new week
       const lastWeekKey = localStorage.getItem('trckng_last_week_key');
@@ -4649,7 +4876,7 @@ function openInfoModal() {
       }
       localStorage.setItem('trckng_last_week_key', currentWeekKey);
       
-      ensureWeekExists();
+      runWithoutCloudDirty(() => ensureWeekExists());
 
       renderHabits();
       renderLayoutEditor();
@@ -4886,7 +5113,23 @@ function openInfoModal() {
       updateCellDiagonalAngle();
       window.addEventListener('resize', updateCellDiagonalAngle);
       window.addEventListener('trckng-supabase-sdk-loaded', () => setupSupabaseAccount(true));
+      window.addEventListener('online', () => {
+        accountStatusOverride = null;
+        if (cloudDirty) scheduleCloudAutosync('online');
+        checkCloudForUpdates({ reason: 'online' });
+      });
+      window.addEventListener('focus', () => {
+        checkCloudForUpdates({ reason: 'focus' });
+        if (cloudDirty) scheduleCloudAutosync('focus');
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          checkCloudForUpdates({ reason: 'visible' });
+          if (cloudDirty) scheduleCloudAutosync('visible');
+        }
+      });
       setupSupabaseAccount();
+      if (cloudDirty) scheduleCloudAutosync('startup');
 
     }
 

@@ -1,6 +1,6 @@
 # Supabase Setup for TRCKNG SSTM
 
-TRCKNG SSTM v1.30.1 uses Supabase as an optional cloud layer. The app stays local-first: without Supabase config it continues to store everything in browser `localStorage`.
+TRCKNG SSTM v1.31 uses Supabase as an optional cloud layer. The app stays local-first: without Supabase config it continues to store everything in browser `localStorage`.
 
 ## 1. Create Project
 
@@ -11,7 +11,7 @@ This project is currently configured in `app-config.js` with:
 
 You can still override these values in the app: open `ACCOUNT`, paste different values, and press `SAVE CONFIG`.
 
-The Supabase dashboard may suggest `npm install @supabase/supabase-js @supabase/ssr` for Next.js. TRCKNG SSTM v1.30.1 is still a static app, so it uses the browser CDN build of `@supabase/supabase-js@2`; `@supabase/ssr` is not needed until the project moves to a server-rendered framework.
+The Supabase dashboard may suggest `npm install @supabase/supabase-js @supabase/ssr` for Next.js. TRCKNG SSTM v1.31 is still a static app, so it uses the browser CDN build of `@supabase/supabase-js@2`; `@supabase/ssr` is not needed until the project moves to a server-rendered framework.
 
 If email confirmation is enabled, open Supabase `Authentication -> URL Configuration` and add the app URLs you use as allowed redirect URLs, for example:
 
@@ -73,4 +73,4 @@ grant select, insert, update, delete on table public.trckng_snapshots to authent
 2. Press `UPLOAD THIS DEVICE` on the device that has the correct local data.
 3. On another device, sign in and press `LOAD CLOUD`.
 
-v1.30.1 intentionally uses manual sync only. Autosync and conflict handling are planned for the next phase.
+v1.31 keeps manual sync controls, but signed-in local changes are now queued for debounced autosync. Conflict handling remains conservative: cloud updates are not allowed to silently overwrite local unsaved changes.

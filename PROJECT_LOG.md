@@ -81,3 +81,12 @@
 - Confirmed GitHub Pages is already serving `https://comp1mov.github.io/TRCKNG-SSTM/`.
 - Decision: publish the current static v1.30.1 app by fast-forwarding `main` to the stabilized branch.
 - Added the public app URL to `README.md`.
+
+### Phase 5A Safe Autosync
+
+- Added dirty-state tracking for local data changes across counters, cell settings, layout, themes, PIN names, import, and reset.
+- Added debounced automatic cloud upload after local changes instead of syncing on every click.
+- Added cloud update checks on sign-in, browser focus, visibility return, and network recovery.
+- Kept manual `UPLOAD THIS DEVICE` and `LOAD CLOUD` controls as recovery actions.
+- Added Account UI sync state (`OFF`, `SIGN IN`, `QUEUED`, `UNSAVED`, `SYNCING`, `SYNCED`).
+- Bumped app/export/cache version to `v1.31`.
