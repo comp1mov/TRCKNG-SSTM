@@ -32,3 +32,12 @@
 - Decision: follow the original v2 roadmap and move next into the modular grid architecture.
 - Phase 1.5 is treated as a bridge: `TRACK/HISTORY` views and `cellFlags` stay, but deeper cell behavior waits for the `cells` + `cellLayout` model.
 - Next target: introduce an internal schema adapter so the app can keep current localStorage data while rendering from layout-driven cells.
+
+### Phase 2 Foundation Started
+
+- Added `CELL_LAYOUT` storage with per-PIN row, col, rowSpan, colSpan, order, and visibility.
+- Added internal `cells` snapshots derived from the existing localStorage-backed settings.
+- Added internal `pins` model for future expansion beyond the current three visible PINs.
+- Updated `renderHabits()` and the edit list to use layout-driven cells instead of directly iterating `HABITS`.
+- Export/import/reset now include v2 schema data while preserving legacy fields for compatibility.
+- Bumped app/export/cache version to `v1.27`.

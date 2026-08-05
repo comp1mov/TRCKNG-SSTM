@@ -39,6 +39,7 @@
       CURRENCY_SETTINGS: 'trckng_sstm_currency_settings',
       CURRENCY_CACHE: 'trckng_sstm_currency_cache',
       CELL_FLAGS: 'trckng_sstm_cell_flags',
+      CELL_LAYOUT: 'trckng_sstm_cell_layout',
       VIEW_MODE: 'trckng_sstm_view_mode'
     };
 
@@ -58,6 +59,8 @@
     };
 
     const WEEKS_TO_KEEP = 52;
+    const PIN_COUNT = 3;
+    const GRID_COLUMNS = 3;
     const HABITS = ['cell01', 'cell02', 'cell03', 'cell04', 'cell05', 'cell06', 'cell07', 'cell08', 'cell09'];
 
     // Default configuration
@@ -97,6 +100,9 @@
     let mathSettings = {};
     let themeSettings = {};
     let cellFlags = {};
+    let cellLayout = {};
+    let cells = [];
+    let pins = [];
 
     let timerStates = {}; // Runtime state (iterations, running status)
     let moneySettings = {}; // Money configs per habit
@@ -586,6 +592,199 @@
       return flags[flagName];
     }
 
+    function normalizeInt(value, fallback, min, max = Number.MAX_SAFE_INTEGER) {
+      const parsed = Number.parseInt(value, 10);
+      if (!Number.isFinite(parsed)) return fallback;
+      return Math.min(Math.max(parsed, min), max);
+    }
+
+    function getDefaultCellLayout(index) {
+      return {
+        row: Math.floor(index / GRID_COLUMNS) + 1,
+        col: (index % GRID_COLUMNS) + 1,
+        rowSpan: 1,
+        colSpan: 1,
+        order: index,
+        visible: true
+      };
+    }
+
+    function normalizeCellLayout(rawLayout) {
+      const normalized = {};
+      const source = rawLayout && typeof rawLayout === 'object' ? rawLayout : {};
+
+      HABITS.forEach((habit, index) => {
+        const fallback = getDefaultCellLayout(index);
+        const incoming = source[habit] && typeof source[habit] === 'object' ? source[habit] : {};
+        const rowSpan = normalizeInt(incoming.rowSpan, fallback.rowSpan, 1, 4);
+        const colSpan = normalizeInt(incoming.colSpan, fallback.colSpan, 1, GRID_COLUMNS);
+        const maxCol = Math.max(1, GRID_COLUMNS - colSpan + 1);
+
+        normalized[habit] = {
+          row: normalizeInt(incoming.row, fallback.row, 1),
+          col: normalizeInt(incoming.col, fallback.col, 1, maxCol),
+          rowSpan,
+          colSpan,
+          order: normalizeInt(incoming.order, fallback.order, 0),
+          visible: incoming.visible !== false
+        };
+      });
+
+      return normalized;
+    }
+
+    function loadCellLayout() {
+      const key = `${STORAGE_KEYS.CELL_LAYOUT}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (!stored) {
+        cellLayout = normalizeCellLayout({});
+        saveCellLayout();
+        return;
+      }
+
+      try {
+        cellLayout = normalizeCellLayout(JSON.parse(stored));
+      } catch (e) {
+        cellLayout = normalizeCellLayout({});
+        saveCellLayout();
+      }
+    }
+
+    function saveCellLayout() {
+      const key = `${STORAGE_KEYS.CELL_LAYOUT}_pin${currentPin}`;
+      cellLayout = normalizeCellLayout(cellLayout);
+      localStorage.setItem(key, JSON.stringify(cellLayout));
+    }
+
+    function getCellLayout(habit) {
+      if (!cellLayout[habit]) {
+        const index = HABITS.indexOf(habit);
+        cellLayout[habit] = getDefaultCellLayout(index >= 0 ? index : 0);
+      }
+      return cellLayout[habit];
+    }
+
+    function getCellSettingsSnapshot(habit) {
+      return {
+        unit: unitSettings[habit] || null,
+        valueFormat: valueFormats[habit] || 'raw',
+        math: mathSettings[habit] || null,
+        duration: durationStates[habit] || null,
+        timer: timerSettings[habit] || null,
+        timerState: timerStates[habit] || null,
+        money: moneySettings[habit] || null,
+        led: ledSettings[habit] || null,
+        ledState: ledStates[habit] || null,
+        currency: currencySettings[habit] || null,
+        counterLastUpdate: counterLastUpdate[habit] || null
+      };
+    }
+
+    function buildCellDefinition(habit, index) {
+      const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+
+      return {
+        id: habit,
+        pin: currentPin,
+        slot: index + 1,
+        label: habitLabels[habit] || '',
+        type,
+        color: habitColors[habit] || '#ffffff',
+        description: habitDescriptions[habit] || '',
+        flags: { ...getCellFlags(habit) },
+        layout: { ...getCellLayout(habit) },
+        settings: getCellSettingsSnapshot(habit)
+      };
+    }
+
+    function compareCellsByLayout(a, b) {
+      const aLayout = a.layout || getDefaultCellLayout(a.slot - 1);
+      const bLayout = b.layout || getDefaultCellLayout(b.slot - 1);
+      return (aLayout.order - bLayout.order) ||
+             (aLayout.row - bLayout.row) ||
+             (aLayout.col - bLayout.col) ||
+             (a.slot - b.slot);
+    }
+
+    function syncCellsFromLegacyState() {
+      cells = HABITS.map((habit, index) => buildCellDefinition(habit, index));
+      return cells;
+    }
+
+    function getRenderableCells() {
+      return syncCellsFromLegacyState()
+        .filter(cell => cell.layout.visible !== false)
+        .sort(compareCellsByLayout);
+    }
+
+    function getCellsSnapshot() {
+      return syncCellsFromLegacyState().map(cell => ({
+        ...cell,
+        flags: { ...cell.flags },
+        layout: { ...cell.layout },
+        settings: { ...cell.settings }
+      }));
+    }
+
+    function getLayoutColumnCount(renderCells) {
+      return Math.max(
+        GRID_COLUMNS,
+        ...renderCells.map(cell => {
+          const layout = cell.layout || getDefaultCellLayout(cell.slot - 1);
+          return layout.col + layout.colSpan - 1;
+        })
+      );
+    }
+
+    function applyCellLayoutToElement(el, layout) {
+      if (!el || !layout) return;
+      el.style.gridColumn = `${layout.col} / span ${layout.colSpan}`;
+      el.style.gridRow = `${layout.row} / span ${layout.rowSpan}`;
+      el.dataset.colSpan = String(layout.colSpan);
+      el.dataset.rowSpan = String(layout.rowSpan);
+    }
+
+    function applyCellsSnapshot(importedCells) {
+      if (!Array.isArray(importedCells)) return;
+
+      importedCells.forEach(cell => {
+        if (!cell || typeof cell !== 'object' || !HABITS.includes(cell.id)) return;
+
+        if ('label' in cell) habitLabels[cell.id] = String(cell.label || '');
+        if ('type' in cell) {
+          habitTypes[cell.id] = cell.type === CELL_TYPES.COUNTER ? CELL_TYPES.UNIT : String(cell.type || CELL_TYPES.UNIT);
+        }
+        if ('color' in cell) habitColors[cell.id] = String(cell.color || '#ffffff');
+        if ('description' in cell) habitDescriptions[cell.id] = String(cell.description || '');
+        if (cell.flags && typeof cell.flags === 'object') {
+          cellFlags[cell.id] = { ...DEFAULT_CELL_FLAGS, ...cell.flags };
+        }
+        if (cell.layout && typeof cell.layout === 'object') {
+          cellLayout[cell.id] = cell.layout;
+        }
+      });
+
+      cellFlags = normalizeCellFlags(cellFlags);
+      cellLayout = normalizeCellLayout(cellLayout);
+      syncCellsFromLegacyState();
+    }
+
+    function syncPinsFromState() {
+      pins = Array.from({ length: PIN_COUNT }, (_, index) => {
+        const raw = (pinNames && pinNames[index] != null) ? String(pinNames[index]) : '';
+        const name = raw.trim() || getDefaultPinName(index);
+        return {
+          id: `pin${index}`,
+          index,
+          name,
+          isActive: index === currentPin
+        };
+      });
+
+      return pins;
+    }
+
     function loadLedSettings() {
       const key = `${STORAGE_KEYS.LED_SETTINGS}_pin${currentPin}`;
       const stored = localStorage.getItem(key);
@@ -739,10 +938,12 @@ function applyTheme() {
     }
 
     function applyPinNamesToUI() {
-      for (let i = 0; i < 3; i++) {
+      syncPinsFromState();
+
+      for (let i = 0; i < PIN_COUNT; i++) {
         const btn = document.getElementById(`pin${i}`);
-        const raw = (pinNames && pinNames[i] != null) ? String(pinNames[i]) : '';
-        const name = raw.trim() || getDefaultPinName(i);
+        const pin = pins[i];
+        const name = pin ? pin.name : getDefaultPinName(i);
         if (btn) btn.textContent = name;
       }
 
@@ -1979,19 +2180,25 @@ function scheduleMathRefresh() {
     function renderHabits() {
       const grid = document.getElementById('habitsGrid');
       grid.innerHTML = '';
+      const renderCells = getRenderableCells();
+      grid.dataset.layout = 'cell-layout';
+      grid.style.setProperty('--layout-columns', String(getLayoutColumnCount(renderCells)));
 
-      HABITS.forEach(habit => {
-        const label = habitLabels[habit];
+      renderCells.forEach(cell => {
+        const habit = cell.id;
+        const label = cell.label;
         const isActive = label?.trim();
-        const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
+        const typeRaw = cell.type || habitTypes[habit] || CELL_TYPES.UNIT;
       const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
-        const color = habitColors[habit] || '#ffffff';
+        const color = cell.color || habitColors[habit] || '#ffffff';
         const state = durationStates[habit] || {};
 
         const btn = document.createElement('button');
         btn.className = 'btn-habit';
         btn.id = `btn-${habit}`;
+        btn.dataset.cellId = habit;
         btn.dataset.type = type.toLowerCase();
+        applyCellLayoutToElement(btn, cell.layout);
 
         if (!isActive) {
           btn.classList.add('inactive');
@@ -2733,9 +2940,13 @@ function scheduleMathRefresh() {
       });
 
       const exportObj = {
-        version: '1.26',
+        version: '1.27',
+        schemaVersion: 2,
         pin: currentPin,
         exportedAt: new Date().toISOString(),
+
+        cells: getCellsSnapshot(),
+        cellLayout: normalizeCellLayout(cellLayout),
 
         weekData,
         habitLabels,
@@ -2809,6 +3020,8 @@ function importData() {
             if (imported.valueFormats) valueFormats = imported.valueFormats;
             if (imported.mathSettings) mathSettings = imported.mathSettings;
             if (imported.cellFlags) cellFlags = normalizeCellFlags(imported.cellFlags);
+            if (imported.cellLayout) cellLayout = normalizeCellLayout(imported.cellLayout);
+            if (imported.cells) applyCellsSnapshot(imported.cells);
             if (imported.themeSettings) themeSettings = imported.themeSettings;
             if (imported.ledSettings) ledSettings = imported.ledSettings;
             if (imported.ledStates) ledStates = imported.ledStates;
@@ -2830,6 +3043,7 @@ function importData() {
             saveValueFormats();
             saveMathSettings();
             saveCellFlags();
+            saveCellLayout();
             saveThemeSettings();
             saveLedSettings();
             saveLedStates();
@@ -2882,6 +3096,7 @@ function importData() {
         STORAGE_KEYS.VALUE_FORMATS,
         STORAGE_KEYS.MATH_SETTINGS,
         STORAGE_KEYS.CELL_FLAGS,
+        STORAGE_KEYS.CELL_LAYOUT,
         STORAGE_KEYS.THEME,
         STORAGE_KEYS.LED_SETTINGS,
         STORAGE_KEYS.LED_STATES,
@@ -2898,6 +3113,7 @@ function importData() {
       const emptyTypes = {};
       const emptyColors = {};
       const emptyFlags = normalizeCellFlags({});
+      const emptyLayout = normalizeCellLayout({});
 
       HABITS.forEach(habit => {
         emptyLabels[habit] = '';
@@ -2911,6 +3127,7 @@ function importData() {
       localStorage.setItem(`${STORAGE_KEYS.TYPES}${suffix}`, JSON.stringify(emptyTypes));
       localStorage.setItem(`${STORAGE_KEYS.COLORS}${suffix}`, JSON.stringify(emptyColors));
       localStorage.setItem(`${STORAGE_KEYS.CELL_FLAGS}${suffix}`, JSON.stringify(emptyFlags));
+      localStorage.setItem(`${STORAGE_KEYS.CELL_LAYOUT}${suffix}`, JSON.stringify(emptyLayout));
 
       // Reload state for current pin
       loadWeekData();
@@ -2926,6 +3143,7 @@ function importData() {
       loadValueFormats();
       loadMathSettings();
       loadCellFlags();
+      loadCellLayout();
       loadLedSettings();
       loadLedStates();
       loadCurrencySettings();
@@ -2971,6 +3189,7 @@ function importData() {
       loadValueFormats();
       loadMathSettings();
       loadCellFlags();
+      loadCellLayout();
       loadLedSettings();
       loadLedStates();
       loadCurrencySettings();
@@ -2978,6 +3197,7 @@ function importData() {
       applyTheme();
       loadCounterLastUpdate();
       loadPinNames();
+      syncPinsFromState();
       currentWeekKey = getWeekKey();
       ensureWeekExists();
       renderHabits();
@@ -2992,17 +3212,19 @@ function importData() {
       const container = document.getElementById('editItemsContainer');
       container.innerHTML = '';
 
-      HABITS.forEach((habit, index) => {
-        const cellNum = String(index + 1).padStart(2, '0');
-        const label = habitLabels[habit] || '';
+      getRenderableCells().forEach(cell => {
+        const habit = cell.id;
+        const cellNum = String(cell.slot).padStart(2, '0');
+        const label = cell.label || '';
+        const size = `${cell.layout.colSpan}x${cell.layout.rowSpan}`;
 
         const item = document.createElement('button');
         item.className = 'edit-item';
         item.innerHTML = `
-          <div class="edit-item-label">CELL ${cellNum}</div>
+          <div class="edit-item-label">CELL ${cellNum} · ${size}</div>
           <div class="edit-item-name">${label || "-"}</div>
         `;
-        item.addEventListener('click', () => openCellEditModal(habit, index));
+        item.addEventListener('click', () => openCellEditModal(habit, cell.slot - 1));
         container.appendChild(item);
       });
 
@@ -3508,6 +3730,7 @@ function openInfoModal() {
       loadValueFormats();
       loadMathSettings();
       loadCellFlags();
+      loadCellLayout();
       loadLedSettings();
       loadLedStates();
       loadCurrencySettings();
@@ -3517,6 +3740,7 @@ function openInfoModal() {
       applyTheme();
       loadCounterLastUpdate();
       loadPinNames();
+      syncPinsFromState();
       
       // Check if week changed - reset duration states for new week
       const lastWeekKey = localStorage.getItem('trckng_last_week_key');

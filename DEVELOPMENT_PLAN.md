@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.26`.
+Current working app target: `v1.27`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -58,16 +58,16 @@ Interaction rules:
 
 ## Phase 2: Modular Grid Architecture
 
-Status: next
+Status: started
 
 Goal: replace the fixed `HABITS = cell01..cell09` mental model with a layout-driven cell system while keeping the current app usable after every step.
 
 Implementation order:
 
-1. Add schema adapters: keep existing localStorage keys working, but expose data internally as `cells`, `cellSettings`, `cellLayout`, and `pins`.
-2. Move storage helpers behind a small data access layer so renderers stop reading raw localStorage-shaped objects directly.
-3. Make `renderHabits()` render from ordered cell definitions and `cellLayout`, with the current 3x3 grid as the default layout.
-4. Add CSS Grid positioning with `grid-area`, starting with static saved positions.
+1. Done: add schema adapters that keep existing localStorage keys working while exposing `cells`, `cellLayout`, and `pins`.
+2. In progress: move storage helpers behind a small data access layer so renderers stop reading raw localStorage-shaped objects directly.
+3. Done: make `renderHabits()` render from ordered cell definitions and `cellLayout`, with the current 3x3 grid as the default layout.
+4. Done: add CSS Grid positioning with saved row/col/span defaults.
 5. Add `LAYOUT` or `EDIT LAYOUT` mode only after the renderer is layout-driven.
 6. Add drag/resize controls for 1x1, 2x1, 1x2, and 2x2 cells.
 7. Revisit history/card/flag UI after the modular grid is stable.
