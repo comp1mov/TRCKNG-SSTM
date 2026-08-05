@@ -52,6 +52,16 @@ Use `EXPORT` before major changes or before clearing browser data. Import restor
 
 See `SUPABASE_SETUP.md`. The current Supabase project URL and publishable key are already in `app-config.js`; the password is never stored by this app.
 
+## Public App
+
+Current GitHub Pages URL:
+
+```text
+https://comp1mov.github.io/TRCKNG-SSTM/
+```
+
+The public build uses the `/TRCKNG-SSTM/` base path already configured in `manifest.json` and `service-worker.js`.
+
 ## Development Roadmap
 
 See `C:\Users\gregt\Desktop\strategic_roadmap.md`.

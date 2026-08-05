@@ -75,3 +75,9 @@
 - Kept the app static/CDN-based instead of adding Next.js-only `@supabase/ssr` dependencies.
 - Updated snapshot RLS setup to use `(select auth.uid()) = user_id` policies.
 - Bumped app/export/cache version to `v1.30.1`.
+
+### Public App Deployment
+
+- Confirmed GitHub Pages is already serving `https://comp1mov.github.io/TRCKNG-SSTM/`.
+- Decision: publish the current static v1.30.1 app by fast-forwarding `main` to the stabilized branch.
+- Added the public app URL to `README.md`.
