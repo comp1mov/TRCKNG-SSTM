@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.27`.
+Current working app target: `v1.28`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -68,9 +68,10 @@ Implementation order:
 2. In progress: move storage helpers behind a small data access layer so renderers stop reading raw localStorage-shaped objects directly.
 3. Done: make `renderHabits()` render from ordered cell definitions and `cellLayout`, with the current 3x3 grid as the default layout.
 4. Done: add CSS Grid positioning with saved row/col/span defaults.
-5. Add `LAYOUT` or `EDIT LAYOUT` mode only after the renderer is layout-driven.
-6. Add drag/resize controls for 1x1, 2x1, 1x2, and 2x2 cells.
-7. Revisit history/card/flag UI after the modular grid is stable.
+5. Done: add static size presets for 1x1, 2x1, 1x2, and 2x2 cells with ordered reflow.
+6. Add `LAYOUT` or `EDIT LAYOUT` mode for position/reorder controls.
+7. Add drag/resize controls after the manual layout mode exists.
+8. Revisit history/card/flag UI after the modular grid is stable.
 
 ## Next Phases
 

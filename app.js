@@ -61,6 +61,12 @@
     const WEEKS_TO_KEEP = 52;
     const PIN_COUNT = 3;
     const GRID_COLUMNS = 3;
+    const LAYOUT_SIZE_PRESETS = {
+      '1x1': { colSpan: 1, rowSpan: 1 },
+      '2x1': { colSpan: 2, rowSpan: 1 },
+      '1x2': { colSpan: 1, rowSpan: 2 },
+      '2x2': { colSpan: 2, rowSpan: 2 }
+    };
     const HABITS = ['cell01', 'cell02', 'cell03', 'cell04', 'cell05', 'cell06', 'cell07', 'cell08', 'cell09'];
 
     // Default configuration
@@ -609,6 +615,17 @@
       };
     }
 
+    function getLayoutSizePreset(sizeId) {
+      return LAYOUT_SIZE_PRESETS[sizeId] || LAYOUT_SIZE_PRESETS['1x1'];
+    }
+
+    function getLayoutSizeId(layout) {
+      const colSpan = normalizeInt(layout?.colSpan, 1, 1, GRID_COLUMNS);
+      const rowSpan = normalizeInt(layout?.rowSpan, 1, 1, 4);
+      const sizeId = `${colSpan}x${rowSpan}`;
+      return LAYOUT_SIZE_PRESETS[sizeId] ? sizeId : '1x1';
+    }
+
     function normalizeCellLayout(rawLayout) {
       const normalized = {};
       const source = rawLayout && typeof rawLayout === 'object' ? rawLayout : {};
@@ -633,6 +650,68 @@
       return normalized;
     }
 
+    function canPlaceCellAt(occupied, row, col, rowSpan, colSpan) {
+      if (col < 1 || col + colSpan - 1 > GRID_COLUMNS) return false;
+
+      for (let r = row; r < row + rowSpan; r++) {
+        for (let c = col; c < col + colSpan; c++) {
+          if (occupied.has(`${r}:${c}`)) return false;
+        }
+      }
+
+      return true;
+    }
+
+    function occupyLayoutCells(occupied, row, col, rowSpan, colSpan) {
+      for (let r = row; r < row + rowSpan; r++) {
+        for (let c = col; c < col + colSpan; c++) {
+          occupied.add(`${r}:${c}`);
+        }
+      }
+    }
+
+    function findAvailableLayoutSlot(occupied, rowSpan, colSpan) {
+      let row = 1;
+      while (row < 200) {
+        for (let col = 1; col <= GRID_COLUMNS - colSpan + 1; col++) {
+          if (canPlaceCellAt(occupied, row, col, rowSpan, colSpan)) {
+            return { row, col };
+          }
+        }
+        row++;
+      }
+
+      return { row, col: 1 };
+    }
+
+    function packCellLayoutByOrder(rawLayout) {
+      const normalized = normalizeCellLayout(rawLayout);
+      const occupied = new Set();
+      const packed = {};
+
+      HABITS
+        .map((habit, index) => ({ habit, index, layout: normalized[habit] }))
+        .sort((a, b) => (a.layout.order - b.layout.order) || (a.index - b.index))
+        .forEach((entry, order) => {
+          const layout = entry.layout;
+          if (layout.visible === false) {
+            packed[entry.habit] = { ...layout, order };
+            return;
+          }
+
+          const slot = findAvailableLayoutSlot(occupied, layout.rowSpan, layout.colSpan);
+          packed[entry.habit] = {
+            ...layout,
+            row: slot.row,
+            col: slot.col,
+            order
+          };
+          occupyLayoutCells(occupied, slot.row, slot.col, layout.rowSpan, layout.colSpan);
+        });
+
+      return normalizeCellLayout(packed);
+    }
+
     function loadCellLayout() {
       const key = `${STORAGE_KEYS.CELL_LAYOUT}_pin${currentPin}`;
       const stored = localStorage.getItem(key);
@@ -654,6 +733,18 @@
       const key = `${STORAGE_KEYS.CELL_LAYOUT}_pin${currentPin}`;
       cellLayout = normalizeCellLayout(cellLayout);
       localStorage.setItem(key, JSON.stringify(cellLayout));
+    }
+
+    function setCellLayoutSize(habit, sizeId) {
+      const preset = getLayoutSizePreset(sizeId);
+      const current = getCellLayout(habit);
+      cellLayout[habit] = {
+        ...current,
+        colSpan: preset.colSpan,
+        rowSpan: preset.rowSpan
+      };
+      cellLayout = packCellLayoutByOrder(cellLayout);
+      saveCellLayout();
     }
 
     function getCellLayout(habit) {
@@ -2940,7 +3031,7 @@ function scheduleMathRefresh() {
       });
 
       const exportObj = {
-        version: '1.27',
+        version: '1.28',
         schemaVersion: 2,
         pin: currentPin,
         exportedAt: new Date().toISOString(),
@@ -3224,6 +3315,7 @@ function importData() {
           <div class="edit-item-label">CELL ${cellNum} · ${size}</div>
           <div class="edit-item-name">${label || "-"}</div>
         `;
+        item.querySelector('.edit-item-label').textContent = `CELL ${cellNum} - ${size}`;
         item.addEventListener('click', () => openCellEditModal(habit, cell.slot - 1));
         container.appendChild(item);
       });
@@ -3244,6 +3336,12 @@ function openCellEditModal(habit, index) {
       document.getElementById('cellEditInput').value = habitLabels[habit] || '';
       document.getElementById('cellEditColor').value = habitColors[habit] || '#ffffff';
       document.getElementById('cellEditDescription').value = habitDescriptions[habit] || '';
+
+      const layout = getCellLayout(habit);
+      const layoutSize = getLayoutSizeId(layout);
+      document.querySelectorAll('#cellEditModal .type-btn[data-layout-size]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.layoutSize === layoutSize);
+      });
 
       const typeRaw = habitTypes[habit] || CELL_TYPES.UNIT;
       const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
@@ -3660,6 +3758,8 @@ function saveCellEdit() {
         saveCurrencySettings();
       }
 
+      const activeLayoutBtn = document.querySelector('#cellEditModal .type-btn.active[data-layout-size]');
+      setCellLayoutSize(editingHabit, activeLayoutBtn?.dataset.layoutSize || '1x1');
 
       closeCellEditModal();
       openEditModal();
@@ -3896,6 +3996,13 @@ function openInfoModal() {
             // Vibrate (Countdown)
             if (btn.dataset.vibrateCd) {
               document.querySelectorAll('#cellEditModal [data-vibrate-cd]').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              return;
+            }
+
+            // Layout size
+            if (btn.dataset.layoutSize) {
+              document.querySelectorAll('#cellEditModal .type-btn[data-layout-size]').forEach(b => b.classList.remove('active'));
               btn.classList.add('active');
               return;
             }

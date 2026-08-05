@@ -41,3 +41,10 @@
 - Updated `renderHabits()` and the edit list to use layout-driven cells instead of directly iterating `HABITS`.
 - Export/import/reset now include v2 schema data while preserving legacy fields for compatibility.
 - Bumped app/export/cache version to `v1.27`.
+
+### Phase 2a Size Presets
+
+- Added layout size presets in the cell editor: 1x1, 2x1, 1x2, and 2x2.
+- Added ordered layout packing so larger cells reflow the rest of the grid without overlap.
+- Saved preset changes to `cellLayout` and kept export/import/reset coverage.
+- Bumped app/export/cache version to `v1.28`.

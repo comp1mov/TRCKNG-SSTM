@@ -1,4 +1,4 @@
-# TRCKNG SSTM v1.27
+# TRCKNG SSTM v1.28
 
 Local-first modular tracking dashboard for weekly habits, timers, money, formulas, and small personal metrics.
 
@@ -21,6 +21,7 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, no backend, data 
 - Per-PIN labels, descriptions, colors, themes, timer settings, money settings, math settings, LED settings, and currency settings
 - TRACK/HISTORY views
 - Internal v2 `cells` + `cellLayout` adapter for the upcoming modular grid editor
+- Cell size presets: 1x1, 2x1, 1x2, and 2x2
 - JSON export/import for backups
 - PWA install support
 - Mobile fixes for iOS safe areas, double-tap zoom, and Safari active states
@@ -40,7 +41,7 @@ Main stored groups:
 
 ## Backup
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.27 settings.
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.28 settings.
 
 ## Development Roadmap
 
@@ -49,8 +50,8 @@ See `C:\Users\gregt\Desktop\strategic_roadmap.md`.
 Recommended next phase:
 
 1. Continue Phase 2 modular grid architecture.
-2. Add static saved positions and size presets.
-3. Add modular layout editor for variable-size cells.
+2. Add `EDIT LAYOUT` mode for reorder controls.
+3. Add drag/resize for variable-size cells.
 4. Add Goal Time.
 5. Add Supabase accounts and sync.
 
