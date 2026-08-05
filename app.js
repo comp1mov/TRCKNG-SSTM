@@ -1,10 +1,11 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.31.2';
+    const APP_VERSION = '1.31.3';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
+    const SIGNUP_UNLOCK_MS = 3000;
     const SUPABASE_DEFAULT_TABLE = 'trckng_snapshots';
 
     const CELL_TYPES = {
@@ -52,7 +53,8 @@
       SUPABASE_DEVICE_ID: 'trckng_sstm_supabase_device_id',
       CLOUD_DIRTY: 'trckng_sstm_cloud_dirty',
       CLOUD_DIRTY_AT: 'trckng_sstm_cloud_dirty_at',
-      CLOUD_LAST_SYNC_AT: 'trckng_sstm_cloud_last_sync_at'
+      CLOUD_LAST_SYNC_AT: 'trckng_sstm_cloud_last_sync_at',
+      SIGNUP_UNLOCKED: 'trckng_sstm_signup_unlocked'
     };
 
     const VIEW_MODES = {
@@ -171,6 +173,8 @@
     let lastCloudPullCheckAt = 0;
     let suppressCloudDirty = 0;
     let cloudConflictPending = false;
+    let signupUnlocked = false;
+    let signupUnlockTimer = null;
 
     // ===== COLOR PALETTE =====
     function generateColorPalette() {
@@ -1710,6 +1714,81 @@
       input.value = value || '';
     }
 
+    function syncAccountConfigToggle(configured) {
+      const body = document.getElementById('accountConfigBody');
+      const toggle = document.getElementById('accountConfigToggle');
+      if (!body || !toggle) return;
+
+      if (!configured) body.hidden = false;
+      const isOpen = !body.hidden;
+      toggle.textContent = isOpen ? 'HIDE CONFIG' : 'CONFIG SAVED';
+      toggle.setAttribute('aria-expanded', String(isOpen));
+    }
+
+    function setAccountConfigOpen(isOpen) {
+      const body = document.getElementById('accountConfigBody');
+      if (body) body.hidden = !isOpen;
+      syncAccountConfigToggle(hasSupabaseConfig());
+    }
+
+    function toggleAccountConfig() {
+      const body = document.getElementById('accountConfigBody');
+      if (!body) return;
+      const configured = hasSupabaseConfig();
+      setAccountConfigOpen(configured ? body.hidden : true);
+    }
+
+    function loadSignupUnlockState() {
+      try {
+        signupUnlocked = sessionStorage.getItem(STORAGE_KEYS.SIGNUP_UNLOCKED) === 'true';
+      } catch (e) {
+        signupUnlocked = false;
+      }
+    }
+
+    function setSignupUnlocked(isUnlocked) {
+      signupUnlocked = Boolean(isUnlocked);
+      try {
+        if (signupUnlocked) {
+          sessionStorage.setItem(STORAGE_KEYS.SIGNUP_UNLOCKED, 'true');
+        } else {
+          sessionStorage.removeItem(STORAGE_KEYS.SIGNUP_UNLOCKED);
+        }
+      } catch (e) {}
+      renderAccountPanel();
+    }
+
+    function unlockSignup() {
+      setSignupUnlocked(true);
+      setAccountStatus('SIGN UP UNLOCKED', 'ok');
+    }
+
+    function cancelSignupUnlockTimer() {
+      if (!signupUnlockTimer) return;
+      clearTimeout(signupUnlockTimer);
+      signupUnlockTimer = null;
+    }
+
+    function setupSignupUnlockGesture() {
+      const label = document.getElementById('accountEmailLabel');
+      if (!label) return;
+
+      const start = event => {
+        if (signupUnlocked) return;
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        cancelSignupUnlockTimer();
+        signupUnlockTimer = setTimeout(() => {
+          signupUnlockTimer = null;
+          unlockSignup();
+        }, SIGNUP_UNLOCK_MS);
+      };
+
+      label.addEventListener('pointerdown', start);
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(eventName => {
+        label.addEventListener(eventName, cancelSignupUnlockTimer);
+      });
+    }
+
     function formatCloudMeta(meta) {
       if (!meta || !meta.updatedAt) return 'NO SNAPSHOT';
       const date = new Date(meta.updatedAt);
@@ -1726,6 +1805,7 @@
 
       setAccountInputValue('accountConfigUrl', config.url);
       setAccountInputValue('accountConfigAnon', config.anonKey);
+      syncAccountConfigToggle(configured);
 
       const identity = document.getElementById('accountIdentity');
       if (identity) {
@@ -1764,6 +1844,15 @@
         quickSync.textContent = syncLabel;
         quickSync.dataset.syncState = syncState;
         quickSync.disabled = cloudBusy;
+      }
+      const signUpButton = document.getElementById('accountSignUp');
+      if (signUpButton) signUpButton.hidden = !signupUnlocked;
+      const authActions = document.getElementById('accountAuthActions');
+      if (authActions) authActions.dataset.signupUnlocked = String(signupUnlocked);
+      const emailLabel = document.getElementById('accountEmailLabel');
+      if (emailLabel) {
+        emailLabel.dataset.unlocked = String(signupUnlocked);
+        emailLabel.textContent = signupUnlocked ? 'Email / Sign Up Unlocked' : 'Email';
       }
 
       const needsConfig = !configured || !sdkLoaded;
@@ -1899,6 +1988,7 @@
       accountSession = null;
       cloudSnapshotMeta = null;
       setupSupabaseAccount(true);
+      setAccountConfigOpen(!(url && anonKey));
       setAccountStatus(url && anonKey ? 'CONFIG SAVED' : 'LOCAL ONLY', url && anonKey ? 'ok' : 'warn');
     }
 
@@ -1942,6 +2032,11 @@
     }
 
     async function signUpAccount() {
+      if (!signupUnlocked) {
+        setAccountStatus('HOLD EMAIL 3 SEC TO UNLOCK SIGN UP', 'warn');
+        return;
+      }
+
       if (!ensureSupabaseClient()) {
         renderAccountPanel();
         return;
@@ -1978,6 +2073,7 @@
         } else {
           setAccountStatus('CHECK EMAIL TO CONFIRM', 'warn');
         }
+        setSignupUnlocked(false);
       } catch (error) {
         console.error(error);
         setAccountStatus(`SIGN UP ERROR: ${error.message}`, 'error');
@@ -5078,6 +5174,7 @@ function openInfoModal() {
       document.addEventListener('touchstart', () => {}, { passive: true });
 
       loadCloudSyncState();
+      loadSignupUnlockState();
       runWithoutCloudDirty(() => {
         loadWeekData();
         loadLabels();
@@ -5183,6 +5280,7 @@ function openInfoModal() {
     document.getElementById('btnNotify').addEventListener('click', requestNotificationPermission);
     document.getElementById('btnInfo').addEventListener('click', () => { closeEditModal(); openInfoModal(); });
     document.getElementById('accountModalClose').addEventListener('click', closeAccountModal);
+    document.getElementById('accountConfigToggle').addEventListener('click', toggleAccountConfig);
     document.getElementById('accountConfigSave').addEventListener('click', saveSupabaseConfigFromModal);
     document.getElementById('accountSignIn').addEventListener('click', signInAccount);
     document.getElementById('accountSignUp').addEventListener('click', signUpAccount);
@@ -5348,6 +5446,7 @@ function openInfoModal() {
       });
 
       applyPinNamesToUI();
+      setupSignupUnlockGesture();
       setView(currentView);
       updateCellDiagonalAngle();
       window.addEventListener('resize', updateCellDiagonalAngle);

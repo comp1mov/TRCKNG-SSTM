@@ -1,6 +1,6 @@
 # Supabase Setup for TRCKNG SSTM
 
-TRCKNG SSTM v1.31.2 uses Supabase as an optional cloud layer. The app stays local-first: without Supabase config it continues to store everything in browser `localStorage`.
+TRCKNG SSTM v1.31.3 uses Supabase as an optional cloud layer. The app stays local-first: without Supabase config it continues to store everything in browser `localStorage`.
 
 ## 1. Create Project
 
@@ -11,7 +11,11 @@ This project is currently configured in `app-config.js` with:
 
 You can still override these values in the app: open `ACCOUNT`, paste different values, and press `SAVE CONFIG`.
 
-The Supabase dashboard may suggest `npm install @supabase/supabase-js @supabase/ssr` for Next.js. TRCKNG SSTM v1.31.2 is still a static app, so it uses the browser CDN build of `@supabase/supabase-js@2`; `@supabase/ssr` is not needed until the project moves to a server-rendered framework.
+The Supabase dashboard may suggest `npm install @supabase/supabase-js @supabase/ssr` for Next.js. TRCKNG SSTM v1.31.3 is still a static app, so it uses the browser CDN build of `@supabase/supabase-js@2`; `@supabase/ssr` is not needed until the project moves to a server-rendered framework.
+
+The publishable key is safe to ship in a browser app when RLS is enabled, but the in-app Account screen hides project config behind `CONFIG SAVED` to keep daily sync controls clean.
+
+Sign-up is hidden by default. Open `ACCOUNT`, then hold the `Email` label for 3 seconds to reveal `SIGN UP` for the current browser session.
 
 If email confirmation is enabled, open Supabase `Authentication -> URL Configuration` and add the app URLs you use as allowed redirect URLs, for example:
 
@@ -74,4 +78,4 @@ grant select, insert, update, delete on table public.trckng_snapshots to authent
 3. On another fresh device, sign in. The app should load the cloud snapshot automatically.
 4. If the device already has local changes, choose manually: `LOAD CLOUD` to accept cloud, or `UPLOAD THIS DEVICE` to overwrite cloud with this device.
 
-v1.31.2 keeps manual sync controls, but signed-in local changes are now queued for debounced autosync. The main-screen `SYNC` button runs a pull-first check, then uploads pending local changes only when no conflict is detected. Conflict handling remains conservative: automatic upload pauses when both cloud and local data may differ.
+v1.31.3 keeps manual sync controls, but signed-in local changes are now queued for debounced autosync. The main-screen `SYNC` button runs a pull-first check, then uploads pending local changes only when no conflict is detected. Conflict handling remains conservative: automatic upload pauses when both cloud and local data may differ.

@@ -106,3 +106,11 @@
 - Added automatic upload preflight: cloud is checked again before writing a debounced local snapshot.
 - Fixed sign-in/sign-up dirty-state scheduling after `cloudBusy` clears.
 - Bumped app/export/cache version to `v1.31.2`.
+
+### Phase 4B Account Hardening
+
+- Moved Supabase project URL/key fields behind a collapsed `CONFIG SAVED` advanced block.
+- Hid `SIGN UP` by default in the Account panel.
+- Added a 3-second hold gesture on the Account `Email` label to reveal `SIGN UP` for the current browser session.
+- Kept `SIGN IN`, sync status, and manual sync actions visible as the normal account flow.
+- Bumped app/export/cache version to `v1.31.3`.

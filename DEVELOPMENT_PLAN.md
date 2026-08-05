@@ -85,6 +85,7 @@ Scope:
 - Keep local-first mode as the default fallback.
 - Add optional Supabase config through `app-config.js` or the in-app `ACCOUNT` panel.
 - Use Supabase Auth email/password for one personal account.
+- Hide public sign-up behind a 3-second hold gesture on the Account email label.
 - Store one full-app JSON snapshot per user in `public.trckng_snapshots`.
 - Protect snapshots with RLS policies keyed by `auth.uid() = user_id`.
 - Start with manual `UPLOAD THIS DEVICE` and `LOAD CLOUD` before autosync.
@@ -100,12 +101,13 @@ Deferred:
 ## Next Phases
 
 1. Done: Phase 4A Supabase manual account/snapshot flow.
-2. Done: Phase 5A safe autosync with dirty-state debounce and cloud update checks.
-3. Done: Phase 5B sync recovery for fresh-device cloud bootstrap, wake checks, main-screen sync button, and conflict pause.
-4. Next: Phase 5C conflict review UI with choose / merge / preserve-both flows.
-5. Phase 5D mobile install/update polish for phone use.
-6. Return to Phase 2c drag/resize only after sync is stable.
-7. Phase 3: weekly cycle review and Goal Time.
+2. Done: Phase 4B account hardening with hidden config and secret sign-up gesture.
+3. Done: Phase 5A safe autosync with dirty-state debounce and cloud update checks.
+4. Done: Phase 5B sync recovery for fresh-device cloud bootstrap, wake checks, main-screen sync button, and conflict pause.
+5. Next: Phase 5C conflict review UI with choose / merge / preserve-both flows.
+6. Phase 5D mobile install/update polish for phone use.
+7. Return to Phase 2c drag/resize only after sync is stable.
+8. Phase 3: weekly cycle review and Goal Time.
 
 ## Phase 5C: Conflict Review UI
 

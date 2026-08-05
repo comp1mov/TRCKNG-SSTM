@@ -93,7 +93,7 @@
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM · v1.31.2</div>
+        <div class="modal-title">TRCKNG SSTM · v1.31.3</div>
         <div class="modal-header-right">
           <button class="modal-pin-btn" id="btnEditPinName">PIN 01</button>
           <button class="modal-help-btn" id="btnEditHelp">?</button>
@@ -489,19 +489,22 @@
       </div>
 
       <div class="account-section">
-        <div class="cell-edit-label">Supabase</div>
-        <input type="url" class="cell-edit-input" id="accountConfigUrl" autocomplete="off" placeholder="Project URL">
-        <input type="text" class="cell-edit-input" id="accountConfigAnon" autocomplete="off" placeholder="Anon / publishable key">
-        <button class="modal-btn account-full-btn" id="accountConfigSave" type="button">SAVE CONFIG</button>
+        <button class="account-config-toggle" id="accountConfigToggle" type="button" aria-expanded="false">CONFIG SAVED</button>
+        <div class="account-config-body" id="accountConfigBody" hidden>
+          <div class="cell-edit-label">Supabase</div>
+          <input type="url" class="cell-edit-input" id="accountConfigUrl" autocomplete="off" placeholder="Project URL">
+          <input type="text" class="cell-edit-input" id="accountConfigAnon" autocomplete="off" placeholder="Publishable key">
+          <button class="modal-btn account-full-btn" id="accountConfigSave" type="button">SAVE CONFIG</button>
+        </div>
       </div>
 
       <div class="account-section">
-        <div class="cell-edit-label">Email</div>
+        <div class="cell-edit-label account-email-label" id="accountEmailLabel">Email</div>
         <input type="email" class="cell-edit-input" id="accountEmail" autocomplete="email" placeholder="email@example.com">
         <input type="password" class="cell-edit-input" id="accountPassword" autocomplete="current-password" placeholder="Password">
-        <div class="account-action-grid">
+        <div class="account-action-grid account-auth-grid" id="accountAuthActions" data-signup-unlocked="false">
           <button class="modal-btn" id="accountSignIn" type="button">SIGN IN</button>
-          <button class="modal-btn" id="accountSignUp" type="button">SIGN UP</button>
+          <button class="modal-btn" id="accountSignUp" type="button" hidden>SIGN UP</button>
           <button class="modal-btn" id="accountSignOut" type="button">SIGN OUT</button>
         </div>
       </div>
@@ -525,13 +528,18 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.31.2</div>
+        <div class="info-version">V1.31.3</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v1.31.2</div>
+        <div class="info-section-title">What's New in v1.31.3</div>
         <div class="info-text">
+          <strong>ACCOUNT CLEANUP:</strong><br>
+          - Supabase project config moved under Advanced<br>
+          - Daily account screen now focuses on status and sync<br>
+          - Sign up hidden behind 3-second hold on Email label<br>
+          <br>
           <strong>SYNC NOW:</strong><br>
           - Small SYNC button added to the PIN bar<br>
           - Opening, returning and reconnecting trigger cloud checks<br>

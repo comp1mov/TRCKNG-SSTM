@@ -1109,9 +1109,52 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .account-auth-grid[data-signup-unlocked="false"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .account-email-label {
+      cursor: default;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .account-email-label[data-unlocked="true"] {
+      color: #35f2a3;
+    }
+
     .account-full-btn {
       width: 100%;
       border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .account-config-toggle {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.48);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .account-config-toggle:hover {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.72);
+    }
+
+    .account-config-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .account-config-body[hidden] {
+      display: none;
     }
 
     /* Edit items grid */
