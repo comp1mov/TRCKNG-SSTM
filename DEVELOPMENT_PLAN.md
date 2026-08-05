@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.31.4`.
+Current working app target: `v1.31.5`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -70,11 +70,12 @@ Implementation order:
 4. Done: add CSS Grid positioning with saved row/col/span defaults.
 5. Done: add static size presets for 1x1, 2x1, 1x2, and 2x2 cells with ordered reflow.
 6. Done: add `LAYOUT` view with UP/DOWN reorder controls and PACK reflow.
-7. In progress: move the old `EDIT` entry points into `LAYOUT`.
-8. Next: improve responsive field behavior before full drag/resize.
-9. Add drag/resize controls after the manual layout mode exists.
-10. Add explicit in-cell controls for time-based cells.
-11. Revisit history/card/flag UI after the modular grid is stable.
+7. Done: move the old `EDIT` entry points into `LAYOUT`.
+8. Done: keep empty cells visible as creation points in the modular field.
+9. Next: design responsive field behavior before full drag/resize.
+10. Add drag/resize controls after the manual layout mode exists.
+11. Add explicit in-cell controls for time-based cells.
+12. Revisit history/card/flag UI after the modular grid is stable.
 
 ## Phase 4A: Supabase Account MVP
 
@@ -121,7 +122,8 @@ Scope:
 
 - Keep the current 3-column CSS Grid and saved `cellLayout` model.
 - Move PIN rename, PIN fill color, Theme, Notify, and Info into `LAYOUT`.
-- Let empty-name cells disappear from `TRACK` but stay recoverable from the layout editor.
+- Treat each field cell as a place where a module can exist.
+- Keep empty cells visible as `CREATE` points in `TRACK` and `LAYOUT`.
 - Make the editor communicate cell type, size, active state, and sync-safe saved state.
 - Keep every change local-first and covered by export/import/Supabase snapshot sync.
 
@@ -130,6 +132,8 @@ Design direction:
 - `TRACK` is for use.
 - `LAYOUT` is for structure.
 - `HISTORY` is for review.
+- Empty cells are not deleted modules; they are unused field cells.
+- Responsive desktop/mobile layout must be designed on top of field cells, not by blindly stretching button animations.
 - Cell long-press, flip cards, and badges stay deferred until the editor model is stronger.
 
 ## Phase 5C: Conflict Review UI

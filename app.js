@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.31.4';
+    const APP_VERSION = '1.31.5';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -912,7 +912,7 @@
     }
 
     function getRenderableCells() {
-      return getOrderedLayoutCells().filter(cell => cell.label && cell.label.trim());
+      return getOrderedLayoutCells();
     }
 
     function getCellsSnapshot() {
@@ -3682,6 +3682,7 @@ function scheduleMathRefresh() {
         const cellNum = String(cell.slot).padStart(2, '0');
         const size = `${cell.layout.colSpan}x${cell.layout.rowSpan}`;
         const label = cell.label.trim() || 'EMPTY';
+        const isEmpty = !cell.label.trim();
         const color = cell.color || habitColors[habit] || '#ffffff';
 
         const tile = document.createElement('div');
@@ -3689,8 +3690,13 @@ function scheduleMathRefresh() {
         tile.id = `layout-${habit}`;
         tile.dataset.cellId = habit;
         tile.dataset.type = cell.type;
+        tile.dataset.empty = String(isEmpty);
         tile.style.setProperty('--btn-color', color);
         applyCellLayoutToElement(tile, cell.layout);
+        tile.addEventListener('click', event => {
+          if (event.target.closest('button')) return;
+          openCellEditModal(habit, cell.slot - 1);
+        });
 
         const metaEl = document.createElement('div');
         metaEl.className = 'layout-cell-meta';
@@ -3717,7 +3723,7 @@ function scheduleMathRefresh() {
         const editBtn = document.createElement('button');
         editBtn.className = 'layout-action';
         editBtn.type = 'button';
-        editBtn.textContent = 'EDIT';
+        editBtn.textContent = isEmpty ? 'CREATE' : 'EDIT';
         editBtn.addEventListener('click', () => openCellEditModal(habit, cell.slot - 1));
 
         const downBtn = document.createElement('button');
@@ -3763,9 +3769,14 @@ function scheduleMathRefresh() {
         applyCellLayoutToElement(btn, cell.layout);
 
         if (!isActive) {
-          btn.classList.add('inactive');
-          btn.style.cursor = 'default';
-          btn.style.pointerEvents = 'none';
+          btn.classList.add('inactive', 'empty-create-cell');
+          btn.title = 'Create cell';
+          btn.setAttribute('aria-label', `Create cell ${cell.slot}`);
+          btn.innerHTML = `
+            <span class="empty-cell-plus">+</span>
+            <span class="empty-cell-label">CREATE</span>
+          `;
+          btn.addEventListener('click', () => openCellEditModal(habit, cell.slot - 1));
           grid.appendChild(btn);
           return;
         }

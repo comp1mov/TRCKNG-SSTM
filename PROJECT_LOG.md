@@ -129,3 +129,12 @@
 - Added persistent per-PIN button fill colors with export/import and Supabase snapshot coverage.
 - Changed empty-name cells to hide from `TRACK` while remaining editable in `LAYOUT` without wiping stored values.
 - Bumped app/export/cache version to `v1.31.4`.
+
+### Phase 2C Module Field Slots
+
+- Restored empty field cells in `TRACK` as visible `CREATE` slots instead of removing them from the grid.
+- Empty cells now open the cell editor directly, turning the unused field cell into a configured module/button.
+- `LAYOUT` empty cells are marked as `CREATE`, and clicking the tile body opens the editor.
+- Restored active PIN glow on top of custom PIN fill colors.
+- Decision: responsive desktop/mobile work should build on this field-cell model instead of stretching buttons arbitrarily.
+- Bumped app/export/cache version to `v1.31.5`.
