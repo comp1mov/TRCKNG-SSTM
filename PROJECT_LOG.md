@@ -25,3 +25,10 @@
 - Expanded history rendering from the last 3 weeks to all retained local weeks.
 - Added per-cell flags for `History` and `Last update`.
 - Bumped app/export/cache version to `v1.26`.
+
+### Architecture Re-Anchor
+
+- Decision: stop spending the next cycle on isolated micro-interactions like flip cards, long-press cell stats, or extra badges.
+- Decision: follow the original v2 roadmap and move next into the modular grid architecture.
+- Phase 1.5 is treated as a bridge: `TRACK/HISTORY` views and `cellFlags` stay, but deeper cell behavior waits for the `cells` + `cellLayout` model.
+- Next target: introduce an internal schema adapter so the app can keep current localStorage data while rendering from layout-driven cells.
