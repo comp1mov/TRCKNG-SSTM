@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.31.5`.
+Current working app target: `v1.31.6`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -71,7 +71,7 @@ Implementation order:
 5. Done: add static size presets for 1x1, 2x1, 1x2, and 2x2 cells with ordered reflow.
 6. Done: add `LAYOUT` view with UP/DOWN reorder controls and PACK reflow.
 7. Done: move the old `EDIT` entry points into `LAYOUT`.
-8. Done: keep empty cells visible as creation points in the modular field.
+8. Done: keep empty cells visible as quiet field slots, with creation handled from `LAYOUT`.
 9. Next: design responsive field behavior before full drag/resize.
 10. Add drag/resize controls after the manual layout mode exists.
 11. Add explicit in-cell controls for time-based cells.
@@ -123,7 +123,8 @@ Scope:
 - Keep the current 3-column CSS Grid and saved `cellLayout` model.
 - Move PIN rename, PIN fill color, Theme, Notify, and Info into `LAYOUT`.
 - Treat each field cell as a place where a module can exist.
-- Keep empty cells visible as `CREATE` points in `TRACK` and `LAYOUT`.
+- Keep empty cells visible in `TRACK` without distracting create labels.
+- Create or edit empty cells from `LAYOUT`.
 - Make the editor communicate cell type, size, active state, and sync-safe saved state.
 - Keep every change local-first and covered by export/import/Supabase snapshot sync.
 

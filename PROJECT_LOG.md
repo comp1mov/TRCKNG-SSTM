@@ -138,3 +138,10 @@
 - Restored active PIN glow on top of custom PIN fill colors.
 - Decision: responsive desktop/mobile work should build on this field-cell model instead of stretching buttons arbitrarily.
 - Bumped app/export/cache version to `v1.31.5`.
+
+### Phase 2C Quiet Track Slots
+
+- Removed visible `CREATE` text and direct create clicks from empty cells in `TRACK` to keep the daily use screen calm.
+- Kept empty-cell creation in `LAYOUT`, where clicking an empty tile or its `CREATE` action opens the cell editor.
+- Confirmed PIN fill colors are included in local storage, export/import, and Supabase full-app snapshots.
+- Bumped app/export/cache version to `v1.31.6`.

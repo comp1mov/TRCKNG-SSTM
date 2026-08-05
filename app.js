@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.31.5';
+    const APP_VERSION = '1.31.6';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -3769,14 +3769,9 @@ function scheduleMathRefresh() {
         applyCellLayoutToElement(btn, cell.layout);
 
         if (!isActive) {
-          btn.classList.add('inactive', 'empty-create-cell');
-          btn.title = 'Create cell';
-          btn.setAttribute('aria-label', `Create cell ${cell.slot}`);
-          btn.innerHTML = `
-            <span class="empty-cell-plus">+</span>
-            <span class="empty-cell-label">CREATE</span>
-          `;
-          btn.addEventListener('click', () => openCellEditModal(habit, cell.slot - 1));
+          btn.classList.add('inactive', 'empty-field-cell');
+          btn.title = 'Empty cell';
+          btn.setAttribute('aria-label', `Empty cell ${cell.slot}`);
           grid.appendChild(btn);
           return;
         }
