@@ -162,3 +162,10 @@
 - Returned PIN states to a simpler fill-color principle: inactive PINs are darker color fills, active PIN is a brighter version of the selected fill.
 - Corrected desktop field row heights so responsive cells do not become wide, flattened rectangles.
 - Bumped app/export/cache version to `v1.32.1`.
+
+### Phase 2D PIN Header Hierarchy
+
+- Increased PIN label size so workspace names are easier to read.
+- Removed the SYNC/OK button from the PIN row and moved it beside ACCOUNT in the secondary control row.
+- Locked the next roadmap order in `DEVELOPMENT_PLAN.md`: LAYOUT cleanup, Cell Cycle Architecture, Header / Week / PIN polish, drag/resize, then Goal Time.
+- Bumped app/export/cache version to `v1.32.2`.

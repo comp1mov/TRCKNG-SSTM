@@ -163,19 +163,18 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     /* ===== PINS ===== */
     .pins {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr)) 48px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
       background: var(--app-bg, #000);
     }
-    .pin,
-    .pin-sync-btn {
+    .pin {
       border: none;
       background: var(--app-bg, #000);
       color: var(--app-text, rgba(255,255,255,0.5));
       opacity: 0.5;
       padding: 8px 6px;
       cursor: pointer;
-      font-size: 8px;
+      font-size: 16px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       transition: all 100ms ease-out;

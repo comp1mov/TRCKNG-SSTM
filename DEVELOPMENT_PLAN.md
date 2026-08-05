@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.32.1`.
+Current working app target: `v1.32.2`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -152,6 +152,14 @@ Scope:
 - Use stable row heights for cells so animations and large modules have predictable space.
 - Keep PINs and utility controls visually secondary to the field on desktop.
 - Do not add desktop/mobile-specific saved layouts until the single field model feels solid.
+
+Next locked order:
+
+1. LAYOUT cleanup: hidden/empty cells, visibility controls, and no duplicated EDIT surface.
+2. Cell Cycle Architecture: daily, weekly, monthly, and never-reset behavior.
+3. Header / Week / PIN visual polish only after layout behavior is stable.
+4. Drag reorder and resize handles.
+5. Goal Time and richer time-based cells.
 
 ## Phase 5C: Conflict Review UI
 
