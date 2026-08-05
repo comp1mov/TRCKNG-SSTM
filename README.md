@@ -1,4 +1,4 @@
-# TRCKNG SSTM v1.30
+# TRCKNG SSTM v1.30.1
 
 Local-first modular tracking dashboard for weekly habits, timers, money, formulas, and small personal metrics.
 
@@ -25,7 +25,7 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `l
 - Internal v2 `cells` + `cellLayout` adapter for the upcoming modular grid editor
 - Cell size presets: 1x1, 2x1, 1x2, and 2x2
 - Dedicated LAYOUT view with UP/DOWN reorder controls and PACK reflow
-- Optional Supabase account panel
+- Optional Supabase account panel with project config prefilled
 - Manual cloud snapshot upload / load across all PINs
 - JSON export/import for backups
 - PWA install support
@@ -46,11 +46,11 @@ Main stored groups:
 
 ## Backup
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.30 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots.
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.30.1 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots.
 
 ## Supabase
 
-See `SUPABASE_SETUP.md`. The required public values can be pasted in the app under `ACCOUNT`; the password is never stored by this app.
+See `SUPABASE_SETUP.md`. The current Supabase project URL and publishable key are already in `app-config.js`; the password is never stored by this app.
 
 ## Development Roadmap
 

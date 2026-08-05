@@ -68,3 +68,10 @@
 - Added `SUPABASE_SETUP.md` with table SQL, RLS policies, and first-sync checklist.
 - Added LAN preview support to `dev-server.mjs` for phone testing on the same Wi-Fi network.
 - Bumped app/export/cache version to `v1.30`.
+
+### Supabase Project Connected
+
+- Added project URL `https://vsabgctziegbtbpqyurb.supabase.co` and publishable key to `app-config.js`.
+- Kept the app static/CDN-based instead of adding Next.js-only `@supabase/ssr` dependencies.
+- Updated snapshot RLS setup to use `(select auth.uid()) = user_id` policies.
+- Bumped app/export/cache version to `v1.30.1`.

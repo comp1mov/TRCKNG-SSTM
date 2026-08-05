@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.30';
+    const APP_VERSION = '1.30.1';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
     const SUPABASE_DEFAULT_TABLE = 'trckng_snapshots';
 

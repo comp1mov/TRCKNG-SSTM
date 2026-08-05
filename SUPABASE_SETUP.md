@@ -1,15 +1,17 @@
 # Supabase Setup for TRCKNG SSTM
 
-TRCKNG SSTM v1.30 uses Supabase as an optional cloud layer. The app stays local-first: without Supabase config it continues to store everything in browser `localStorage`.
+TRCKNG SSTM v1.30.1 uses Supabase as an optional cloud layer. The app stays local-first: without Supabase config it continues to store everything in browser `localStorage`.
 
 ## 1. Create Project
 
-Create a Supabase project and copy:
+This project is currently configured in `app-config.js` with:
 
-- Project URL
-- Anon / publishable key
+- Project URL: `https://vsabgctziegbtbpqyurb.supabase.co`
+- Publishable key: `sb_publishable_2Rl6uyW5XySFQ8SvwZkKcw_k3t_CAr0`
 
-In the app, open `ACCOUNT`, paste both values, and press `SAVE CONFIG`.
+You can still override these values in the app: open `ACCOUNT`, paste different values, and press `SAVE CONFIG`.
+
+The Supabase dashboard may suggest `npm install @supabase/supabase-js @supabase/ssr` for Next.js. TRCKNG SSTM v1.30.1 is still a static app, so it uses the browser CDN build of `@supabase/supabase-js@2`; `@supabase/ssr` is not needed until the project moves to a server-rendered framework.
 
 If email confirmation is enabled, open Supabase `Authentication -> URL Configuration` and add the app URLs you use as allowed redirect URLs, for example:
 
@@ -41,26 +43,26 @@ create policy "TRCKNG snapshots select own row"
 on public.trckng_snapshots
 for select
 to authenticated
-using (auth.uid() = user_id);
+using ((select auth.uid()) = user_id);
 
 create policy "TRCKNG snapshots insert own row"
 on public.trckng_snapshots
 for insert
 to authenticated
-with check (auth.uid() = user_id);
+with check ((select auth.uid()) = user_id);
 
 create policy "TRCKNG snapshots update own row"
 on public.trckng_snapshots
 for update
 to authenticated
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
 
 create policy "TRCKNG snapshots delete own row"
 on public.trckng_snapshots
 for delete
 to authenticated
-using (auth.uid() = user_id);
+using ((select auth.uid()) = user_id);
 
 grant select, insert, update, delete on table public.trckng_snapshots to authenticated;
 ```
@@ -71,4 +73,4 @@ grant select, insert, update, delete on table public.trckng_snapshots to authent
 2. Press `UPLOAD THIS DEVICE` on the device that has the correct local data.
 3. On another device, sign in and press `LOAD CLOUD`.
 
-v1.30 intentionally uses manual sync only. Autosync and conflict handling are planned for the next phase.
+v1.30.1 intentionally uses manual sync only. Autosync and conflict handling are planned for the next phase.
