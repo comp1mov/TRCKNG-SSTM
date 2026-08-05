@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.32.2`.
+Current working app target: `v1.32.3`.
 
 ## Phase 1.5: Navigation + History Architecture
 

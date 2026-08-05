@@ -169,3 +169,10 @@
 - Removed the SYNC/OK button from the PIN row and moved it beside ACCOUNT in the secondary control row.
 - Locked the next roadmap order in `DEVELOPMENT_PLAN.md`: LAYOUT cleanup, Cell Cycle Architecture, Header / Week / PIN polish, drag/resize, then Goal Time.
 - Bumped app/export/cache version to `v1.32.2`.
+
+### Phase 2D Bottom PIN Switcher
+
+- Reduced PIN label size from `16px` to `11px` after testing showed the previous labels felt too large.
+- Moved the PIN switcher below the active work surface so PIN navigation becomes the bottom control layer.
+- Started `UI_CHANGE_NOTES.md` as a separate running list for incoming small UI corrections.
+- Bumped app/export/cache version to `v1.32.3`.

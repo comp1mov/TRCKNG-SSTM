@@ -35,12 +35,6 @@
           <span class="strip-right" id="dateDisplay">-- --- - -- ---</span>
         </div>
       </div>
-      <!-- Pins -->
-      <div class="pins">
-        <button class="pin active" data-pin="0" id="pin0">PIN 01</button>
-        <button class="pin" data-pin="1" id="pin1">PIN 02</button>
-        <button class="pin" data-pin="2" id="pin2">PIN 03</button>
-      </div>
       <!-- Controls row 1 -->
       <div class="controls">
         <button class="btn-control" id="btnCopy">COPY</button>
@@ -97,6 +91,13 @@
         <div class="history-meta" id="historyMeta">0 weeks</div>
       </div>
       <div class="stats" id="stats"></div>
+    </div>
+
+    <!-- Pins -->
+    <div class="pins">
+      <button class="pin active" data-pin="0" id="pin0">PIN 01</button>
+      <button class="pin" data-pin="1" id="pin1">PIN 02</button>
+      <button class="pin" data-pin="2" id="pin2">PIN 03</button>
     </div>
   </div>
 
@@ -499,12 +500,12 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.32.2</div>
+        <div class="info-version">V1.32.3</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v1.32.2</div>
+        <div class="info-section-title">What's New in v1.32.3</div>
         <div class="info-text">
           <strong>RESPONSIVE FIELD SHELL:</strong><br>
           - Field width now adapts for phone, laptop, and desktop<br>
@@ -514,8 +515,9 @@
           <strong>PIN COLOR:</strong><br>
           - Removed separate glow and shadow effects from PIN buttons<br>
           - Active PIN now reads as a brighter version of its own fill color<br>
-          - PIN labels are larger for clearer workspace switching<br>
+          - PIN labels are now 11px for a calmer bottom switcher<br>
           - SYNC/OK moved next to ACCOUNT<br>
+          - PIN switcher moved below the active work surface<br>
           <br>
           <strong>QUIET EMPTY CELLS:</strong><br>
           - Empty TRACK cells are quiet placeholders again<br>
