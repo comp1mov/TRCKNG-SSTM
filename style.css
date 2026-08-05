@@ -183,8 +183,20 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       align-items: center;
       justify-content: center;
     }
-    .pin:hover { background: rgba(255,255,255,0.06); opacity: 0.8; }
-    .pin.active { background: rgba(255,140,66,0.2); color: #ff8c42; opacity: 1; }
+    .pin {
+      background: color-mix(in srgb, var(--pin-fill, transparent) 28%, var(--app-bg, #000));
+      color: var(--pin-text, var(--app-text, rgba(255,255,255,0.72)));
+      border-top: 2px solid color-mix(in srgb, var(--pin-fill, #ffffff) 70%, transparent);
+    }
+    .pin:hover {
+      background: color-mix(in srgb, var(--pin-fill, #ffffff) 40%, var(--app-bg, #000));
+      opacity: 0.88;
+    }
+    .pin.active {
+      background: var(--pin-fill, rgba(255,140,66,0.2));
+      color: var(--pin-text, #000);
+      opacity: 1;
+    }
     .pin-sync-btn {
       border-left: 1px solid rgba(255,255,255,0.08);
       color: #35f2a3;
@@ -310,6 +322,13 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       margin-bottom: 8px;
     }
 
+    .layout-heading {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
     .layout-title {
       color: var(--app-text, #fff);
       font-size: 11px;
@@ -323,6 +342,20 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       font-size: 9px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
+    }
+
+    .layout-pin-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      align-items: stretch;
+      max-width: 360px;
+    }
+
+    .layout-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(62px, auto));
+      gap: 1px;
     }
 
     .layout-toolbar-btn {
@@ -339,12 +372,48 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       opacity: 0.65;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .layout-pin-name-btn {
+      text-align: left;
+      justify-content: flex-start;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: 0.82;
     }
 
     .layout-toolbar-btn:hover,
     .layout-toolbar-btn:active {
       background: rgba(255,255,255,0.08);
       opacity: 1;
+    }
+
+    .layout-pin-color {
+      min-height: 34px;
+      border: 1px solid var(--stroke-soft, rgba(255,255,255,0.15));
+      display: grid;
+      grid-template-columns: auto 34px;
+      align-items: center;
+      gap: 6px;
+      padding-left: 8px;
+      color: rgba(255,255,255,0.56);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .layout-pin-color input {
+      width: 34px;
+      height: 100%;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
     }
 
     /* ===== HABITS GRID ===== */
@@ -1518,7 +1587,7 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       0%, 100% { background: rgba(255,140,66,0.3); }
       50% { background: rgba(255,140,66,0.6); }
     }
-    #btnInfo.pulse {
+    #btnQuickInfo.pulse {
       animation: btnPulse 1.5s ease-in-out infinite;
       color: #ff8c42;
     }

@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.31.3`.
+Current working app target: `v1.31.4`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -39,7 +39,7 @@ Design notes:
 
 Decision: stop adding isolated button-level UX until the v2 architecture is shaped.
 
-The next work should follow the original roadmap: TRCKNG SSTM becomes a modular tracking dashboard, not just a fixed 3x3 habit grid with extra settings. Phase 1.5 remains useful because it introduced top-level views and per-cell flags, but it must not turn into a parallel mini-roadmap.
+The next work should follow the original roadmap: TRCKNG SSTM becomes a modular tracking field, not just a fixed 3x3 habit grid with extra settings. Phase 1.5 remains useful because it introduced top-level views and per-cell flags, but it must not turn into a parallel mini-roadmap.
 
 Core model:
 
@@ -70,9 +70,9 @@ Implementation order:
 4. Done: add CSS Grid positioning with saved row/col/span defaults.
 5. Done: add static size presets for 1x1, 2x1, 1x2, and 2x2 cells with ordered reflow.
 6. Done: add `LAYOUT` view with UP/DOWN reorder controls and PACK reflow.
-7. Next: turn `LAYOUT` into a real editor surface with add/hide/duplicate/reset controls.
-8. Add drag/resize controls after the manual layout mode exists.
-9. Add standalone label/text cells for section headers.
+7. In progress: move the old `EDIT` entry points into `LAYOUT`.
+8. Next: improve responsive field behavior before full drag/resize.
+9. Add drag/resize controls after the manual layout mode exists.
 10. Add explicit in-cell controls for time-based cells.
 11. Revisit history/card/flag UI after the modular grid is stable.
 
@@ -107,21 +107,21 @@ Deferred:
 3. Done: Phase 5A safe autosync with dirty-state debounce and cloud update checks.
 4. Done: Phase 5B sync recovery for fresh-device cloud bootstrap, wake checks, main-screen sync button, and conflict pause.
 5. Deferred: Phase 5C conflict review UI with choose / merge / preserve-both flows.
-6. Next: Phase 2C layout editor UX and dashboard architecture.
-7. Phase 2D standalone label/text cells and section structure.
+6. Next: Phase 2C layout editor UX and modular field architecture.
+7. Phase 2D responsive field behavior for desktop/mobile.
 8. Phase 2E explicit time-cell controls inside larger cells.
 9. Phase 5D mobile install/update polish for phone use.
 10. Phase 3: weekly cycle review and Goal Time.
 
 ## Phase 2C: Layout Editor UX
 
-Goal: make `LAYOUT` feel like the dashboard construction surface, not only a list of 9 cells with `UP` / `DOWN`.
+Goal: make `LAYOUT` the only place for editing the modular field, not a duplicate of the old `EDIT` menu.
 
 Scope:
 
 - Keep the current 3-column CSS Grid and saved `cellLayout` model.
-- Add visible controls for `ADD`, `HIDE`, `DUPLICATE`, `RESET`, and `PACK`.
-- Let hidden/inactive cells stay recoverable from the layout editor.
+- Move PIN rename, PIN fill color, Theme, Notify, and Info into `LAYOUT`.
+- Let empty-name cells disappear from `TRACK` but stay recoverable from the layout editor.
 - Make the editor communicate cell type, size, active state, and sync-safe saved state.
 - Keep every change local-first and covered by export/import/Supabase snapshot sync.
 

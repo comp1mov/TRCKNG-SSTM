@@ -1,6 +1,6 @@
-# TRCKNG SSTM v1.31.3
+# TRCKNG SSTM v1.31.4
 
-Local-first modular tracking dashboard for weekly habits, timers, money, formulas, and small personal metrics.
+Local-first modular tracking field for weekly habits, timers, money, formulas, and small personal metrics.
 
 The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `localStorage`, optional Supabase account sync, with PWA/offline support through `service-worker.js`.
 
@@ -35,6 +35,8 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `l
 - Automatic upload preflight before writing to cloud
 - Supabase project config hidden behind account advanced config
 - Sign-up hidden behind a 3-second hold on the Account email label
+- LAYOUT now owns cell editing, PIN rename, PIN fill color, Theme, Notify, and Info
+- Empty-name cells hide from TRACK but remain recoverable in LAYOUT
 - JSON export/import for backups
 - PWA install support
 - Mobile fixes for iOS safe areas, double-tap zoom, and Safari active states
@@ -54,7 +56,7 @@ Main stored groups:
 
 ## Backup
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.31.3 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.31.4 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
 
 ## Supabase
 
@@ -76,10 +78,10 @@ See `C:\Users\gregt\Desktop\strategic_roadmap.md`.
 
 Recommended next phase:
 
-1. Resume Phase 2C layout editor UX.
-2. Add dashboard construction controls: add, hide, duplicate, reset, pack.
-3. Add standalone label/text cells for sections.
-4. Add explicit time-cell controls inside larger cells.
+1. Continue Phase 2C layout editor UX.
+2. Keep all editing entry points in LAYOUT instead of a separate EDIT menu.
+3. Improve responsive field behavior carefully before full drag/resize.
+4. Add explicit time-cell controls only after the field model is stable.
 5. Return to conflict review UI only when real multi-device conflicts need a richer screen.
 
 ## Deploy

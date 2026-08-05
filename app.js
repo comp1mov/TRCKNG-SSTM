@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.31.3';
+    const APP_VERSION = '1.31.4';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -36,6 +36,7 @@
       COUNTER_LAST_UPDATE: 'trckng_sstm_counter_last_update',
       MONEY_SETTINGS: 'trckng_sstm_money_settings',
       PIN_NAMES: 'trckng_sstm_pin_names',
+      PIN_COLORS: 'trckng_sstm_pin_colors',
       SEEN_INFO: 'trckng_has_seen_info',
       UNIT_SETTINGS: 'trckng_sstm_unit_settings',
       VALUE_FORMATS: 'trckng_sstm_value_formats',
@@ -124,6 +125,8 @@
       2: { cell01: '#ffffff', cell02: '#ffffff', cell03: '#ffffff', cell04: '#ffffff', cell05: '#ffffff', cell06: '#ffffff', cell07: '#ffffff', cell08: '#ffffff', cell09: '#ffffff' }
     };
 
+    const DEFAULT_PIN_COLORS = ['#ff8c42', '#35f2a3', '#4da6ff'];
+
     // ===== STATE =====
     let currentPin = 0;
     let currentWeekKey = getWeekKey();
@@ -149,6 +152,7 @@
     let timerStates = {}; // Runtime state (iterations, running status)
     let moneySettings = {}; // Money configs per habit
     let pinNames = {}; // Custom pin names
+    let pinColors = {}; // Custom fill colors for PIN buttons
     let counterLastUpdate = {}; // Last update timestamps for simple counters
     let ledSettings = {}; // LED pulse configurations
     let ledStates = {}; // LED runtime states (active/inactive)
@@ -908,7 +912,7 @@
     }
 
     function getRenderableCells() {
-      return getOrderedLayoutCells();
+      return getOrderedLayoutCells().filter(cell => cell.label && cell.label.trim());
     }
 
     function getCellsSnapshot() {
@@ -971,6 +975,7 @@
           id: `pin${index}`,
           index,
           name,
+          fill: getPinFillColor(index),
           isActive: index === currentPin
         };
       });
@@ -1406,6 +1411,7 @@
 
     function hasMeaningfulLocalData() {
       if (Object.keys(pinNames || {}).length > 0) return true;
+      if (Object.keys(pinColors || {}).length > 0) return true;
       return Array.from({ length: PIN_COUNT }, (_, pin) => buildPinSyncSnapshot(pin))
         .some(snapshot => hasMeaningfulPinSnapshotData(snapshot.pin, snapshot));
     }
@@ -1432,6 +1438,7 @@
       saveCurrencyCache();
       saveCounterLastUpdate();
       savePinNames();
+      savePinColors();
       saveViewMode();
     }
 
@@ -1458,6 +1465,7 @@
       applyTheme();
       loadCounterLastUpdate();
       loadPinNames();
+      loadPinColors();
       syncPinsFromState();
       currentWeekKey = getWeekKey();
       ensureWeekExists();
@@ -1539,6 +1547,7 @@
         pinCount: PIN_COUNT,
         deviceId: getSupabaseDeviceId(),
         pinNames: cloneData(pinNames || {}),
+        pinColors: cloneData(pinColors || {}),
         currencyCache: cloneData(currencyCache || {}),
         pinData: Array.from({ length: PIN_COUNT }, (_, pin) => buildPinSyncSnapshot(pin))
       };
@@ -1579,6 +1588,7 @@
         if (imported.currencyCache) currencyCache = imported.currencyCache;
         if (imported.counterLastUpdate) counterLastUpdate = imported.counterLastUpdate;
         if (imported.pinNames) pinNames = { ...pinNames, ...imported.pinNames };
+        if (imported.pinColors) pinColors = { ...pinColors, ...imported.pinColors };
 
         persistCurrentPinState();
         reloadCurrentPinState();
@@ -1614,6 +1624,11 @@
         if (snapshot.pinNames && typeof snapshot.pinNames === 'object') {
           pinNames = snapshot.pinNames;
           savePinNames();
+        }
+
+        if (snapshot.pinColors && typeof snapshot.pinColors === 'object') {
+          pinColors = snapshot.pinColors;
+          savePinColors();
         }
 
         if (snapshot.currencyCache && typeof snapshot.currencyCache === 'object') {
@@ -2336,6 +2351,38 @@ function applyTheme() {
       markCloudDirty('pin names');
     }
 
+    function normalizeHexColor(value, fallback = '#ffffff') {
+      if (typeof value !== 'string') return fallback;
+      const trimmed = value.trim();
+      return /^#[0-9a-fA-F]{6}$/.test(trimmed) ? trimmed.toLowerCase() : fallback;
+    }
+
+    function loadPinColors() {
+      pinColors = {};
+      const stored = localStorage.getItem(STORAGE_KEYS.PIN_COLORS);
+      if (stored) {
+        try { pinColors = JSON.parse(stored) || {}; } catch (e) { pinColors = {}; }
+      }
+    }
+
+    function savePinColors() {
+      localStorage.setItem(STORAGE_KEYS.PIN_COLORS, JSON.stringify(pinColors));
+      markCloudDirty('pin colors');
+    }
+
+    function getPinFillColor(index) {
+      return normalizeHexColor(pinColors[index], DEFAULT_PIN_COLORS[index] || '#ff8c42');
+    }
+
+    function getReadableTextColor(hex) {
+      const normalized = normalizeHexColor(hex, '#000000').replace('#', '');
+      const r = parseInt(normalized.substring(0, 2), 16);
+      const g = parseInt(normalized.substring(2, 4), 16);
+      const b = parseInt(normalized.substring(4, 6), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.56 ? '#000000' : '#ffffff';
+    }
+
     function getDefaultPinName(index) {
       const num = String(index + 1).padStart(2, '0');
       return `PIN ${num}`;
@@ -2348,14 +2395,19 @@ function applyTheme() {
         const btn = document.getElementById(`pin${i}`);
         const pin = pins[i];
         const name = pin ? pin.name : getDefaultPinName(i);
-        if (btn) btn.textContent = name;
+        const fill = getPinFillColor(i);
+        if (btn) {
+          btn.textContent = name;
+          btn.style.setProperty('--pin-fill', fill);
+          btn.style.setProperty('--pin-text', getReadableTextColor(fill));
+        }
       }
 
-      const renameBtn = document.getElementById('btnEditPinName');
-      if (renameBtn) {
-        const raw = (pinNames && pinNames[currentPin] != null) ? String(pinNames[currentPin]) : '';
-        const name = raw.trim() || getDefaultPinName(currentPin);
-        renameBtn.textContent = name;
+      const layoutPinName = document.getElementById('btnLayoutPinName');
+      if (layoutPinName) layoutPinName.textContent = getCurrentPinName();
+      const layoutPinColor = document.getElementById('layoutPinColor');
+      if (layoutPinColor && document.activeElement !== layoutPinColor) {
+        layoutPinColor.value = getPinFillColor(currentPin);
       }
 
       updateHistoryChrome();
@@ -2365,6 +2417,27 @@ function applyTheme() {
     function getCurrentPinName() {
       const raw = (pinNames && pinNames[currentPin] != null) ? String(pinNames[currentPin]) : '';
       return raw.trim() || getDefaultPinName(currentPin);
+    }
+
+    function renameCurrentPin() {
+      const raw = (pinNames && pinNames[currentPin] != null) ? String(pinNames[currentPin]) : '';
+      const currentName = raw.trim() || getDefaultPinName(currentPin);
+      const newName = prompt('Pin name', currentName);
+      if (newName === null) return;
+      const trimmed = newName.trim();
+      if (trimmed) {
+        pinNames[currentPin] = trimmed;
+      } else {
+        delete pinNames[currentPin];
+      }
+      savePinNames();
+      applyPinNamesToUI();
+    }
+
+    function setCurrentPinFillColor(value) {
+      pinColors[currentPin] = normalizeHexColor(value, getPinFillColor(currentPin));
+      savePinColors();
+      applyPinNamesToUI();
     }
 
     function updateHistoryChrome() {
@@ -4457,7 +4530,8 @@ function scheduleMathRefresh() {
         currencySettings,
         currencyCache,
         counterLastUpdate,
-        pinNames
+        pinNames,
+        pinColors
       };
     }
 
@@ -4641,6 +4715,7 @@ function importData() {
       applyTheme();
       loadCounterLastUpdate();
       loadPinNames();
+      loadPinColors();
       syncPinsFromState();
       currentWeekKey = getWeekKey();
       ensureWeekExists();
@@ -4654,6 +4729,8 @@ function importData() {
 
     // ===== EDIT MODALS =====
     function openEditModal() {
+      setView(VIEW_MODES.LAYOUT);
+      return;
       const container = document.getElementById('editItemsContainer');
       container.innerHTML = '';
 
@@ -4678,6 +4755,7 @@ function importData() {
     }
 
     function closeEditModal() {
+      if (!document.getElementById('editModal')) return;
       document.getElementById('editModal').classList.remove('visible');
     }
 
@@ -4890,7 +4968,6 @@ function saveCellEdit() {
 
       const oldTypeRaw = habitTypes[editingHabit];
       const oldType = (oldTypeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : oldTypeRaw;
-      const wasActive = habitLabels[editingHabit] && habitLabels[editingHabit].trim();
       const typeChanged = oldType !== normalizedType;
 
       const oldIsDuration =
@@ -4911,18 +4988,8 @@ function saveCellEdit() {
         normalizedType === CELL_TYPES.TIMER ||
         normalizedType === CELL_TYPES.COUNTDOWN;
 
-      if (wasActive && !newLabel) {
-        // Deactivating cell - wipe all stored values for this habit across weeks
-        // If you ever want to change this behavior, adjust deletion logic here
-        Object.keys(weekData).forEach(week => {
-          if (weekData[week] && typeof weekData[week] === 'object') {
-            delete weekData[week][editingHabit];
-          }
-        });
-        delete durationStates[editingHabit];
-        delete timerStates[editingHabit];
-        delete timerSettings[editingHabit];
-        delete moneySettings[editingHabit];
+      if (!newLabel) {
+        // Empty name hides the cell from TRACK. Data stays recoverable through LAYOUT.
       } else if (typeChanged) {
         // Type changed
         if (oldIsDuration && newIsDuration) {
@@ -5115,9 +5182,7 @@ function saveCellEdit() {
       const activeLayoutBtn = document.querySelector('#cellEditModal .type-btn.active[data-layout-size]');
       setCellLayoutSize(editingHabit, activeLayoutBtn?.dataset.layoutSize || '1x1');
 
-      const editModalWasVisible = document.getElementById('editModal')?.classList.contains('visible');
       closeCellEditModal();
-      if (editModalWasVisible) openEditModal();
       renderHabits();
       renderLayoutEditor();
     }
@@ -5199,6 +5264,7 @@ function openInfoModal() {
         applyTheme();
         loadCounterLastUpdate();
         loadPinNames();
+        loadPinColors();
         syncPinsFromState();
       });
       
@@ -5217,6 +5283,7 @@ function openInfoModal() {
       renderLayoutEditor();
       setView(currentView);
       updateHeader();
+      applyPinNamesToUI();
       
       // Fetch sunrise/sunset data
       fetchSunData();
@@ -5240,30 +5307,20 @@ function openInfoModal() {
       });
 
       document.getElementById('btnDecrease').addEventListener('click', toggleDecrease);
-      document.getElementById('btnEdit').addEventListener('click', openEditModal);
       const layoutPackBtn = document.getElementById('btnLayoutPack');
       if (layoutPackBtn) layoutPackBtn.addEventListener('click', packCurrentLayout);
-      const pinRenameBtn = document.getElementById('btnEditPinName');
-      if (pinRenameBtn) {
-        pinRenameBtn.addEventListener('click', () => {
-          const raw = (pinNames && pinNames[currentPin] != null) ? String(pinNames[currentPin]) : '';
-          const currentName = raw.trim() || getDefaultPinName(currentPin);
-          const newName = prompt('Pin name', currentName);
-          if (newName === null) return;
-          const trimmed = newName.trim();
-          if (trimmed) {
-            pinNames[currentPin] = trimmed;
-          } else {
-            delete pinNames[currentPin];
-          }
-          savePinNames();
-          applyPinNamesToUI();
-        });
+      const layoutPinNameBtn = document.getElementById('btnLayoutPinName');
+      if (layoutPinNameBtn) layoutPinNameBtn.addEventListener('click', renameCurrentPin);
+      const layoutPinColor = document.getElementById('layoutPinColor');
+      if (layoutPinColor) {
+        layoutPinColor.addEventListener('input', event => setCurrentPinFillColor(event.target.value));
       }
-      const editHelpBtn = document.getElementById('btnEditHelp');
-      if (editHelpBtn) {
-        editHelpBtn.addEventListener('click', () => togglePanelVisibility('editHelpPanel'));
-      }
+      const layoutThemeBtn = document.getElementById('btnLayoutTheme');
+      if (layoutThemeBtn) layoutThemeBtn.addEventListener('click', openThemeModal);
+      const layoutNotifyBtn = document.getElementById('btnLayoutNotify');
+      if (layoutNotifyBtn) layoutNotifyBtn.addEventListener('click', requestNotificationPermission);
+      const layoutInfoBtn = document.getElementById('btnLayoutInfo');
+      if (layoutInfoBtn) layoutInfoBtn.addEventListener('click', openInfoModal);
       const cellEditHelpBtn = document.getElementById('btnCellEditHelp');
       if (cellEditHelpBtn) {
         cellEditHelpBtn.addEventListener('click', () => togglePanelVisibility('cellEditHelpPanel'));
@@ -5276,9 +5333,6 @@ function openInfoModal() {
       document.getElementById('btnQuickInfo').addEventListener('click', openInfoModal);
       document.getElementById('btnAccount').addEventListener('click', openAccountModal);
       document.getElementById('btnCloudSync').addEventListener('click', manualCloudSync);
-    document.getElementById('btnTheme').addEventListener('click', () => { closeEditModal(); openThemeModal(); });
-    document.getElementById('btnNotify').addEventListener('click', requestNotificationPermission);
-    document.getElementById('btnInfo').addEventListener('click', () => { closeEditModal(); openInfoModal(); });
     document.getElementById('accountModalClose').addEventListener('click', closeAccountModal);
     document.getElementById('accountConfigToggle').addEventListener('click', toggleAccountConfig);
     document.getElementById('accountConfigSave').addEventListener('click', saveSupabaseConfigFromModal);
@@ -5339,7 +5393,6 @@ function openInfoModal() {
     });
       document.getElementById('btnInfoClose').addEventListener('click', closeInfoModal);
 
-      document.getElementById('editModalClose').addEventListener('click', closeEditModal);
       document.getElementById('cellEditCancel').addEventListener('click', closeCellEditModal);
       document.getElementById('cellEditSave').addEventListener('click', saveCellEdit);
 

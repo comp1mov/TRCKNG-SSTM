@@ -119,5 +119,13 @@
 
 - Decision: the current sync baseline is good enough for real personal use and should not block the UI architecture work.
 - Deferred Phase 5C conflict review UI until real multi-device conflicts appear or the product needs a richer recovery screen.
-- Resumed Phase 2C as the next active architecture track: turn `LAYOUT` into a real dashboard construction surface.
-- Next focus: add/hide/duplicate/reset layout controls, recoverable inactive cells, and clearer separation between `TRACK`, `LAYOUT`, and `HISTORY`.
+- Resumed Phase 2C as the next active architecture track: turn `LAYOUT` into the modular field editing surface.
+- Next focus: consolidate editing into `LAYOUT`, keep empty cells recoverable, and improve the desktop/mobile field behavior carefully.
+
+### Phase 2C Edit Consolidation
+
+- Removed the visible `EDIT` control from the daily header.
+- Moved PIN rename, PIN fill color, Theme, Notify, Info, PACK, and per-cell edit access into `LAYOUT`.
+- Added persistent per-PIN button fill colors with export/import and Supabase snapshot coverage.
+- Changed empty-name cells to hide from `TRACK` while remaining editable in `LAYOUT` without wiping stored values.
+- Bumped app/export/cache version to `v1.31.4`.

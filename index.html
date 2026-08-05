@@ -53,9 +53,8 @@
       </div>
       <!-- Controls row 2 -->
       <div class="controls-edit">
-        <button class="btn-control btn-control-third" id="btnDecrease">DECREASE</button>
-        <button class="btn-control btn-control-third" id="btnEdit">EDIT</button>
-        <button class="btn-control btn-control-third" id="btnAccount">ACCOUNT</button>
+        <button class="btn-control btn-control-wide" id="btnDecrease">DECREASE</button>
+        <button class="btn-control btn-control-wide" id="btnAccount">ACCOUNT</button>
       </div>
     </div>
 
@@ -71,11 +70,23 @@
 
     <div class="view-panel" id="layoutView" hidden>
       <div class="layout-toolbar">
-        <div>
+        <div class="layout-heading">
           <div class="layout-title" id="layoutTitle">PIN 01</div>
           <div class="layout-meta" id="layoutMeta">9 cells</div>
+          <div class="layout-pin-row">
+            <button class="layout-toolbar-btn layout-pin-name-btn" id="btnLayoutPinName" type="button">PIN 01</button>
+            <label class="layout-pin-color">
+              <span>PIN FILL</span>
+              <input type="color" id="layoutPinColor" value="#ff8c42" autocomplete="off">
+            </label>
+          </div>
         </div>
-        <button class="layout-toolbar-btn" id="btnLayoutPack" type="button">PACK</button>
+        <div class="layout-actions">
+          <button class="layout-toolbar-btn" id="btnLayoutPack" type="button">PACK</button>
+          <button class="layout-toolbar-btn" id="btnLayoutTheme" type="button">THEME</button>
+          <button class="layout-toolbar-btn" id="btnLayoutNotify" type="button">NOTIFY</button>
+          <button class="layout-toolbar-btn" id="btnLayoutInfo" type="button">INFO</button>
+        </div>
       </div>
       <div class="layout-grid" id="layoutGrid" data-pin="0"></div>
     </div>
@@ -86,46 +97,6 @@
         <div class="history-meta" id="historyMeta">0 weeks</div>
       </div>
       <div class="stats" id="stats"></div>
-    </div>
-  </div>
-
-  <!-- EDIT MODAL -->
-  <div class="modal" id="editModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM · v1.31.3</div>
-        <div class="modal-header-right">
-          <button class="modal-pin-btn" id="btnEditPinName">PIN 01</button>
-          <button class="modal-help-btn" id="btnEditHelp">?</button>
-        </div>
-      </div>
-      <div class="modal-help-panel" id="editHelpPanel">
-        <strong>EDIT mode · layout for current PIN</strong><br>
-        You edit the 3×3 grid for the selected PIN. Each cell can track one thing: a counter, a timer, a duration, a countdown or money.
-        <br><br>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.7; padding: 0 2px 4px;">
-          <div>
-            • Tap a cell to edit name, type, color, description<br>
-            • Clear the name to deactivate the cell<br>
-            • <strong style="color: rgba(255,255,255,0.9);">Counter:</strong> tap to +1, DECREASE to -1<br>
-            • <strong style="color: rgba(255,255,255,0.9);">MM:SS:</strong> live stopwatch (minutes:seconds)
-          </div>
-          <div>
-            • <strong style="color: rgba(255,255,255,0.9);">Min / Sec:</strong> live timers in minutes or seconds<br>
-            • <strong style="color: rgba(255,255,255,0.9);">Timer:</strong> countdown with sound / vibration<br>
-            • <strong style="color: rgba(255,255,255,0.9);">Countdown:</strong> target date & time in hours left<br>
-            • <strong style="color: rgba(255,255,255,0.9);">Money:</strong> income / budget with custom step and currency
-          </div>
-        </div>
-      </div>
-      
-      <div class="edit-items-grid" id="editItemsContainer"></div>
-      <div class="modal-buttons" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1px;">
-        <button class="modal-btn" id="btnTheme">THEME</button>
-        <button class="modal-btn" id="btnNotify">NOTIFY</button>
-        <button class="modal-btn" id="btnInfo">INFO</button>
-        <button class="modal-btn" id="editModalClose">DONE</button>
-      </div>
     </div>
   </div>
 
@@ -528,13 +499,18 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.31.3</div>
+        <div class="info-version">V1.31.4</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v1.31.3</div>
+        <div class="info-section-title">What's New in v1.31.4</div>
         <div class="info-text">
+          <strong>LAYOUT CONSOLIDATION:</strong><br>
+          - Main EDIT menu removed from the daily controls<br>
+          - PIN rename, PIN fill, Theme, Notify and Info moved into LAYOUT<br>
+          - Empty-name cells hide from TRACK but stay editable in LAYOUT<br>
+          <br>
           <strong>ACCOUNT CLEANUP:</strong><br>
           - Supabase project config moved under Advanced<br>
           - Daily account screen now focuses on status and sync<br>
