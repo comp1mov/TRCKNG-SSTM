@@ -1,8 +1,9 @@
-const CACHE_NAME = 'trckng-sstm-v1.29.0';
+const CACHE_NAME = 'trckng-sstm-v1.30.0';
 const urlsToCache = [
   '/TRCKNG-SSTM/',
   '/TRCKNG-SSTM/index.html',
   '/TRCKNG-SSTM/style.css',
+  '/TRCKNG-SSTM/app-config.js',
   '/TRCKNG-SSTM/app.js',
   '/TRCKNG-SSTM/manifest.json',
   '/TRCKNG-SSTM/icons/icon-192.png',

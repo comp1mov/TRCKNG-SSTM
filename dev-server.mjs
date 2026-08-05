@@ -1,11 +1,13 @@
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.argv[2]) || 5173;
-const host = '127.0.0.1';
+const hostArg = process.argv[3];
+const host = hostArg === '--lan' ? '0.0.0.0' : (hostArg || '127.0.0.1');
 
 const contentTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -57,5 +59,16 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`TRCKNG SSTM running at http://${host}:${port}/TRCKNG-SSTM/`);
+  const localHost = host === '0.0.0.0' ? '127.0.0.1' : host;
+  console.log(`TRCKNG SSTM running at http://${localHost}:${port}/TRCKNG-SSTM/`);
+
+  if (host === '0.0.0.0') {
+    const interfaces = os.networkInterfaces();
+    Object.values(interfaces)
+      .flat()
+      .filter(address => address && address.family === 'IPv4' && !address.internal)
+      .forEach(address => {
+        console.log(`LAN preview: http://${address.address}:${port}/TRCKNG-SSTM/`);
+      });
+  }
 });

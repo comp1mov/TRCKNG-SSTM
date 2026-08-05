@@ -1,0 +1,74 @@
+# Supabase Setup for TRCKNG SSTM
+
+TRCKNG SSTM v1.30 uses Supabase as an optional cloud layer. The app stays local-first: without Supabase config it continues to store everything in browser `localStorage`.
+
+## 1. Create Project
+
+Create a Supabase project and copy:
+
+- Project URL
+- Anon / publishable key
+
+In the app, open `ACCOUNT`, paste both values, and press `SAVE CONFIG`.
+
+If email confirmation is enabled, open Supabase `Authentication -> URL Configuration` and add the app URLs you use as allowed redirect URLs, for example:
+
+- `http://127.0.0.1:5173/TRCKNG-SSTM/`
+- `http://YOUR-LAN-IP:5173/TRCKNG-SSTM/`
+- your final GitHub Pages / production URL
+
+## 2. Create Snapshot Table
+
+Run this SQL in the Supabase SQL editor:
+
+```sql
+create table if not exists public.trckng_snapshots (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  app_state jsonb not null,
+  updated_at timestamptz not null default now(),
+  device_id text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.trckng_snapshots enable row level security;
+
+drop policy if exists "TRCKNG snapshots select own row" on public.trckng_snapshots;
+drop policy if exists "TRCKNG snapshots insert own row" on public.trckng_snapshots;
+drop policy if exists "TRCKNG snapshots update own row" on public.trckng_snapshots;
+drop policy if exists "TRCKNG snapshots delete own row" on public.trckng_snapshots;
+
+create policy "TRCKNG snapshots select own row"
+on public.trckng_snapshots
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "TRCKNG snapshots insert own row"
+on public.trckng_snapshots
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "TRCKNG snapshots update own row"
+on public.trckng_snapshots
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy "TRCKNG snapshots delete own row"
+on public.trckng_snapshots
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
+grant select, insert, update, delete on table public.trckng_snapshots to authenticated;
+```
+
+## 3. First Sync
+
+1. Sign up or sign in from `ACCOUNT`.
+2. Press `UPLOAD THIS DEVICE` on the device that has the correct local data.
+3. On another device, sign in and press `LOAD CLOUD`.
+
+v1.30 intentionally uses manual sync only. Autosync and conflict handling are planned for the next phase.

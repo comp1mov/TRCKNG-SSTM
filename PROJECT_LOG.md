@@ -56,3 +56,15 @@
 - Added per-cell `UP` / `DOWN` controls that update `cellLayout.order` and repack the grid.
 - Added `PACK` toolbar command for compact reflow.
 - Bumped app/export/cache version to `v1.29`.
+
+### Phase 4A Supabase Account MVP
+
+- Decision: pause further layout micro-work and pull account/sync forward so the app can be used across computer and phone.
+- Added optional `app-config.js` for Supabase project configuration.
+- Added `ACCOUNT` panel with Supabase URL/key config, email/password sign up, sign in, sign out, and sync status.
+- Added manual cloud snapshot actions: `UPLOAD THIS DEVICE` and `LOAD CLOUD`.
+- Added full-app sync snapshots across all 3 PINs instead of syncing only the active PIN.
+- Kept local-first mode intact when Supabase is not configured or the SDK is offline.
+- Added `SUPABASE_SETUP.md` with table SQL, RLS policies, and first-sync checklist.
+- Added LAN preview support to `dev-server.mjs` for phone testing on the same Wi-Fi network.
+- Bumped app/export/cache version to `v1.30`.

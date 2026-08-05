@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.29`.
+Current working app target: `v1.30`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -58,7 +58,7 @@ Interaction rules:
 
 ## Phase 2: Modular Grid Architecture
 
-Status: started
+Status: paused after layout view baseline
 
 Goal: replace the fixed `HABITS = cell01..cell09` mental model with a layout-driven cell system while keeping the current app usable after every step.
 
@@ -74,10 +74,33 @@ Implementation order:
 8. Add standalone label/text cells for section headers.
 9. Revisit history/card/flag UI after the modular grid is stable.
 
+## Phase 4A: Supabase Account MVP
+
+Status: started
+
+Decision: pull account/sync forward before more layout experiments so the app can be used again across computer and phone.
+
+Scope:
+
+- Keep local-first mode as the default fallback.
+- Add optional Supabase config through `app-config.js` or the in-app `ACCOUNT` panel.
+- Use Supabase Auth email/password for one personal account.
+- Store one full-app JSON snapshot per user in `public.trckng_snapshots`.
+- Protect snapshots with RLS policies keyed by `auth.uid() = user_id`.
+- Start with manual `UPLOAD THIS DEVICE` and `LOAD CLOUD` before autosync.
+- Document the SQL setup and first sync flow.
+
+Deferred:
+
+- Autosync debounce and conflict resolution.
+- Per-cell relational tables.
+- Collaboration or sharing.
+- Account profile settings beyond sign in / sign out.
+
 ## Next Phases
 
-1. Phase 2a-c: layout-driven CSS Grid editor.
-2. Phase 1 mobile polish can run in parallel only when it does not touch data architecture.
-3. Phase 3: weekly cycle review and Goal Time.
-4. Phase 4: Supabase accounts.
-5. Phase 5: offline-first sync.
+1. Finish Phase 4A Supabase manual account/snapshot flow.
+2. Phase 5A: safe autosync with dirty-state debounce and last-write metadata.
+3. Phase 5B: mobile install/update polish for phone use.
+4. Return to Phase 2c drag/resize only after sync is stable.
+5. Phase 3: weekly cycle review and Goal Time.

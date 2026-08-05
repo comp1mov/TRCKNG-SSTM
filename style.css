@@ -201,6 +201,9 @@ button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
     .btn-control-wide {
       grid-column: span 3;
     }
+    .btn-control-third {
+      grid-column: span 2;
+    }
     .btn-control-edit {
       grid-column: span 2;
     }
@@ -1005,6 +1008,88 @@ button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
     .modal-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
     .modal-btn.primary { background: #35f2a3; color: #000; }
     .modal-btn.primary:hover { background: #4df7b5; }
+    .modal-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.25;
+    }
+
+    .account-modal-content {
+      max-width: 520px;
+      gap: 12px;
+    }
+
+    .account-card,
+    .account-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .account-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 24px;
+    }
+
+    .account-label,
+    .account-value,
+    .account-status {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .account-label {
+      color: rgba(255,255,255,0.42);
+    }
+
+    .account-value {
+      color: rgba(255,255,255,0.78);
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .account-status {
+      padding: 10px 8px;
+      text-align: center;
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.72);
+    }
+
+    .account-status[data-status="ok"] {
+      background: rgba(53,242,163,0.16);
+      color: #35f2a3;
+    }
+
+    .account-status[data-status="warn"] {
+      background: rgba(255,171,64,0.14);
+      color: #ffab40;
+    }
+
+    .account-status[data-status="error"] {
+      background: rgba(255,79,106,0.16);
+      color: #ff4f6a;
+    }
+
+    .account-action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .account-action-grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .account-full-btn {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
 
     /* Edit items grid */
     .edit-items-grid {

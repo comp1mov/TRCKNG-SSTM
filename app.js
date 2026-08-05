@@ -1,6 +1,10 @@
 'use strict';
 
     // ===== CONSTANTS =====
+    const APP_VERSION = '1.30';
+    const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
+    const SUPABASE_DEFAULT_TABLE = 'trckng_snapshots';
+
     const CELL_TYPES = {
       COUNTER: 'counter',   // legacy
       UNIT: 'unit',
@@ -40,7 +44,10 @@
       CURRENCY_CACHE: 'trckng_sstm_currency_cache',
       CELL_FLAGS: 'trckng_sstm_cell_flags',
       CELL_LAYOUT: 'trckng_sstm_cell_layout',
-      VIEW_MODE: 'trckng_sstm_view_mode'
+      VIEW_MODE: 'trckng_sstm_view_mode',
+      SUPABASE_URL: 'trckng_sstm_supabase_url',
+      SUPABASE_ANON_KEY: 'trckng_sstm_supabase_anon_key',
+      SUPABASE_DEVICE_ID: 'trckng_sstm_supabase_device_id'
     };
 
     const VIEW_MODES = {
@@ -69,6 +76,27 @@
       '2x2': { colSpan: 2, rowSpan: 2 }
     };
     const HABITS = ['cell01', 'cell02', 'cell03', 'cell04', 'cell05', 'cell06', 'cell07', 'cell08', 'cell09'];
+    const PER_PIN_SYNC_FIELDS = [
+      { key: STORAGE_KEYS.DATA, prop: 'weekData' },
+      { key: STORAGE_KEYS.LABELS, prop: 'habitLabels' },
+      { key: STORAGE_KEYS.TYPES, prop: 'habitTypes' },
+      { key: STORAGE_KEYS.COLORS, prop: 'habitColors' },
+      { key: STORAGE_KEYS.DESCRIPTIONS, prop: 'habitDescriptions' },
+      { key: STORAGE_KEYS.DURATION, prop: 'durationStates' },
+      { key: STORAGE_KEYS.TIMER_SETTINGS, prop: 'timerSettings' },
+      { key: STORAGE_KEYS.TIMER_STATES, prop: 'timerStates' },
+      { key: STORAGE_KEYS.COUNTER_LAST_UPDATE, prop: 'counterLastUpdate' },
+      { key: STORAGE_KEYS.MONEY_SETTINGS, prop: 'moneySettings' },
+      { key: STORAGE_KEYS.UNIT_SETTINGS, prop: 'unitSettings' },
+      { key: STORAGE_KEYS.VALUE_FORMATS, prop: 'valueFormats' },
+      { key: STORAGE_KEYS.MATH_SETTINGS, prop: 'mathSettings' },
+      { key: STORAGE_KEYS.CELL_FLAGS, prop: 'cellFlags' },
+      { key: STORAGE_KEYS.CELL_LAYOUT, prop: 'cellLayout' },
+      { key: STORAGE_KEYS.THEME, prop: 'themeSettings' },
+      { key: STORAGE_KEYS.LED_SETTINGS, prop: 'ledSettings' },
+      { key: STORAGE_KEYS.LED_STATES, prop: 'ledStates' },
+      { key: STORAGE_KEYS.CURRENCY_SETTINGS, prop: 'currencySettings' }
+    ];
 
     // Default configuration
     const DEFAULT_LABELS = {
@@ -124,6 +152,13 @@
     let clockInterval = null;
     let editingHabit = null;
     let audioContext = null;
+    let supabaseClient = null;
+    let supabaseConfigSignature = '';
+    let supabaseAuthSubscription = null;
+    let accountSession = null;
+    let cloudSnapshotMeta = null;
+    let cloudBusy = false;
+    let accountStatusOverride = null;
 
     // ===== COLOR PALETTE =====
     function generateColorPalette() {
@@ -1001,6 +1036,692 @@
 
     function saveViewMode() {
       localStorage.setItem(STORAGE_KEYS.VIEW_MODE, currentView);
+    }
+
+    function readStoredJson(key, fallback = {}) {
+      const stored = localStorage.getItem(key);
+      if (!stored) return cloneData(fallback);
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        return cloneData(fallback);
+      }
+    }
+
+    function writeStoredJson(key, value) {
+      localStorage.setItem(key, JSON.stringify(value || {}));
+    }
+
+    function cloneData(value) {
+      if (value === undefined || value === null) return value;
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function persistCurrentPinState() {
+      saveWeekData();
+      saveLabels();
+      saveTypes();
+      saveColors();
+      saveDescriptions();
+      saveDurationStates();
+      saveTimerSettings();
+      saveTimerStates();
+      saveMoneySettings();
+      saveUnitSettings();
+      saveValueFormats();
+      saveMathSettings();
+      saveCellFlags();
+      saveCellLayout();
+      saveThemeSettings();
+      saveLedSettings();
+      saveLedStates();
+      saveCurrencySettings();
+      saveCurrencyCache();
+      saveCounterLastUpdate();
+      savePinNames();
+      saveViewMode();
+    }
+
+    function reloadCurrentPinState() {
+      loadWeekData();
+      loadLabels();
+      loadTypes();
+      loadColors();
+      loadDescriptions();
+      loadDurationStates();
+      loadTimerSettings();
+      loadTimerStates();
+      loadMoneySettings();
+      loadUnitSettings();
+      loadValueFormats();
+      loadMathSettings();
+      loadCellFlags();
+      loadCellLayout();
+      loadLedSettings();
+      loadLedStates();
+      loadCurrencySettings();
+      loadCurrencyCache();
+      loadThemeSettings();
+      applyTheme();
+      loadCounterLastUpdate();
+      loadPinNames();
+      syncPinsFromState();
+      currentWeekKey = getWeekKey();
+      ensureWeekExists();
+      applyPinNamesToUI();
+      renderHabits();
+      renderLayoutEditor();
+      setView(currentView);
+      updateHeader();
+    }
+
+    function getCurrentPinProp(prop) {
+      const map = {
+        weekData,
+        habitLabels,
+        habitTypes,
+        habitColors,
+        habitDescriptions,
+        durationStates,
+        timerSettings,
+        timerStates,
+        counterLastUpdate,
+        moneySettings,
+        unitSettings,
+        valueFormats,
+        mathSettings,
+        cellFlags,
+        cellLayout,
+        themeSettings,
+        ledSettings,
+        ledStates,
+        currencySettings
+      };
+      return cloneData(map[prop] || {});
+    }
+
+    function getDefaultPinProp(pin, prop) {
+      if (prop === 'habitLabels') return { ...DEFAULT_LABELS[pin] };
+      if (prop === 'habitTypes') return { ...DEFAULT_TYPES[pin] };
+      if (prop === 'habitColors') return { ...DEFAULT_COLORS[pin] };
+      if (prop === 'cellFlags') return normalizeCellFlags({});
+      if (prop === 'cellLayout') return normalizeCellLayout({});
+      if (prop === 'themeSettings') return defaultThemeSettings();
+      return {};
+    }
+
+    function buildPinSyncSnapshot(pin) {
+      const snapshot = { pin };
+      PER_PIN_SYNC_FIELDS.forEach(field => {
+        if (pin === currentPin) {
+          snapshot[field.prop] = getCurrentPinProp(field.prop);
+        } else {
+          snapshot[field.prop] = readStoredJson(
+            `${field.key}_pin${pin}`,
+            getDefaultPinProp(pin, field.prop)
+          );
+        }
+
+        if (field.prop === 'habitTypes') {
+          Object.keys(snapshot[field.prop]).forEach(k => {
+            if (snapshot[field.prop][k] === CELL_TYPES.COUNTER) {
+              snapshot[field.prop][k] = CELL_TYPES.UNIT;
+            }
+          });
+        }
+      });
+      return snapshot;
+    }
+
+    function buildCloudSnapshot() {
+      persistCurrentPinState();
+
+      return {
+        version: APP_VERSION,
+        schemaVersion: CLOUD_SNAPSHOT_SCHEMA_VERSION,
+        snapshotType: 'fullApp',
+        exportedAt: new Date().toISOString(),
+        currentPin,
+        currentView,
+        pinCount: PIN_COUNT,
+        deviceId: getSupabaseDeviceId(),
+        pinNames: cloneData(pinNames || {}),
+        currencyCache: cloneData(currencyCache || {}),
+        pinData: Array.from({ length: PIN_COUNT }, (_, pin) => buildPinSyncSnapshot(pin))
+      };
+    }
+
+    function applyCurrentPinSnapshot(imported) {
+      if (!imported || typeof imported !== 'object') return false;
+
+      if (imported.weekData) weekData = imported.weekData;
+      if (imported.habitLabels) habitLabels = { ...habitLabels, ...imported.habitLabels };
+
+      if (imported.habitTypes) {
+        const incoming = { ...imported.habitTypes };
+        Object.keys(incoming).forEach(k => {
+          if (incoming[k] === CELL_TYPES.COUNTER) incoming[k] = CELL_TYPES.UNIT;
+        });
+        habitTypes = { ...habitTypes, ...incoming };
+      }
+
+      if (imported.habitColors) habitColors = { ...habitColors, ...imported.habitColors };
+      if (imported.habitDescriptions) habitDescriptions = { ...habitDescriptions, ...imported.habitDescriptions };
+
+      if (imported.durationStates) durationStates = { ...durationStates, ...imported.durationStates };
+      if (imported.timerSettings) timerSettings = { ...timerSettings, ...imported.timerSettings };
+      if (imported.moneySettings) moneySettings = { ...moneySettings, ...imported.moneySettings };
+
+      if (imported.unitSettings) unitSettings = imported.unitSettings;
+      if (imported.valueFormats) valueFormats = imported.valueFormats;
+      if (imported.mathSettings) mathSettings = imported.mathSettings;
+      if (imported.cellFlags) cellFlags = normalizeCellFlags(imported.cellFlags);
+      if (imported.cellLayout) cellLayout = normalizeCellLayout(imported.cellLayout);
+      if (imported.cells) applyCellsSnapshot(imported.cells);
+      if (imported.themeSettings) themeSettings = imported.themeSettings;
+      if (imported.ledSettings) ledSettings = imported.ledSettings;
+      if (imported.ledStates) ledStates = imported.ledStates;
+      if (imported.currencySettings) currencySettings = imported.currencySettings;
+      if (imported.currencyCache) currencyCache = imported.currencyCache;
+      if (imported.counterLastUpdate) counterLastUpdate = imported.counterLastUpdate;
+      if (imported.pinNames) pinNames = { ...pinNames, ...imported.pinNames };
+
+      persistCurrentPinState();
+      reloadCurrentPinState();
+      return true;
+    }
+
+    function applyCloudSnapshot(snapshot) {
+      if (!snapshot || snapshot.snapshotType !== 'fullApp' || !Array.isArray(snapshot.pinData)) {
+        return false;
+      }
+
+      snapshot.pinData.forEach(pinSnapshot => {
+        const pin = normalizeInt(pinSnapshot.pin, 0, 0, PIN_COUNT - 1);
+        PER_PIN_SYNC_FIELDS.forEach(field => {
+          localStorage.removeItem(`${field.key}_pin${pin}`);
+          if (pinSnapshot[field.prop] !== undefined) {
+            let value = pinSnapshot[field.prop];
+            if (field.prop === 'habitTypes') {
+              value = { ...value };
+              Object.keys(value).forEach(k => {
+                if (value[k] === CELL_TYPES.COUNTER) value[k] = CELL_TYPES.UNIT;
+              });
+            }
+            if (field.prop === 'cellFlags') value = normalizeCellFlags(value);
+            if (field.prop === 'cellLayout') value = normalizeCellLayout(value);
+            writeStoredJson(`${field.key}_pin${pin}`, value);
+          }
+        });
+      });
+
+      if (snapshot.pinNames && typeof snapshot.pinNames === 'object') {
+        pinNames = snapshot.pinNames;
+        savePinNames();
+      }
+
+      if (snapshot.currencyCache && typeof snapshot.currencyCache === 'object') {
+        currencyCache = snapshot.currencyCache;
+        saveCurrencyCache();
+      }
+
+      currentPin = normalizeInt(snapshot.currentPin, currentPin, 0, PIN_COUNT - 1);
+      currentView = Object.values(VIEW_MODES).includes(snapshot.currentView)
+        ? snapshot.currentView
+        : VIEW_MODES.TRACK;
+      saveViewMode();
+
+      document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
+      const activePin = document.getElementById(`pin${currentPin}`);
+      if (activePin) activePin.classList.add('active');
+      const grid = document.getElementById('habitsGrid');
+      if (grid) grid.setAttribute('data-pin', currentPin);
+      const layoutGrid = document.getElementById('layoutGrid');
+      if (layoutGrid) layoutGrid.setAttribute('data-pin', currentPin);
+
+      reloadCurrentPinState();
+      return true;
+    }
+
+    function getSupabaseConfig() {
+      const baseConfig = window.TRCKNG_CONFIG || {};
+      return {
+        url: (localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || baseConfig.supabaseUrl || '').trim(),
+        anonKey: (localStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || baseConfig.supabaseAnonKey || '').trim(),
+        table: (baseConfig.supabaseTable || SUPABASE_DEFAULT_TABLE).trim()
+      };
+    }
+
+    function hasSupabaseConfig() {
+      const config = getSupabaseConfig();
+      return Boolean(config.url && config.anonKey);
+    }
+
+    function getSupabaseDeviceId() {
+      let deviceId = localStorage.getItem(STORAGE_KEYS.SUPABASE_DEVICE_ID);
+      if (!deviceId) {
+        deviceId = window.crypto && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `device-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        localStorage.setItem(STORAGE_KEYS.SUPABASE_DEVICE_ID, deviceId);
+      }
+      return deviceId;
+    }
+
+    function ensureSupabaseClient(force = false) {
+      const config = getSupabaseConfig();
+      const signature = `${config.url}|${config.anonKey}|${config.table}`;
+
+      if (!config.url || !config.anonKey) {
+        supabaseClient = null;
+        supabaseConfigSignature = '';
+        return false;
+      }
+
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        supabaseClient = null;
+        supabaseConfigSignature = '';
+        return false;
+      }
+
+      if (!force && supabaseClient && supabaseConfigSignature === signature) {
+        return true;
+      }
+
+      supabaseClient = window.supabase.createClient(config.url, config.anonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true
+        }
+      });
+      supabaseConfigSignature = signature;
+      return true;
+    }
+
+    function applyAccountStatus(message, tone = 'idle') {
+      const status = document.getElementById('accountStatus');
+      if (!status) return;
+      status.textContent = message;
+      status.dataset.status = tone;
+    }
+
+    function setAccountStatus(message, tone = 'idle') {
+      accountStatusOverride = { message, tone };
+      applyAccountStatus(message, tone);
+    }
+
+    function setAccountInputValue(id, value) {
+      const input = document.getElementById(id);
+      if (!input || document.activeElement === input) return;
+      input.value = value || '';
+    }
+
+    function formatCloudMeta(meta) {
+      if (!meta || !meta.updatedAt) return 'NO SNAPSHOT';
+      const date = new Date(meta.updatedAt);
+      const when = Number.isNaN(date.getTime()) ? meta.updatedAt : date.toLocaleString();
+      const device = meta.deviceId ? meta.deviceId.slice(0, 8).toUpperCase() : 'DEVICE';
+      return `${when} / ${device}`;
+    }
+
+    function renderAccountPanel() {
+      const config = getSupabaseConfig();
+      const configured = Boolean(config.url && config.anonKey);
+      const sdkLoaded = Boolean(window.supabase && typeof window.supabase.createClient === 'function');
+      const signedIn = Boolean(accountSession && accountSession.user);
+
+      setAccountInputValue('accountConfigUrl', config.url);
+      setAccountInputValue('accountConfigAnon', config.anonKey);
+
+      const identity = document.getElementById('accountIdentity');
+      if (identity) {
+        identity.textContent = signedIn
+          ? (accountSession.user.email || accountSession.user.id || 'SIGNED IN')
+          : (configured ? 'GUEST READY' : 'LOCAL');
+      }
+
+      const cloudMeta = document.getElementById('accountCloudMeta');
+      if (cloudMeta) cloudMeta.textContent = formatCloudMeta(cloudSnapshotMeta);
+
+      const needsConfig = !configured || !sdkLoaded;
+      ['accountEmail', 'accountPassword', 'accountSignIn', 'accountSignUp'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = needsConfig || cloudBusy || signedIn;
+      });
+      ['accountSignOut', 'accountUpload', 'accountLoad'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = needsConfig || cloudBusy || !signedIn;
+      });
+
+      const saveConfig = document.getElementById('accountConfigSave');
+      if (saveConfig) saveConfig.disabled = cloudBusy;
+
+      let statusMessage = 'READY TO SIGN IN';
+      let statusTone = 'idle';
+      if (!configured) {
+        statusMessage = 'LOCAL ONLY';
+        statusTone = 'warn';
+      } else if (!sdkLoaded) {
+        statusMessage = 'SUPABASE SDK OFFLINE';
+        statusTone = 'error';
+      } else if (signedIn) {
+        statusMessage = 'SIGNED IN';
+        statusTone = 'ok';
+      }
+      applyAccountStatus(
+        accountStatusOverride?.message || statusMessage,
+        accountStatusOverride?.tone || statusTone
+      );
+    }
+
+    function openAccountModal() {
+      renderAccountPanel();
+      document.getElementById('accountModal').classList.add('visible');
+      if (hasSupabaseConfig() && !accountSession) {
+        refreshAccountSession();
+      }
+    }
+
+    function closeAccountModal() {
+      document.getElementById('accountModal').classList.remove('visible');
+    }
+
+    function setupSupabaseAccount(force = false) {
+      if (supabaseAuthSubscription && typeof supabaseAuthSubscription.unsubscribe === 'function') {
+        supabaseAuthSubscription.unsubscribe();
+        supabaseAuthSubscription = null;
+      }
+
+      if (!ensureSupabaseClient(force)) {
+        accountSession = null;
+        cloudSnapshotMeta = null;
+        renderAccountPanel();
+        return false;
+      }
+
+      const { data } = supabaseClient.auth.onAuthStateChange((event, session) => {
+        accountSession = session;
+        if (event === 'SIGNED_OUT') {
+          cloudSnapshotMeta = null;
+        }
+        renderAccountPanel();
+        if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+          setTimeout(() => refreshCloudSnapshotMeta(), 0);
+        }
+      });
+      supabaseAuthSubscription = data && data.subscription ? data.subscription : null;
+      refreshAccountSession();
+      return true;
+    }
+
+    async function refreshAccountSession() {
+      if (!ensureSupabaseClient()) {
+        renderAccountPanel();
+        return null;
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        accountSession = data.session;
+        renderAccountPanel();
+        if (accountSession) await refreshCloudSnapshotMeta();
+        return accountSession;
+      } catch (error) {
+        console.error(error);
+        setAccountStatus(`SESSION ERROR: ${error.message}`, 'error');
+        return null;
+      }
+    }
+
+    function getAccountCredentials() {
+      const email = (document.getElementById('accountEmail')?.value || '').trim();
+      const password = document.getElementById('accountPassword')?.value || '';
+      return { email, password };
+    }
+
+    function saveSupabaseConfigFromModal() {
+      const url = (document.getElementById('accountConfigUrl')?.value || '').trim();
+      const anonKey = (document.getElementById('accountConfigAnon')?.value || '').trim();
+
+      if (url) localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
+      else localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
+
+      if (anonKey) localStorage.setItem(STORAGE_KEYS.SUPABASE_ANON_KEY, anonKey);
+      else localStorage.removeItem(STORAGE_KEYS.SUPABASE_ANON_KEY);
+
+      accountSession = null;
+      cloudSnapshotMeta = null;
+      setupSupabaseAccount(true);
+      setAccountStatus(url && anonKey ? 'CONFIG SAVED' : 'LOCAL ONLY', url && anonKey ? 'ok' : 'warn');
+    }
+
+    async function signInAccount() {
+      if (!ensureSupabaseClient()) {
+        renderAccountPanel();
+        return;
+      }
+
+      const { email, password } = getAccountCredentials();
+      if (!email || !password) {
+        setAccountStatus('EMAIL AND PASSWORD REQUIRED', 'warn');
+        return;
+      }
+
+      cloudBusy = true;
+      renderAccountPanel();
+      setAccountStatus('SIGNING IN...', 'idle');
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        accountSession = data.session;
+        document.getElementById('accountPassword').value = '';
+        await refreshCloudSnapshotMeta();
+        setAccountStatus('SIGNED IN', 'ok');
+      } catch (error) {
+        console.error(error);
+        setAccountStatus(`SIGN IN ERROR: ${error.message}`, 'error');
+      } finally {
+        cloudBusy = false;
+        renderAccountPanel();
+      }
+    }
+
+    async function signUpAccount() {
+      if (!ensureSupabaseClient()) {
+        renderAccountPanel();
+        return;
+      }
+
+      const { email, password } = getAccountCredentials();
+      if (!email || !password) {
+        setAccountStatus('EMAIL AND PASSWORD REQUIRED', 'warn');
+        return;
+      }
+
+      cloudBusy = true;
+      renderAccountPanel();
+      setAccountStatus('CREATING ACCOUNT...', 'idle');
+
+      try {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.href.split('#')[0]
+          }
+        });
+        if (error) throw error;
+        accountSession = data.session;
+        document.getElementById('accountPassword').value = '';
+        if (accountSession) {
+          await refreshCloudSnapshotMeta();
+          setAccountStatus('ACCOUNT READY', 'ok');
+        } else {
+          setAccountStatus('CHECK EMAIL TO CONFIRM', 'warn');
+        }
+      } catch (error) {
+        console.error(error);
+        setAccountStatus(`SIGN UP ERROR: ${error.message}`, 'error');
+      } finally {
+        cloudBusy = false;
+        renderAccountPanel();
+      }
+    }
+
+    async function signOutAccount() {
+      if (!ensureSupabaseClient()) return;
+      cloudBusy = true;
+      renderAccountPanel();
+      setAccountStatus('SIGNING OUT...', 'idle');
+
+      try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+        accountSession = null;
+        cloudSnapshotMeta = null;
+        setAccountStatus('SIGNED OUT', 'idle');
+      } catch (error) {
+        console.error(error);
+        setAccountStatus(`SIGN OUT ERROR: ${error.message}`, 'error');
+      } finally {
+        cloudBusy = false;
+        renderAccountPanel();
+      }
+    }
+
+    async function fetchCloudSnapshotRow() {
+      const session = await refreshAccountSession();
+      if (!session || !session.user) {
+        setAccountStatus('SIGN IN REQUIRED', 'warn');
+        return null;
+      }
+
+      const config = getSupabaseConfig();
+      const { data, error } = await supabaseClient
+        .from(config.table)
+        .select('app_state, updated_at, device_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    async function refreshCloudSnapshotMeta() {
+      if (!supabaseClient || !accountSession || !accountSession.user) return;
+
+      try {
+        const config = getSupabaseConfig();
+        const { data, error } = await supabaseClient
+          .from(config.table)
+          .select('app_state, updated_at, device_id')
+          .eq('user_id', accountSession.user.id)
+          .maybeSingle();
+        if (error) throw error;
+
+        cloudSnapshotMeta = data ? {
+          updatedAt: data.updated_at,
+          deviceId: data.device_id,
+          version: data.app_state && data.app_state.version
+        } : null;
+        renderAccountPanel();
+      } catch (error) {
+        console.error(error);
+        setAccountStatus(`CLOUD ERROR: ${error.message}`, 'error');
+      }
+    }
+
+    async function uploadCloudSnapshot() {
+      if (!ensureSupabaseClient()) {
+        renderAccountPanel();
+        return;
+      }
+
+      const session = await refreshAccountSession();
+      if (!session || !session.user) {
+        setAccountStatus('SIGN IN REQUIRED', 'warn');
+        return;
+      }
+
+      cloudBusy = true;
+      renderAccountPanel();
+      setAccountStatus('UPLOADING SNAPSHOT...', 'idle');
+
+      try {
+        const config = getSupabaseConfig();
+        const timestamp = new Date().toISOString();
+        const snapshot = buildCloudSnapshot();
+        const { data, error } = await supabaseClient
+          .from(config.table)
+          .upsert({
+            user_id: session.user.id,
+            app_state: snapshot,
+            updated_at: timestamp,
+            device_id: getSupabaseDeviceId()
+          }, { onConflict: 'user_id' })
+          .select('updated_at, device_id')
+          .maybeSingle();
+        if (error) throw error;
+
+        cloudSnapshotMeta = {
+          updatedAt: data?.updated_at || timestamp,
+          deviceId: data?.device_id || getSupabaseDeviceId(),
+          version: APP_VERSION
+        };
+        setAccountStatus('CLOUD SNAPSHOT UPDATED', 'ok');
+      } catch (error) {
+        console.error(error);
+        setAccountStatus(`UPLOAD ERROR: ${error.message}`, 'error');
+      } finally {
+        cloudBusy = false;
+        renderAccountPanel();
+      }
+    }
+
+    async function loadCloudSnapshot() {
+      if (!ensureSupabaseClient()) {
+        renderAccountPanel();
+        return;
+      }
+
+      cloudBusy = true;
+      renderAccountPanel();
+      setAccountStatus('LOADING CLOUD...', 'idle');
+
+      try {
+        const row = await fetchCloudSnapshotRow();
+        if (!row || !row.app_state) {
+          setAccountStatus('NO CLOUD SNAPSHOT', 'warn');
+          return;
+        }
+
+        const updatedAt = row.updated_at ? new Date(row.updated_at).toLocaleString() : 'unknown time';
+        if (!confirm(`LOAD CLOUD SNAPSHOT?\n\nCloud updated: ${updatedAt}\nThis replaces local data on this device.`)) {
+          setAccountStatus('LOAD CANCELLED', 'idle');
+          return;
+        }
+
+        const applied = row.app_state.snapshotType === 'fullApp'
+          ? applyCloudSnapshot(row.app_state)
+          : applyCurrentPinSnapshot(row.app_state);
+
+        if (!applied) throw new Error('Unsupported snapshot format');
+
+        cloudSnapshotMeta = {
+          updatedAt: row.updated_at,
+          deviceId: row.device_id,
+          version: row.app_state.version
+        };
+        setAccountStatus('CLOUD SNAPSHOT LOADED', 'ok');
+      } catch (error) {
+        console.error(error);
+        setAccountStatus(`LOAD ERROR: ${error.message}`, 'error');
+      } finally {
+        cloudBusy = false;
+        renderAccountPanel();
+      }
     }
 
     
@@ -3145,15 +3866,14 @@ function scheduleMathRefresh() {
       navigator.clipboard?.writeText(text).then(() => alert('Previous week copied'));
     }
 
-    function exportData() {
-      // Export current PIN state + settings
+    function buildCurrentPinExportSnapshot() {
       const exportedTypes = { ...habitTypes };
       Object.keys(exportedTypes).forEach(k => {
         if (exportedTypes[k] === CELL_TYPES.COUNTER) exportedTypes[k] = CELL_TYPES.UNIT;
       });
 
-      const exportObj = {
-        version: '1.29',
+      return {
+        version: APP_VERSION,
         schemaVersion: 2,
         pin: currentPin,
         exportedAt: new Date().toISOString(),
@@ -3184,7 +3904,10 @@ function scheduleMathRefresh() {
         counterLastUpdate,
         pinNames
       };
+    }
 
+    function exportData() {
+      const exportObj = buildCurrentPinExportSnapshot();
       const dataStr = JSON.stringify(exportObj, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(dataBlob);
@@ -3210,68 +3933,14 @@ function importData() {
           try {
             const imported = JSON.parse(reader.result);
 
-            if (imported.weekData) weekData = imported.weekData;
-            if (imported.habitLabels) habitLabels = { ...habitLabels, ...imported.habitLabels };
-
-            if (imported.habitTypes) {
-              const incoming = { ...imported.habitTypes };
-              Object.keys(incoming).forEach(k => {
-                if (incoming[k] === CELL_TYPES.COUNTER) incoming[k] = CELL_TYPES.UNIT;
-              });
-              habitTypes = { ...habitTypes, ...incoming };
+            if (imported.snapshotType === 'fullApp') {
+              const ok = applyCloudSnapshot(imported);
+              if (!ok) throw new Error('Unsupported full app snapshot');
+              alert('Full app snapshot imported successfully');
+            } else {
+              applyCurrentPinSnapshot(imported);
+              alert('Data imported successfully');
             }
-
-            if (imported.habitColors) habitColors = { ...habitColors, ...imported.habitColors };
-            if (imported.habitDescriptions) habitDescriptions = { ...habitDescriptions, ...imported.habitDescriptions };
-
-            if (imported.durationStates) durationStates = { ...durationStates, ...imported.durationStates };
-            if (imported.timerSettings) timerSettings = { ...timerSettings, ...imported.timerSettings };
-            if (imported.moneySettings) moneySettings = { ...moneySettings, ...imported.moneySettings };
-
-            // Per-PIN settings (imported as-is into the current PIN)
-            if (imported.unitSettings) unitSettings = imported.unitSettings;
-            if (imported.valueFormats) valueFormats = imported.valueFormats;
-            if (imported.mathSettings) mathSettings = imported.mathSettings;
-            if (imported.cellFlags) cellFlags = normalizeCellFlags(imported.cellFlags);
-            if (imported.cellLayout) cellLayout = normalizeCellLayout(imported.cellLayout);
-            if (imported.cells) applyCellsSnapshot(imported.cells);
-            if (imported.themeSettings) themeSettings = imported.themeSettings;
-            if (imported.ledSettings) ledSettings = imported.ledSettings;
-            if (imported.ledStates) ledStates = imported.ledStates;
-            if (imported.currencySettings) currencySettings = imported.currencySettings;
-            if (imported.currencyCache) currencyCache = imported.currencyCache;
-            if (imported.counterLastUpdate) counterLastUpdate = imported.counterLastUpdate;
-            if (imported.pinNames) pinNames = { ...pinNames, ...imported.pinNames };
-
-            // Persist
-            saveWeekData();
-            saveLabels();
-            saveTypes();
-            saveColors();
-            saveDescriptions();
-            saveDurationStates();
-            saveTimerSettings();
-            saveMoneySettings();
-            saveUnitSettings();
-            saveValueFormats();
-            saveMathSettings();
-            saveCellFlags();
-            saveCellLayout();
-            saveThemeSettings();
-            saveLedSettings();
-            saveLedStates();
-            saveCurrencySettings();
-            saveCurrencyCache();
-            saveCounterLastUpdate();
-            savePinNames();
-
-            applyTheme();
-
-            renderHabits();
-            renderLayoutEditor();
-            updateHeader();
-            applyPinNamesToUI();
-            alert('Data imported successfully');
           } catch (err) {
             console.error(err);
             alert('Import failed: invalid file');
@@ -4043,9 +4712,17 @@ function openInfoModal() {
       document.getElementById('btnImport').addEventListener('click', importData);
       document.getElementById('btnReset').addEventListener('click', resetAll);
       document.getElementById('btnQuickInfo').addEventListener('click', openInfoModal);
+      document.getElementById('btnAccount').addEventListener('click', openAccountModal);
     document.getElementById('btnTheme').addEventListener('click', () => { closeEditModal(); openThemeModal(); });
     document.getElementById('btnNotify').addEventListener('click', requestNotificationPermission);
     document.getElementById('btnInfo').addEventListener('click', () => { closeEditModal(); openInfoModal(); });
+    document.getElementById('accountModalClose').addEventListener('click', closeAccountModal);
+    document.getElementById('accountConfigSave').addEventListener('click', saveSupabaseConfigFromModal);
+    document.getElementById('accountSignIn').addEventListener('click', signInAccount);
+    document.getElementById('accountSignUp').addEventListener('click', signUpAccount);
+    document.getElementById('accountSignOut').addEventListener('click', signOutAccount);
+    document.getElementById('accountUpload').addEventListener('click', uploadCloudSnapshot);
+    document.getElementById('accountLoad').addEventListener('click', loadCloudSnapshot);
 
     document.getElementById('valueModalCancel').addEventListener('click', closeValueModal);
     document.getElementById('valueModalClear').addEventListener('click', () => {
@@ -4208,6 +4885,8 @@ function openInfoModal() {
       setView(currentView);
       updateCellDiagonalAngle();
       window.addEventListener('resize', updateCellDiagonalAngle);
+      window.addEventListener('trckng-supabase-sdk-loaded', () => setupSupabaseAccount(true));
+      setupSupabaseAccount();
 
     }
 
