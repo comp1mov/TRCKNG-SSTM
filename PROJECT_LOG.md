@@ -90,3 +90,11 @@
 - Kept manual `UPLOAD THIS DEVICE` and `LOAD CLOUD` controls as recovery actions.
 - Added Account UI sync state (`OFF`, `SIGN IN`, `QUEUED`, `UNSAVED`, `SYNCING`, `SYNCED`).
 - Bumped app/export/cache version to `v1.31`.
+
+### Phase 5B Sync Recovery
+
+- Fixed first-use behavior on another computer: fresh local devices now auto-load the existing cloud snapshot after sign-in.
+- Added conflict pause so automatic upload does not overwrite cloud when local unsaved data and cloud data both exist.
+- Added `CONFLICT` / `LOAD OR UPLOAD` account states while keeping manual recovery buttons available.
+- Documented the next conflict-review phase: choose, merge safe differences, or preserve both versions.
+- Bumped app/export/cache version to `v1.31.1`.

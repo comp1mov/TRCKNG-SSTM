@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.31';
+    const APP_VERSION = '1.31.1';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -170,6 +170,7 @@
     let cloudPullCheckInFlight = false;
     let lastCloudPullCheckAt = 0;
     let suppressCloudDirty = 0;
+    let cloudConflictPending = false;
 
     // ===== COLOR PALETTE =====
     function generateColorPalette() {
@@ -1104,6 +1105,7 @@
         scheduleCloudAutosync(reason);
       } else {
         cloudDirtyAt = 0;
+        cloudConflictPending = false;
         localStorage.removeItem(STORAGE_KEYS.CLOUD_DIRTY);
         localStorage.removeItem(STORAGE_KEYS.CLOUD_DIRTY_AT);
         if (cloudSyncTimer) {
@@ -1125,6 +1127,10 @@
         renderAccountPanel();
         return;
       }
+      if (cloudConflictPending) {
+        setAccountStatus('CONFLICT - LOAD OR UPLOAD', 'warn');
+        return;
+      }
       if (!navigator.onLine) {
         setAccountStatus('OFFLINE - SYNC WAITING', 'warn');
         return;
@@ -1141,6 +1147,7 @@
       if (!hasSupabaseConfig()) return 'OFF';
       if (!accountSession || !accountSession.user) return cloudDirty ? 'UNSAVED LOCAL' : 'SIGN IN';
       if (cloudBusy) return 'SYNCING';
+      if (cloudConflictPending) return 'CONFLICT';
       if (cloudDirty && cloudSyncTimer) return 'QUEUED';
       if (cloudDirty) return 'UNSAVED';
       if (cloudSnapshotMeta) return 'SYNCED';
@@ -1154,6 +1161,25 @@
       const localSyncMs = getCloudLastSyncMs();
       if (!localSyncMs) return 'unknown';
       return cloudMs > localSyncMs + 1000 ? 'newer' : 'current';
+    }
+
+    function applyIncomingCloudRow(row, message = 'CLOUD UPDATE LOADED') {
+      if (!row || !row.app_state) return false;
+
+      const applied = row.app_state.snapshotType === 'fullApp'
+        ? applyCloudSnapshot(row.app_state, { fromCloudSync: true })
+        : applyCurrentPinSnapshot(row.app_state, { fromCloudSync: true });
+      if (!applied) return false;
+
+      cloudSnapshotMeta = {
+        updatedAt: row.updated_at,
+        deviceId: row.device_id,
+        version: row.app_state && row.app_state.version
+      };
+      setCloudLastSyncAt(row.updated_at);
+      setCloudDirty(false);
+      setAccountStatus(message, 'ok');
+      return true;
     }
 
     async function checkCloudForUpdates(options = {}) {
@@ -1188,19 +1214,26 @@
         const relation = compareCloudToLocal(data);
         if (data && relation === 'newer') {
           if (cloudDirty) {
+            cloudConflictPending = true;
             setAccountStatus('CLOUD NEWER - LOCAL UNSAVED', 'warn');
           } else {
-            const applied = data.app_state?.snapshotType === 'fullApp'
-              ? applyCloudSnapshot(data.app_state, { fromCloudSync: true })
-              : applyCurrentPinSnapshot(data.app_state, { fromCloudSync: true });
-            if (applied) {
-              setCloudLastSyncAt(data.updated_at);
-              setCloudDirty(false);
-              setAccountStatus('CLOUD UPDATE LOADED', 'ok');
-            }
+            cloudConflictPending = false;
+            applyIncomingCloudRow(data);
           }
-        } else if (data && relation === 'unknown' && !cloudDirty) {
-          setAccountStatus('CLOUD SNAPSHOT READY', 'warn');
+        } else if (data && relation === 'unknown') {
+          const canBootstrapFromCloud = !cloudDirty && !hasMeaningfulLocalData();
+          if (canBootstrapFromCloud) {
+            cloudConflictPending = false;
+            applyIncomingCloudRow(data, 'CLOUD LOADED ON THIS DEVICE');
+          } else {
+            cloudConflictPending = true;
+            setAccountStatus(
+              cloudDirty ? 'CLOUD READY - LOCAL UNSAVED' : 'CLOUD READY - CHOOSE LOAD',
+              'warn'
+            );
+          }
+        } else {
+          cloudConflictPending = false;
         }
       } catch (error) {
         console.error(error);
@@ -1228,6 +1261,77 @@
     function cloneData(value) {
       if (value === undefined || value === null) return value;
       return JSON.parse(JSON.stringify(value));
+    }
+
+    function stableStringify(value) {
+      if (Array.isArray(value)) {
+        return `[${value.map(stableStringify).join(',')}]`;
+      }
+      if (value && typeof value === 'object') {
+        return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+      }
+      return JSON.stringify(value);
+    }
+
+    function isSameData(a, b) {
+      return stableStringify(a) === stableStringify(b);
+    }
+
+    function hasMeaningfulWeekData(data) {
+      if (!data || typeof data !== 'object') return false;
+      return Object.values(data).some(week => {
+        if (!week || typeof week !== 'object') return false;
+        return Object.values(week).some(value => {
+          if (typeof value === 'number') return value !== 0;
+          if (typeof value === 'string') return value.trim() !== '';
+          if (typeof value === 'boolean') return value;
+          return value !== null && value !== undefined;
+        });
+      });
+    }
+
+    function normalizeTypesForCompare(types) {
+      const normalized = { ...(types || {}) };
+      Object.keys(normalized).forEach(key => {
+        if (normalized[key] === CELL_TYPES.COUNTER) normalized[key] = CELL_TYPES.UNIT;
+      });
+      return normalized;
+    }
+
+    function hasMeaningfulPinSnapshotData(pin, snapshot) {
+      if (!snapshot || typeof snapshot !== 'object') return false;
+
+      if (hasMeaningfulWeekData(snapshot.weekData)) return true;
+      if (!isSameData(snapshot.habitLabels || {}, getDefaultPinProp(pin, 'habitLabels'))) return true;
+      if (!isSameData(
+        normalizeTypesForCompare(snapshot.habitTypes || {}),
+        normalizeTypesForCompare(getDefaultPinProp(pin, 'habitTypes'))
+      )) return true;
+      if (!isSameData(snapshot.habitColors || {}, getDefaultPinProp(pin, 'habitColors'))) return true;
+      if (!isSameData(normalizeCellFlags(snapshot.cellFlags || {}), normalizeCellFlags({}))) return true;
+      if (!isSameData(normalizeCellLayout(snapshot.cellLayout || {}), normalizeCellLayout({}))) return true;
+      if (!isSameData(snapshot.themeSettings || defaultThemeSettings(), defaultThemeSettings())) return true;
+
+      return [
+        'habitDescriptions',
+        'durationStates',
+        'timerSettings',
+        'timerStates',
+        'counterLastUpdate',
+        'moneySettings',
+        'unitSettings',
+        'valueFormats',
+        'mathSettings',
+        'ledSettings',
+        'ledStates',
+        'currencySettings'
+      ].some(prop => Object.keys(snapshot[prop] || {}).length > 0);
+    }
+
+    function hasMeaningfulLocalData() {
+      if (Object.keys(pinNames || {}).length > 0) return true;
+      return Array.from({ length: PIN_COUNT }, (_, pin) => buildPinSyncSnapshot(pin))
+        .some(snapshot => hasMeaningfulPinSnapshotData(snapshot.pin, snapshot));
     }
 
     function persistCurrentPinState() {
@@ -1588,6 +1692,9 @@
         if (cloudBusy) {
           statusMessage = 'SYNCING...';
           statusTone = 'idle';
+        } else if (cloudConflictPending) {
+          statusMessage = 'CONFLICT - LOAD OR UPLOAD';
+          statusTone = 'warn';
         } else if (cloudDirty && cloudSyncTimer) {
           statusMessage = 'UNSAVED - AUTO SYNC QUEUED';
           statusTone = 'warn';
@@ -1848,6 +1955,12 @@
       const session = await refreshAccountSession();
       if (!session || !session.user) {
         setAccountStatus('SIGN IN REQUIRED', 'warn');
+        return;
+      }
+
+      if (automatic && cloudConflictPending) {
+        setAccountStatus('CONFLICT - LOAD OR UPLOAD', 'warn');
+        renderAccountPanel();
         return;
       }
 

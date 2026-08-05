@@ -1,4 +1,4 @@
-# TRCKNG SSTM v1.31
+# TRCKNG SSTM v1.31.1
 
 Local-first modular tracking dashboard for weekly habits, timers, money, formulas, and small personal metrics.
 
@@ -29,6 +29,8 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `l
 - Manual cloud snapshot upload / load across all PINs
 - Safe autosync with dirty-state debounce
 - Cloud update checks on sign-in, focus, and online recovery
+- Fresh-device cloud bootstrap after sign-in
+- Conflict pause when local unsaved data and cloud data differ
 - JSON export/import for backups
 - PWA install support
 - Mobile fixes for iOS safe areas, double-tap zoom, and Safari active states
@@ -48,11 +50,11 @@ Main stored groups:
 
 ## Backup
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.31 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, and signed-in local changes are queued for debounced autosync.
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.31.1 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, and signed-in local changes are queued for debounced autosync.
 
 ## Supabase
 
-See `SUPABASE_SETUP.md`. The current Supabase project URL and publishable key are already in `app-config.js`; the password is never stored by this app. Autosync writes one full-app snapshot row per user, debounced after local changes.
+See `SUPABASE_SETUP.md`. The current Supabase project URL and publishable key are already in `app-config.js`; the password is never stored by this app. Autosync writes one full-app snapshot row per user, debounced after local changes, and pauses when a conflict needs manual choice.
 
 ## Public App
 
