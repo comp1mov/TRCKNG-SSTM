@@ -76,10 +76,11 @@ See `C:\Users\gregt\Desktop\strategic_roadmap.md`.
 
 Recommended next phase:
 
-1. Finish Supabase account MVP validation.
-2. Add safe autosync and cloud conflict handling.
-3. Add mobile install/update polish.
-4. Return to drag/resize and section label/text cells after sync is stable.
+1. Resume Phase 2C layout editor UX.
+2. Add dashboard construction controls: add, hide, duplicate, reset, pack.
+3. Add standalone label/text cells for sections.
+4. Add explicit time-cell controls inside larger cells.
+5. Return to conflict review UI only when real multi-device conflicts need a richer screen.
 
 ## Deploy
 

@@ -114,3 +114,10 @@
 - Added a 3-second hold gesture on the Account `Email` label to reveal `SIGN UP` for the current browser session.
 - Kept `SIGN IN`, sync status, and manual sync actions visible as the normal account flow.
 - Bumped app/export/cache version to `v1.31.3`.
+
+### Roadmap Re-Anchor After Sync
+
+- Decision: the current sync baseline is good enough for real personal use and should not block the UI architecture work.
+- Deferred Phase 5C conflict review UI until real multi-device conflicts appear or the product needs a richer recovery screen.
+- Resumed Phase 2C as the next active architecture track: turn `LAYOUT` into a real dashboard construction surface.
+- Next focus: add/hide/duplicate/reset layout controls, recoverable inactive cells, and clearer separation between `TRACK`, `LAYOUT`, and `HISTORY`.

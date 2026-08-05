@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.31.2`.
+Current working app target: `v1.31.3`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -58,7 +58,7 @@ Interaction rules:
 
 ## Phase 2: Modular Grid Architecture
 
-Status: paused after layout view baseline
+Status: resuming after account/sync baseline
 
 Goal: replace the fixed `HABITS = cell01..cell09` mental model with a layout-driven cell system while keeping the current app usable after every step.
 
@@ -70,9 +70,11 @@ Implementation order:
 4. Done: add CSS Grid positioning with saved row/col/span defaults.
 5. Done: add static size presets for 1x1, 2x1, 1x2, and 2x2 cells with ordered reflow.
 6. Done: add `LAYOUT` view with UP/DOWN reorder controls and PACK reflow.
-7. Add drag/resize controls after the manual layout mode exists.
-8. Add standalone label/text cells for section headers.
-9. Revisit history/card/flag UI after the modular grid is stable.
+7. Next: turn `LAYOUT` into a real editor surface with add/hide/duplicate/reset controls.
+8. Add drag/resize controls after the manual layout mode exists.
+9. Add standalone label/text cells for section headers.
+10. Add explicit in-cell controls for time-based cells.
+11. Revisit history/card/flag UI after the modular grid is stable.
 
 ## Phase 4A: Supabase Account MVP
 
@@ -104,10 +106,31 @@ Deferred:
 2. Done: Phase 4B account hardening with hidden config and secret sign-up gesture.
 3. Done: Phase 5A safe autosync with dirty-state debounce and cloud update checks.
 4. Done: Phase 5B sync recovery for fresh-device cloud bootstrap, wake checks, main-screen sync button, and conflict pause.
-5. Next: Phase 5C conflict review UI with choose / merge / preserve-both flows.
-6. Phase 5D mobile install/update polish for phone use.
-7. Return to Phase 2c drag/resize only after sync is stable.
-8. Phase 3: weekly cycle review and Goal Time.
+5. Deferred: Phase 5C conflict review UI with choose / merge / preserve-both flows.
+6. Next: Phase 2C layout editor UX and dashboard architecture.
+7. Phase 2D standalone label/text cells and section structure.
+8. Phase 2E explicit time-cell controls inside larger cells.
+9. Phase 5D mobile install/update polish for phone use.
+10. Phase 3: weekly cycle review and Goal Time.
+
+## Phase 2C: Layout Editor UX
+
+Goal: make `LAYOUT` feel like the dashboard construction surface, not only a list of 9 cells with `UP` / `DOWN`.
+
+Scope:
+
+- Keep the current 3-column CSS Grid and saved `cellLayout` model.
+- Add visible controls for `ADD`, `HIDE`, `DUPLICATE`, `RESET`, and `PACK`.
+- Let hidden/inactive cells stay recoverable from the layout editor.
+- Make the editor communicate cell type, size, active state, and sync-safe saved state.
+- Keep every change local-first and covered by export/import/Supabase snapshot sync.
+
+Design direction:
+
+- `TRACK` is for use.
+- `LAYOUT` is for structure.
+- `HISTORY` is for review.
+- Cell long-press, flip cards, and badges stay deferred until the editor model is stronger.
 
 ## Phase 5C: Conflict Review UI
 
