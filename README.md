@@ -1,81 +1,74 @@
-# TRCKNG SSTM v0.111
+# TRCKNG SSTM v1.25
 
-Modular weekly habit tracking system. Personal tracking journal built for weekly checkpoints and Obsidian integration.
+Local-first modular tracking dashboard for weekly habits, timers, money, formulas, and small personal metrics.
 
-## What is it?
+The app is intentionally simple to deploy: static HTML/CSS/JS, no backend, data stored in `localStorage`, with PWA/offline support through `service-worker.js`.
 
-A minimalist web app to track habits weekly. You define what to track, and the system records data over time. Simple, local-first, offline-capable.
+## Current Structure
+
+- `index.html` - app markup and modals
+- `style.css` - visual system, responsive layout, mobile fixes
+- `app.js` - state, storage, rendering, timers, import/export
+- `manifest.json` - PWA metadata
+- `service-worker.js` - offline cache
 
 ## Features
 
-- **Weekly tracking** — automatic week numbering (ISO 8601)
-- **Customizable habits** — add/remove/reorder tracking items easily
-- **Data persistence** — localStorage keeps data locally on your device
-- **Migration-friendly** — change habit list without losing history
-- **Export/Import** — backup data as JSON, restore anytime
-- **Previous week snapshot** — COPY button for last week to paste into Obsidian
-- **Decrease mode** — toggle to subtract instead of add (useful for tracking reductions)
-- **Offline support** — works completely offline via service worker
-- **PWA ready** — install as app on mobile or desktop
-- **Monday reminder** — notification to export data to Obsidian
+- 3 independent PIN pages
+- 9 configurable cells per PIN
+- Cell types: Unit, Value, Math, MM:SS, Min, Sec, Timer, Countdown, Income, Budget, LED Pulse, FX Rate
+- Weekly history with 52-week retention
+- Per-PIN labels, descriptions, colors, themes, timer settings, money settings, math settings, LED settings, and currency settings
+- JSON export/import for backups
+- PWA install support
+- Mobile fixes for iOS safe areas, double-tap zoom, and Safari active states
 
-## How to use
+## Data
 
-1. Click habit button to increment counter
-2. **COPY** — copies previous week's data for Obsidian
-3. **EXPORT** — saves full JSON history to clipboard
-4. **IMPORT** — restore from backed-up JSON file
-5. **DECREASE** — toggle mode to subtract (-1) instead of add (+1)
+All user data is stored locally in browser `localStorage`. Per-PIN keys use suffixes like `_pin0`, `_pin1`, and `_pin2`.
 
-## Setup (GitHub Pages)
+Main stored groups:
 
-1. Fork or create repo: `tracking-system`
-2. Enable GitHub Pages in Settings → Pages
-3. App available at: `https://username.github.io/tracking-system`
-4. Install as PWA (on mobile: "Add to Home Screen", on desktop: install button in browser)
+- weekly values: `trckng_sstm_data_pinX`
+- cell labels/types/colors/descriptions
+- duration/timer runtime and settings
+- unit/value/math/money/LED/currency settings
+- per-PIN theme and custom PIN names
 
-## Customization
+## Backup
 
-Edit `habits` array in `index.html`:
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.25 settings.
 
-```javascript
-const habits = [
-  "sport",    // add/remove/reorder here
-  "cig", 
-  "want",
-  // ...
-];
+## Development Roadmap
 
-const habitLabels = {
-  "sport": "Sport",  // display names
-  "cig": "Cig",
-  // ...
-};
+See `C:\Users\gregt\Desktop\strategic_roadmap.md`.
+
+Recommended next phase:
+
+1. Stabilize v1.25 data export/import/reset.
+2. Polish mobile/PWA behavior.
+3. Add modular layout editor for variable-size cells.
+4. Add Goal Time.
+5. Add Supabase accounts and sync.
+
+## Deploy
+
+The current manifest assumes GitHub Pages path `/TRCKNG-SSTM/`:
+
+```text
+https://username.github.io/TRCKNG-SSTM/
 ```
 
-Data auto-migrates when you change the list.
+If deploying to another path, update `manifest.json`, icon paths, and `service-worker.js` cache URLs.
 
-## Data format
+## Local Preview
 
-```json
-{
-  "2026W01": {
-    "sport": 5,
-    "cig": 0,
-    "want": 3,
-    ...
-  },
-  "2025W52": { ... }
-}
+```powershell
+node dev-server.mjs 5173
 ```
 
-Keep this file backed up locally!
+Open:
 
-## Version history
-
-- **v0.02** — Added DECREASE mode, COPY prev week, better export/import, POST habit
-- **v0.01** — Initial release
-
----
-
-Made for personal tracking. Fully local. No ads, no tracking, no cloud sync.
+```text
+http://127.0.0.1:5173/TRCKNG-SSTM/
+```

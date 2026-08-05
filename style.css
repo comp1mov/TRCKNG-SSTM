@@ -1,0 +1,1097 @@
+* {
+  box-sizing: border-box;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--app-bg, #000000);
+  color: var(--app-text, #ffffff);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overscroll-behavior: none; /* Prevents scroll bounce and pull-to-refresh */
+}
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+}
+button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
+  touch-action: manipulation; /* Prevents double-tap zoom delay */
+}
+
+    :root {
+      --cell-diagonal-angle: 36.87deg;
+      --cell-line-width: 1px;
+    }
+    .container {
+      width: 100%;
+      /* Adjust max-width below to tune desktop layout width */
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    
+    /* Controls group - consistent 1px gaps */
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* ===== HEADER - Progress Strips ===== */
+    .header {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      gap: 6px;
+      padding: 0;
+    }
+    
+    .progress-strip {
+      position: relative;
+      width: 100%;
+      height: 32px;
+      background: var(--app-bg, #000);
+      overflow: hidden;
+    }
+    
+    .progress-strip-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      transition: width 1s linear;
+    }
+    
+    .progress-strip-fill.day-fill {
+      background: var(--day-strip-color, rgba(102,170,255,0.3));
+    }
+    
+    .progress-strip-fill.week-fill {
+      background: var(--week-strip-color, rgba(255,140,66,0.25));
+    }
+    
+    .progress-strip-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 100%;
+      padding: 0 12px;
+    }
+    
+    /* Sunrise/sunset markers */
+    .sun-marker {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: rgba(255,255,255,0.5);
+      z-index: 2;
+    }
+    .sun-marker::after {
+      content: attr(data-label);
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 7px;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.6);
+      white-space: nowrap;
+    }
+    .sun-marker.sunrise::after {
+      left: 4px;
+    }
+    .sun-marker.sunset::after {
+      right: 4px;
+    }
+    
+    .strip-left {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--app-text, #fff);
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .strip-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: "Roboto Condensed", -apple-system, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
+      color: var(--app-text, #fff);
+    }
+    
+    .strip-right {
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--app-text, #fff);
+      opacity: 0.7;
+    }
+    
+    /* Controls group with consistent gaps */
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    /* LED Pulse cells */
+    .btn-habit[data-type="led_pulse"] {
+      transition: background 0.08s ease-out;
+    }
+    .btn-habit[data-type="led_pulse"].led-on {
+      background: var(--btn-color, #ff8c42) !important;
+    }
+    .btn-habit[data-type="led_pulse"].led-off {
+      background: var(--app-bg, #000) !important;
+    }
+
+    /* ===== PINS ===== */
+    .pins {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      background: var(--app-bg, #000);
+    }
+    .pin {
+      border: none;
+      background: var(--app-bg, #000);
+      color: var(--app-text, rgba(255,255,255,0.5));
+      opacity: 0.5;
+      padding: 8px 6px;
+      cursor: pointer;
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pin:hover { background: rgba(255,255,255,0.06); opacity: 0.8; }
+    .pin.active { background: rgba(255,140,66,0.2); color: #ff8c42; opacity: 1; }
+
+    /* ===== CONTROLS ===== */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0px;
+      background: var(--app-bg, #000000);
+      }
+    .controls-edit {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0px;
+      background: var(--app-bg, #000000);
+      }
+    .btn-control-wide {
+      grid-column: span 3;
+    }
+    .btn-control-edit {
+      grid-column: span 2;
+    }
+    
+    .btn-control-mini {
+      grid-column: span 1;
+      }
+.btn-control-pin {
+      grid-column: span 1;
+      background: transparent;
+      color: var(--app-text, #ffffff);
+      }
+    .btn-control {
+      border: none;
+      background: transparent;
+      color: var(--app-text, #ffffff);
+      padding: 8px 6px;
+      cursor: pointer;
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      opacity: 0.6;
+    }
+    .btn-control:hover { background: rgba(255,255,255,0.06); opacity: 0.9; }
+    .btn-control:active { background: rgba(255,255,255,0.12); }
+    .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; opacity: 1; }
+
+    /* ===== HABITS GRID ===== */
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      background: var(--app-bg, #000);
+      border: none;
+    }
+
+    .btn-habit {
+      border: none;
+      background: var(--app-bg, #000);
+      color: var(--app-text, #fff);
+      padding: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      position: relative;
+      overflow: hidden;
+      -webkit-user-select: none;
+      user-select: none;
+      aspect-ratio: 4 / 3;
+    }
+
+    /* INACTIVE CELLS - different patterns per pin */
+    .btn-habit.inactive {
+      background: var(--app-bg, #000);
+      cursor: default;
+      pointer-events: none;
+    }
+    
+    /* PIN 01 - diagonal cross using SVG for clean intersection */
+    [data-pin="0"] .btn-habit.inactive::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cline x1='0' y1='0' x2='100%25' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3Cline x1='100%25' y1='0' x2='0' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 100% 100%;
+      pointer-events: none;
+    }
+
+
+    /* PIN 02 - grid using SVG */
+    [data-pin="1"] .btn-habit.inactive::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cline x1='50%25' y1='0' x2='50%25' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3Cline x1='0' y1='50%25' x2='100%25' y2='50%25' stroke='%23505050' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 100% 100%;
+      pointer-events: none;
+    }
+
+    /* PIN 03 - diagonal + grid */
+    [data-pin="2"] .btn-habit.inactive::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cline x1='0' y1='0' x2='100%25' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3Cline x1='50%25' y1='0' x2='50%25' y2='100%25' stroke='%23505050' stroke-width='1'/%3E%3Cline x1='0' y1='50%25' x2='100%25' y2='50%25' stroke='%23505050' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 100% 100%;
+      pointer-events: none;
+    }
+
+
+
+    /* Cell content structure */
+    .btn-status {
+      display: block;
+      font-size: 10px;
+      line-height: 1.2;
+      margin-bottom: 3px;
+      text-transform: lowercase;
+      letter-spacing: 0.16em;
+      opacity: 0.9;
+    }
+    .btn-status-countdown {
+      text-transform: lowercase;
+      opacity: 0.7;
+    }
+    .btn-status-timer {
+      text-transform: lowercase;
+      opacity: 0.7;
+    }
+
+
+    .btn-label { 
+      font-size: 11px; 
+      font-weight: 400; 
+      opacity: 0.7;
+      order: 2;
+    }
+    .btn-value { 
+      font-family: "Roboto Condensed", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: clamp(22px, 9vw, 36px);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      order: 3;
+      letter-spacing: -0.02em;
+      word-spacing: 0;
+      font-feature-settings: "tnum" 1;
+    }
+
+    /* Countdown digits: stroke with black fill */
+    .btn-habit[data-type="countdown"] .btn-value {
+      color: #000000;
+      -webkit-text-stroke: 1px var(--btn-color, #ffffff);
+      text-stroke: 1px var(--btn-color, #ffffff);
+    }
+
+    .btn-habit[data-type="countdown"] .btn-value .btn-value-suffix {
+      color: var(--btn-color, #ffffff);
+      -webkit-text-stroke: 0;
+      text-stroke: 0;
+    }
+
+    /* Small suffix letters (s, m) - 5x smaller */
+    .btn-value-suffix {
+      font-size: 0.5em;
+      opacity: 0.6;
+      margin-left: 0.1em;
+    }
+    .btn-breakdown {
+      font-size: 9px;
+      opacity: 0.5;
+      letter-spacing: 0.06em;
+      order: 4;
+      min-height: 14px;
+    }
+    
+    /* Responsive font tuning: phones a bit smaller, desktops a bit larger */
+    @media (max-width: 600px) {
+      .btn-label { font-size: 9px; }
+      .btn-value { font-size: clamp(18px, 8vw, 30px); }
+      .btn-breakdown { font-size: 9px; }
+    }
+    @media (min-width: 1200px) {
+      .btn-label { font-size: 13px; }
+      .btn-value { font-size: clamp(26px, 10vw, 44px); }
+      .btn-breakdown { font-size: 11px; }
+    }
+
+
+    /* Running state with animated border */
+    
+    /* Running states base */
+    .btn-habit.running {
+      position: relative;
+    }
+
+    /* Duration types - colored border and background pulse */
+    .btn-habit[data-type="duration_sec"].running,
+    .btn-habit[data-type="duration_min"].running,
+    .btn-habit[data-type="duration_sec_count"].running {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      background: color-mix(in srgb, var(--btn-color, #35f2a3) 15%, transparent);
+      box-shadow: inset 0 0 0 3px var(--btn-color, #35f2a3);
+      animation: borderPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes borderPulse {
+      0%, 100% {
+        box-shadow: inset 0 0 0 3px var(--btn-color, #35f2a3);
+      }
+      50% {
+        box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--btn-color, #35f2a3) 50%, transparent);
+      }
+    }
+
+    /* TIMER - top edge progress bar, black background, pulsing value */
+    .btn-habit[data-type="timer"].running {
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      background: #000;
+    }
+
+    .btn-habit[data-type="timer"].running::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 70%;
+      height: 2px;
+      background: var(--btn-color, #35f2a3);
+      pointer-events: none;
+      z-index: 2;
+      animation: timerScan 60s linear infinite;
+    }
+
+    @keyframes timerScan {
+      0% {
+        left: -3px;
+        right: 60%;
+      }
+      50% {
+        left: 60%;
+        right: -3px;
+      }
+      100% {
+        left: -3px;
+        right: 60%;
+      }
+    }
+
+    /* COUNTDOWN - perimeter snake over one-minute cycle */
+    .btn-habit[data-type="countdown"].running {
+      border: none;
+      background: #000;
+    }
+
+    .btn-habit[data-type="countdown"].running::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 160%;
+      height: 2px;
+      background: var(--btn-color, #ffffff);
+      pointer-events: none;
+      z-index: 0;
+      transform-origin: center center;
+      transform: translate(-50%, -50%) rotate(var(--progress-angle, 0deg));
+      opacity: 1;
+      animation: none;
+    }
+
+    @keyframes countdownSnake {
+      0% {
+        transform: translateX(-50%) rotate(0deg);
+      }
+      100% {
+        transform: translateX(-50%) rotate(-360deg);
+      }
+    }
+
+/* Common z-index for content on top of effects */
+    .btn-habit.running > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Value color for active cells */
+    .btn-habit[data-type="duration_sec"].running .btn-value,
+    .btn-habit[data-type="duration_min"].running .btn-value,
+    .btn-habit[data-type="duration_sec_count"].running .btn-value,
+    .btn-habit[data-type="timer"].running .btn-value {
+      color: var(--btn-color, #35f2a3);
+    }
+
+    /* Timer text pulse */
+    .btn-habit[data-type="timer"].running .btn-value {
+      animation: timerTextPulse 16s ease-in-out infinite;
+    }
+
+    @keyframes timerTextPulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      50% {
+        transform: scale(1.08);
+        filter: brightness(1.9);
+      }
+    }
+
+    /* Countdown hourly flash */
+    .btn-habit[data-type="countdown"].hour-ping {
+      animation: countdownHourPing 0.8s ease-out;
+    }
+
+    @keyframes countdownHourPing {
+      0% {
+        box-shadow: 0 0 0 rgba(255,255,255,0);
+      }
+      40% {
+        box-shadow: 0 0 40px rgba(255,255,255,0.9);
+      }
+      100% {
+        box-shadow: 0 0 0 rgba(255,255,255,0);
+      }
+    }
+
+    /* Countdown expired blinking value */
+    .btn-habit[data-type="countdown"].pulsing .btn-value {
+      animation: countdownExpired 1s steps(2, end) infinite;
+    }
+
+    @keyframes countdownExpired {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
+
+    /* Stronger tap feedback when value changes */
+    .btn-habit.animating {
+      animation: tapPress 1200ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    /* Countdown click feedback: text color flashes to accent, no background glow */
+    .btn-habit[data-type="countdown"] .btn-label,
+    .btn-habit[data-type="countdown"] .btn-status,
+    .btn-habit[data-type="countdown"] .btn-value,
+    .btn-habit[data-type="countdown"] .btn-breakdown {
+      transition: color 5000ms ease-out;
+    }
+
+    .btn-habit[data-type="countdown"].animating .btn-label,
+    .btn-habit[data-type="countdown"].animating .btn-status,
+    .btn-habit[data-type="countdown"].animating .btn-value,
+    .btn-habit[data-type="countdown"].animating .btn-breakdown {
+      color: var(--btn-color, #ffffff);
+      transition: none;
+    }
+
+
+
+    @keyframes tapPress {
+      0% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      30% {
+        transform: scale(0.96);
+        filter: brightness(1.6);
+      }
+      100% {
+        transform: scale(1);
+        filter: brightness(1.05);
+      }
+    }
+/* Paused state */
+    .btn-habit.paused {
+      border: 2px solid var(--stroke-soft, rgba(255,255,255,0.15));
+    }
+    .btn-habit.paused .btn-value,
+    .btn-habit.paused .btn-label,
+    .btn-habit.paused .btn-status {
+      opacity: 0.35;
+    }
+
+    /* Pulsing animation for expired countdown */
+    .btn-habit.pulsing {
+      animation: fastPulse 0.5s ease-in-out infinite;
+    }
+    @keyframes fastPulse {
+      0%, 100% { 
+        border-color: rgba(255,79,106,0.8);
+        background: rgba(255,79,106,0.15);
+      }
+      50% { 
+        border-color: rgba(255,79,106,0.3);
+        background: rgba(255,79,106,0.05);
+      }
+    }
+
+    /* Flash animation on click - bright and slow fade */
+    .btn-habit::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--btn-color, transparent);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .btn-habit.animating::before {
+      animation: flash 1500ms ease-out forwards;
+    }
+    @keyframes flash {
+      0% { opacity: 1; }
+      10% { opacity: 0.95; }
+      30% { opacity: 0.7; }
+      100% { opacity: 0; }
+    }
+    .btn-habit > * { position: relative; z-index: 2; }
+
+    /* ===== STATS ===== */
+    .stats {
+      padding: 0;
+      overflow-x: auto;
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .stats-table th, .stats-table td {
+      padding: 10px 8px;
+      text-align: center;
+      border-right: 1px solid var(--stroke-strong, rgba(80,80,80,1));
+      border-bottom: 1px solid var(--stroke-strong, rgba(80,80,80,1));
+      background: transparent;
+    }
+    
+    .stats-table th:last-child,
+    .stats-table td:last-child {
+      border-right: none;
+    }
+    
+    .stats-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .stats-table th {
+      font-size: 8px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--app-text, rgba(255,255,255,0.5));
+      opacity: 0.5;
+    }
+    
+    .stats-table td {
+      font-family: "Roboto Condensed", -apple-system, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--app-text, rgba(255,255,255,0.8));
+      opacity: 0.8;
+    }
+    
+    .stats-table td:first-child, 
+    .stats-table th:first-child {
+      text-align: left;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 8px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--app-text, rgba(255,255,255,0.5));
+      opacity: 0.5;
+      cursor: pointer;
+      transition: color 100ms ease-out;
+    }
+
+    /* Hover on week label only */
+    .stats-table tbody td:first-child:hover {
+      color: #ff8c42;
+    }
+
+    /* Hover effects - subtle */
+    .stats-table tbody tr.row-highlight {
+      background: rgba(255,140,66,0.03);
+    }
+
+    .stats-table th.col-highlight,
+    .stats-table td.col-highlight {
+      background: rgba(255,140,66,0.05) !important;
+      color: #ff8c42 !important;
+    }
+
+    .stats-table th.cell-highlight,
+    .stats-table td.cell-highlight {
+      background: rgba(255,140,66,0.25) !important;
+      color: #ff8c42 !important;
+      font-weight: 500;
+    }
+
+    /* ===== MODALS ===== */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal.visible { display: flex; }
+
+    .modal-content {
+      background: var(--app-bg, #000);
+      border: none;
+      max-height: 80vh;
+      overflow-y: auto;
+      max-width: 500px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 0px solid rgba(255,255,255,0.3);
+      padding: 16px 20px 12px;
+    }
+    .modal-title {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .modal-header-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .modal-pin-btn {
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #000;
+      color: rgba(255,255,255,0.8);
+      padding: 6px 10px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .modal-pin-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+    .modal-help-btn {
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #000;
+      color: rgba(255,255,255,0.7);
+      padding: 5px 8px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .modal-help-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    
+    .modal-help-panel,
+    .cell-help-panel {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.9);
+      font-size: 9px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.75);
+    }
+    .modal-help-panel.visible,
+    .cell-help-panel.visible {
+      display: block;
+    }
+.modal-buttons {
+      display: flex;
+      gap: 1px;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .modal-btn {
+      flex: 1;
+      border: none;
+      background: #000;
+      color: rgba(255,255,255,0.7);
+      padding: 12px 8px;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .modal-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+    .modal-btn.primary { background: #35f2a3; color: #000; }
+    .modal-btn.primary:hover { background: #4df7b5; }
+
+    /* Edit items grid */
+    .edit-items-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.3);
+    }
+    .edit-item {
+      background: #000;
+      border: none;
+      padding: 16px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .edit-item:hover { background: rgba(255,255,255,0.04); }
+    .edit-item-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.4);
+    }
+    .edit-item-name {
+      font-size: 12px;
+      color: #fff;
+      text-align: center;
+      word-break: break-word;
+    }
+
+    /* Cell edit modal */
+    .cell-edit-content {
+      background: #000;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 20px;
+      max-width: 520px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    
+    .cell-edit-help-btn {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #000;
+      color: rgba(255,255,255,0.7);
+      padding: 4px 7px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .cell-edit-help-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    .cell-edit-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .cell-edit-grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px 12px;
+    }
+
+    .cell-edit-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 12px;
+    }
+
+    .cell-edit-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cell-edit-field-full {
+      grid-column: 1 / -1;
+    }
+
+    .cell-edit-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sound-test-btn {
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #050607;
+      color: #fff;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 120ms, transform 120ms;
+    }
+
+    .sound-test-btn:active {
+      transform: scale(0.96);
+    }
+
+    .sound-test-btn:hover {
+      background: rgba(255,255,255,0.12);
+    }
+
+    @media (max-width: 480px) {
+.cell-edit-content {
+        max-width: 100%;
+        padding: 16px;
+      }
+    }
+
+    .cell-edit-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+    }
+    .cell-edit-input {
+      background: #050607;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      text-align: center;
+    }
+    .cell-edit-input:focus {
+      outline: none;
+      border-color: #35f2a3;
+    }
+
+    .type-selector {
+      display: flex;
+      gap: 1px;
+    }
+    .type-btn {
+      flex: 1;
+      padding: 10px 4px;
+      background: var(--panel-bg, #050607);
+      border: none;
+      color: var(--panel-text-muted, rgba(255,255,255,0.6));
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 100ms;
+    }
+    .type-btn:hover { background: rgba(255,255,255,0.08); }
+    .type-btn.active { background: #35f2a3; color: #000; }
+
+    .color-picker-wrap {
+      margin-top: 8px;
+      padding-top: 12px;
+      text-align: center;
+    }
+    .color-picker-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    .color-picker {
+      width: 100%;
+      height: 40px;
+      border: none;
+      background: #050607;
+      cursor: pointer;
+      padding: 2px;
+    }
+    .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker::-webkit-color-swatch { border: none; }
+
+    /* Info modal */
+    .info-modal-content {
+      background: var(--app-bg, #000);
+      border: none;
+      padding: 24px;
+      max-width: 450px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .info-header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+    }
+    .info-logo {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .info-version {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 4px;
+    }
+    .info-author {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.3);
+    }
+    .info-author a {
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+    }
+    .info-author a:hover { color: #ff8c42; }
+
+    .info-section {
+      margin-bottom: 16px;
+    }
+    .info-section-title {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #ff8c42;
+      margin-bottom: 6px;
+    }
+    .info-text {
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .info-footer {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .info-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .info-button {
+      flex: 1;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: #000;
+      color: rgba(255,255,255,0.7);
+      padding: 10px 12px;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 100ms ease-out;
+      text-decoration: none;
+      text-align: center;
+    }
+    .info-button:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+
+    /* Pulse animation for ? button */
+    @keyframes btnPulse {
+      0%, 100% { background: rgba(255,140,66,0.3); }
+      50% { background: rgba(255,140,66,0.6); }
+    }
+    #btnInfo.pulse {
+      animation: btnPulse 1.5s ease-in-out infinite;
+      color: #ff8c42;
+    }
