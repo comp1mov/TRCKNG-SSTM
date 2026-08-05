@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.31.6';
+    const APP_VERSION = '1.32.0';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;

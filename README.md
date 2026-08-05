@@ -1,4 +1,4 @@
-# TRCKNG SSTM v1.31.6
+# TRCKNG SSTM v1.32.0
 
 Local-first modular tracking field for weekly habits, timers, money, formulas, and small personal metrics.
 
@@ -39,7 +39,9 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `l
 - Empty-name cells remain visible as create slots without wiping saved values
 - Empty field cells stay visible as quiet placeholders in TRACK
 - Empty cells are created/edited from LAYOUT
-- Active PIN fill colors include glow feedback
+- All PIN fill colors include glow feedback, with stronger glow on the active PIN
+- Responsive field shell with stable cell row height across phone, laptop, and desktop
+- Taller PIN buttons and quieter desktop utility controls
 - JSON export/import for backups
 - PWA install support
 - Mobile fixes for iOS safe areas, double-tap zoom, and Safari active states
@@ -59,7 +61,7 @@ Main stored groups:
 
 ## Backup
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.31.6 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.32.0 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
 
 ## Supabase
 
@@ -81,12 +83,12 @@ See `C:\Users\gregt\Desktop\strategic_roadmap.md`.
 
 Recommended next phase:
 
-1. Continue Phase 2C layout editor UX.
-2. Keep all editing entry points in LAYOUT instead of a separate EDIT menu.
-3. Design responsive field behavior carefully before full drag/resize.
-4. Decide whether desktop/mobile share one layout or can diverge later.
-5. Add explicit time-cell controls only after the field model is stable.
-6. Return to conflict review UI only when real multi-device conflicts need a richer screen.
+1. Finish Responsive Field Shell verification on desktop and phone.
+2. Continue LAYOUT cleanup: hidden/empty cells, visibility controls, and no duplicated EDIT surface.
+3. Add Cell Cycle Architecture: daily, weekly, monthly, and never-reset cells.
+4. Polish Header / Week / PIN visuals after the field shell is stable.
+5. Add drag reorder and resize handles.
+6. Add Goal Time and richer time-based cells after the base field model is stable.
 
 ## Deploy
 

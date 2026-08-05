@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.31.6`.
+Current working app target: `v1.32.0`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -72,10 +72,12 @@ Implementation order:
 6. Done: add `LAYOUT` view with UP/DOWN reorder controls and PACK reflow.
 7. Done: move the old `EDIT` entry points into `LAYOUT`.
 8. Done: keep empty cells visible as quiet field slots, with creation handled from `LAYOUT`.
-9. Next: design responsive field behavior before full drag/resize.
-10. Add drag/resize controls after the manual layout mode exists.
-11. Add explicit in-cell controls for time-based cells.
-12. Revisit history/card/flag UI after the modular grid is stable.
+9. In progress: Responsive Field Shell for phone, laptop, and desktop widths.
+10. Next: LAYOUT cleanup, including hidden/empty cells, visibility controls, and no duplicated EDIT surface.
+11. Add Cell Cycle Architecture: daily, weekly, monthly, and never-reset behavior.
+12. Polish Header / Week / PIN visuals after the field shell is stable.
+13. Add drag reorder and resize handles.
+14. Add Goal Time and richer time-based cells after the base field model is stable.
 
 ## Phase 4A: Supabase Account MVP
 
@@ -108,11 +110,13 @@ Deferred:
 3. Done: Phase 5A safe autosync with dirty-state debounce and cloud update checks.
 4. Done: Phase 5B sync recovery for fresh-device cloud bootstrap, wake checks, main-screen sync button, and conflict pause.
 5. Deferred: Phase 5C conflict review UI with choose / merge / preserve-both flows.
-6. Next: Phase 2C layout editor UX and modular field architecture.
-7. Phase 2D responsive field behavior for desktop/mobile.
-8. Phase 2E explicit time-cell controls inside larger cells.
-9. Phase 5D mobile install/update polish for phone use.
-10. Phase 3: weekly cycle review and Goal Time.
+6. Next: Phase 2D Responsive Field Shell.
+7. Phase 2C LAYOUT cleanup and same-field edit mode.
+8. Phase 2E Cell Cycle Architecture for daily/weekly/monthly/never reset.
+9. Phase 2F Header / Week / PIN visual polish.
+10. Phase 2G drag reorder and resize handles.
+11. Phase 5D mobile install/update polish for phone use.
+12. Phase 3: weekly cycle review and Goal Time.
 
 ## Phase 2C: Layout Editor UX
 
@@ -131,11 +135,23 @@ Scope:
 Design direction:
 
 - `TRACK` is for use.
-- `LAYOUT` is for structure.
+- `LAYOUT` should turn the same field/buttons into editable modules with an overlay, not render an unrelated editor surface.
 - `HISTORY` is for review.
 - Empty cells are not deleted modules; they are unused field cells.
 - Responsive desktop/mobile layout must be designed on top of field cells, not by blindly stretching button animations.
 - Cell long-press, flip cards, and badges stay deferred until the editor model is stronger.
+
+## Phase 2D: Responsive Field Shell
+
+Goal: make the tracking field feel intentional on phone, laptop, and desktop before adding drag/resize.
+
+Scope:
+
+- Keep one shared `cellLayout` model for now.
+- Use responsive shell limits for field width instead of treating the whole app as a stretched mobile column.
+- Use stable row heights for cells so animations and large modules have predictable space.
+- Keep PINs and utility controls visually secondary to the field on desktop.
+- Do not add desktop/mobile-specific saved layouts until the single field model feels solid.
 
 ## Phase 5C: Conflict Review UI
 

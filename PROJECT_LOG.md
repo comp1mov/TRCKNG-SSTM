@@ -145,3 +145,13 @@
 - Kept empty-cell creation in `LAYOUT`, where clicking an empty tile or its `CREATE` action opens the cell editor.
 - Confirmed PIN fill colors are included in local storage, export/import, and Supabase full-app snapshots.
 - Bumped app/export/cache version to `v1.31.6`.
+
+### Phase 2D Responsive Field Shell
+
+- Re-anchored the roadmap order: Responsive Field Shell, LAYOUT cleanup, Cell Cycle Architecture, Header / Week / PIN polish, then drag reorder and resize handles.
+- Added responsive field shell variables for field width and cell row height across phone, laptop, desktop, and short desktop screens.
+- Removed the default button aspect-ratio dependency so field cells keep a stable row rhythm instead of ballooning on wide screens.
+- Fixed PIN fill styling so every PIN has its own color glow, with a stronger version on the active PIN.
+- Doubled PIN button height for clearer touch targets and stronger workspace presence.
+- Made the desktop utility row quieter and narrower so COPY / COPY PREV / EXPORT / IMPORT / RESET do not compete with the field.
+- Bumped app/export/cache version to `v1.32.0`.
