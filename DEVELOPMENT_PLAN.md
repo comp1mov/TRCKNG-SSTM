@@ -12,7 +12,7 @@ The project is now a static split app:
 - `manifest.json`
 - `service-worker.js`
 
-Current working app target: `v1.31.1`.
+Current working app target: `v1.31.2`.
 
 ## Phase 1.5: Navigation + History Architecture
 
@@ -101,7 +101,7 @@ Deferred:
 
 1. Done: Phase 4A Supabase manual account/snapshot flow.
 2. Done: Phase 5A safe autosync with dirty-state debounce and cloud update checks.
-3. Done: Phase 5B sync recovery for fresh-device cloud bootstrap and conflict pause.
+3. Done: Phase 5B sync recovery for fresh-device cloud bootstrap, wake checks, main-screen sync button, and conflict pause.
 4. Next: Phase 5C conflict review UI with choose / merge / preserve-both flows.
 5. Phase 5D mobile install/update polish for phone use.
 6. Return to Phase 2c drag/resize only after sync is stable.

@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.31.1';
+    const APP_VERSION = '1.31.2';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -1184,13 +1184,14 @@
 
     async function checkCloudForUpdates(options = {}) {
       const silent = options.silent !== false;
+      const force = options.force === true;
       const now = Date.now();
-      if (cloudPullCheckInFlight) return;
-      if (silent && now - lastCloudPullCheckAt < CLOUD_PULL_COOLDOWN_MS) return;
-      if (!ensureSupabaseClient() || !accountSession || !accountSession.user) return;
+      if (cloudPullCheckInFlight) return 'busy';
+      if (!force && silent && now - lastCloudPullCheckAt < CLOUD_PULL_COOLDOWN_MS) return 'throttled';
+      if (!ensureSupabaseClient() || !accountSession || !accountSession.user) return 'unavailable';
       if (!navigator.onLine) {
         if (!silent) setAccountStatus('OFFLINE - CANNOT CHECK CLOUD', 'warn');
-        return;
+        return 'offline';
       }
 
       cloudPullCheckInFlight = true;
@@ -1212,36 +1213,107 @@
         } : null;
 
         const relation = compareCloudToLocal(data);
+        let result = data ? 'current' : 'empty';
         if (data && relation === 'newer') {
           if (cloudDirty) {
             cloudConflictPending = true;
             setAccountStatus('CLOUD NEWER - LOCAL UNSAVED', 'warn');
+            result = 'conflict';
           } else {
             cloudConflictPending = false;
-            applyIncomingCloudRow(data);
+            result = applyIncomingCloudRow(data) ? 'applied' : 'unsupported';
           }
         } else if (data && relation === 'unknown') {
           const canBootstrapFromCloud = !cloudDirty && !hasMeaningfulLocalData();
           if (canBootstrapFromCloud) {
             cloudConflictPending = false;
-            applyIncomingCloudRow(data, 'CLOUD LOADED ON THIS DEVICE');
+            result = applyIncomingCloudRow(data, 'CLOUD LOADED ON THIS DEVICE') ? 'applied' : 'unsupported';
           } else {
             cloudConflictPending = true;
             setAccountStatus(
               cloudDirty ? 'CLOUD READY - LOCAL UNSAVED' : 'CLOUD READY - CHOOSE LOAD',
               'warn'
             );
+            result = 'conflict';
           }
         } else {
           cloudConflictPending = false;
         }
+        return result;
       } catch (error) {
         console.error(error);
         if (!silent) setAccountStatus(`CHECK ERROR: ${error.message}`, 'error');
+        return 'error';
       } finally {
         cloudPullCheckInFlight = false;
         renderAccountPanel();
       }
+    }
+
+    async function triggerCloudSync(reason = 'sync', options = {}) {
+      const manual = options.manual === true;
+      const immediateUpload = options.immediateUpload === true;
+      const force = options.force === true;
+
+      if (!hasSupabaseConfig() || !ensureSupabaseClient()) {
+        if (manual) {
+          setAccountStatus('SUPABASE CONFIG REQUIRED', 'warn');
+          openAccountModal();
+        }
+        renderAccountPanel();
+        return 'unavailable';
+      }
+
+      let session = accountSession;
+      if (!session || !session.user) {
+        session = await refreshAccountSession();
+      }
+      if (!session || !session.user) {
+        if (manual) {
+          setAccountStatus('SIGN IN REQUIRED', 'warn');
+          openAccountModal();
+        }
+        renderAccountPanel();
+        return 'signed-out';
+      }
+
+      if (!navigator.onLine) {
+        setAccountStatus('OFFLINE - SYNC WAITING', 'warn');
+        renderAccountPanel();
+        return 'offline';
+      }
+
+      if (manual) setAccountStatus('CHECKING CLOUD...', 'idle');
+      const checkResult = await checkCloudForUpdates({
+        reason,
+        silent: !manual,
+        force
+      });
+
+      if (cloudConflictPending) return 'conflict';
+
+      if (cloudDirty) {
+        if (immediateUpload) {
+          await uploadCloudSnapshot({ automatic: false, reason, skipPreflight: true });
+          return 'uploaded';
+        }
+        scheduleCloudAutosync(reason);
+        return 'queued';
+      }
+
+      if (manual && checkResult !== 'applied') {
+        setAccountStatus(cloudSnapshotMeta ? 'SYNC CHECKED' : 'NO CLOUD SNAPSHOT', cloudSnapshotMeta ? 'ok' : 'warn');
+      }
+      renderAccountPanel();
+      return checkResult;
+    }
+
+    async function manualCloudSync() {
+      await triggerCloudSync('manual sync', {
+        manual: true,
+        force: true,
+        immediateUpload: true
+      });
     }
 
     function readStoredJson(key, fallback = {}) {
@@ -1666,6 +1738,33 @@
       if (cloudMeta) cloudMeta.textContent = formatCloudMeta(cloudSnapshotMeta);
       const syncMeta = document.getElementById('accountSyncMeta');
       if (syncMeta) syncMeta.textContent = getCloudSyncLabel();
+      const quickSync = document.getElementById('btnCloudSync');
+      if (quickSync) {
+        let syncState = 'idle';
+        let syncLabel = 'SYNC';
+        if (cloudBusy) {
+          syncState = 'busy';
+          syncLabel = '...';
+        } else if (cloudConflictPending) {
+          syncState = 'conflict';
+          syncLabel = 'FIX';
+        } else if (cloudDirty && cloudSyncTimer) {
+          syncState = 'queued';
+          syncLabel = 'WAIT';
+        } else if (cloudDirty) {
+          syncState = 'dirty';
+          syncLabel = 'UP';
+        } else if (signedIn && cloudSnapshotMeta) {
+          syncState = 'ready';
+          syncLabel = 'OK';
+        } else if (signedIn) {
+          syncState = 'ready';
+          syncLabel = 'SYNC';
+        }
+        quickSync.textContent = syncLabel;
+        quickSync.dataset.syncState = syncState;
+        quickSync.disabled = cloudBusy;
+      }
 
       const needsConfig = !configured || !sdkLoaded;
       ['accountEmail', 'accountPassword', 'accountSignIn', 'accountSignUp'].forEach(id => {
@@ -1748,14 +1847,16 @@
         renderAccountPanel();
         if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
           setTimeout(async () => {
-            await refreshCloudSnapshotMeta();
-            await checkCloudForUpdates({ reason: 'auth' });
-            if (cloudDirty) scheduleCloudAutosync('auth');
+            await triggerCloudSync('auth', { force: true });
           }, 0);
         }
       });
       supabaseAuthSubscription = data && data.subscription ? data.subscription : null;
-      refreshAccountSession();
+      refreshAccountSession().then(session => {
+        if (session && session.user) {
+          triggerCloudSync('startup', { force: true });
+        }
+      });
       return true;
     }
 
@@ -1833,6 +1934,9 @@
         setAccountStatus(`SIGN IN ERROR: ${error.message}`, 'error');
       } finally {
         cloudBusy = false;
+        if (accountSession && accountSession.user && cloudDirty && !cloudConflictPending) {
+          scheduleCloudAutosync('sign in ready');
+        }
         renderAccountPanel();
       }
     }
@@ -1879,6 +1983,9 @@
         setAccountStatus(`SIGN UP ERROR: ${error.message}`, 'error');
       } finally {
         cloudBusy = false;
+        if (accountSession && accountSession.user && cloudDirty && !cloudConflictPending) {
+          scheduleCloudAutosync('sign up ready');
+        }
         renderAccountPanel();
       }
     }
@@ -1947,6 +2054,7 @@
 
     async function uploadCloudSnapshot(options = {}) {
       const automatic = Boolean(options.automatic);
+      const skipPreflight = options.skipPreflight === true;
       if (!ensureSupabaseClient()) {
         renderAccountPanel();
         return;
@@ -1962,6 +2070,23 @@
         setAccountStatus('CONFLICT - LOAD OR UPLOAD', 'warn');
         renderAccountPanel();
         return;
+      }
+
+      if (automatic && !skipPreflight) {
+        await checkCloudForUpdates({
+          reason: options.reason ? `${options.reason} preflight` : 'upload preflight',
+          silent: true,
+          force: true
+        });
+        if (cloudConflictPending) {
+          setAccountStatus('CONFLICT - LOAD OR UPLOAD', 'warn');
+          renderAccountPanel();
+          return;
+        }
+        if (!cloudDirty) {
+          renderAccountPanel();
+          return;
+        }
       }
 
       cloudBusy = true;
@@ -5053,6 +5178,7 @@ function openInfoModal() {
       document.getElementById('btnReset').addEventListener('click', resetAll);
       document.getElementById('btnQuickInfo').addEventListener('click', openInfoModal);
       document.getElementById('btnAccount').addEventListener('click', openAccountModal);
+      document.getElementById('btnCloudSync').addEventListener('click', manualCloudSync);
     document.getElementById('btnTheme').addEventListener('click', () => { closeEditModal(); openThemeModal(); });
     document.getElementById('btnNotify').addEventListener('click', requestNotificationPermission);
     document.getElementById('btnInfo').addEventListener('click', () => { closeEditModal(); openInfoModal(); });
@@ -5228,21 +5354,21 @@ function openInfoModal() {
       window.addEventListener('trckng-supabase-sdk-loaded', () => setupSupabaseAccount(true));
       window.addEventListener('online', () => {
         accountStatusOverride = null;
-        if (cloudDirty) scheduleCloudAutosync('online');
-        checkCloudForUpdates({ reason: 'online' });
+        triggerCloudSync('online', { force: true });
       });
       window.addEventListener('focus', () => {
-        checkCloudForUpdates({ reason: 'focus' });
-        if (cloudDirty) scheduleCloudAutosync('focus');
+        triggerCloudSync('focus');
+      });
+      window.addEventListener('pageshow', () => {
+        triggerCloudSync('pageshow', { force: true });
       });
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-          checkCloudForUpdates({ reason: 'visible' });
-          if (cloudDirty) scheduleCloudAutosync('visible');
+          triggerCloudSync('visible');
         }
       });
       setupSupabaseAccount();
-      if (cloudDirty) scheduleCloudAutosync('startup');
+      triggerCloudSync('startup', { force: true });
 
     }
 

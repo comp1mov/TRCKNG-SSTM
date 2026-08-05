@@ -18,7 +18,7 @@ body {
   min-height: 100vh;
   padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
 }
-button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
+button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn, .type-btn {
   touch-action: manipulation; /* Prevents double-tap zoom delay */
 }
 
@@ -161,11 +161,12 @@ button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
     /* ===== PINS ===== */
     .pins {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr)) 48px;
       gap: 0;
       background: var(--app-bg, #000);
     }
-    .pin {
+    .pin,
+    .pin-sync-btn {
       border: none;
       background: var(--app-bg, #000);
       color: var(--app-text, rgba(255,255,255,0.5));
@@ -184,6 +185,28 @@ button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
     }
     .pin:hover { background: rgba(255,255,255,0.06); opacity: 0.8; }
     .pin.active { background: rgba(255,140,66,0.2); color: #ff8c42; opacity: 1; }
+    .pin-sync-btn {
+      border-left: 1px solid rgba(255,255,255,0.08);
+      color: #35f2a3;
+      opacity: 0.7;
+      font-size: 7px;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    .pin-sync-btn:hover { background: rgba(53,242,163,0.1); opacity: 1; }
+    .pin-sync-btn[data-sync-state="dirty"],
+    .pin-sync-btn[data-sync-state="queued"] {
+      color: #ff8c42;
+      opacity: 1;
+    }
+    .pin-sync-btn[data-sync-state="conflict"] {
+      color: #ff4f6a;
+      opacity: 1;
+    }
+    .pin-sync-btn[data-sync-state="busy"] {
+      color: var(--app-text, #ffffff);
+      opacity: 0.45;
+    }
 
     /* ===== CONTROLS ===== */
     .controls {

@@ -98,3 +98,11 @@
 - Added `CONFLICT` / `LOAD OR UPLOAD` account states while keeping manual recovery buttons available.
 - Documented the next conflict-review phase: choose, merge safe differences, or preserve both versions.
 - Bumped app/export/cache version to `v1.31.1`.
+
+### Phase 5B.1 Sync Wake + Manual Button
+
+- Added a compact `SYNC` button to the PIN bar for manual pull-first sync without opening `ACCOUNT`.
+- Routed startup, auth restore, page show, focus, visibility return, and network recovery through one `triggerCloudSync()` path.
+- Added automatic upload preflight: cloud is checked again before writing a debounced local snapshot.
+- Fixed sign-in/sign-up dirty-state scheduling after `cloudBusy` clears.
+- Bumped app/export/cache version to `v1.31.2`.
