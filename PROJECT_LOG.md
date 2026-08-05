@@ -48,3 +48,11 @@
 - Added ordered layout packing so larger cells reflow the rest of the grid without overlap.
 - Saved preset changes to `cellLayout` and kept export/import/reset coverage.
 - Bumped app/export/cache version to `v1.28`.
+
+### Phase 2b Layout View
+
+- Added a dedicated `LAYOUT` view alongside `TRACK` and `HISTORY`.
+- Added layout tiles with cell metadata, size, type, and actions.
+- Added per-cell `UP` / `DOWN` controls that update `cellLayout.order` and repack the grid.
+- Added `PACK` toolbar command for compact reflow.
+- Bumped app/export/cache version to `v1.29`.

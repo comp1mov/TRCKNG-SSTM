@@ -45,6 +45,7 @@
 
     const VIEW_MODES = {
       TRACK: 'track',
+      LAYOUT: 'layout',
       HISTORY: 'history'
     };
 
@@ -747,6 +748,44 @@
       saveCellLayout();
     }
 
+    function getOrderedLayoutCells() {
+      return syncCellsFromLegacyState()
+        .filter(cell => cell.layout.visible !== false)
+        .sort(compareCellsByLayout);
+    }
+
+    function moveCellInLayout(habit, direction) {
+      const ordered = getOrderedLayoutCells();
+      const index = ordered.findIndex(cell => cell.id === habit);
+      if (index < 0) return;
+
+      const targetIndex = Math.max(0, Math.min(ordered.length - 1, index + direction));
+      if (targetIndex === index) return;
+
+      const ids = ordered.map(cell => cell.id);
+      const [movedId] = ids.splice(index, 1);
+      ids.splice(targetIndex, 0, movedId);
+
+      ids.forEach((id, order) => {
+        cellLayout[id] = {
+          ...getCellLayout(id),
+          order
+        };
+      });
+
+      cellLayout = packCellLayoutByOrder(cellLayout);
+      saveCellLayout();
+      renderHabits();
+      renderLayoutEditor();
+    }
+
+    function packCurrentLayout() {
+      cellLayout = packCellLayoutByOrder(cellLayout);
+      saveCellLayout();
+      renderHabits();
+      renderLayoutEditor();
+    }
+
     function getCellLayout(habit) {
       if (!cellLayout[habit]) {
         const index = HABITS.indexOf(habit);
@@ -804,9 +843,7 @@
     }
 
     function getRenderableCells() {
-      return syncCellsFromLegacyState()
-        .filter(cell => cell.layout.visible !== false)
-        .sort(compareCellsByLayout);
+      return getOrderedLayoutCells();
     }
 
     function getCellsSnapshot() {
@@ -1046,6 +1083,7 @@ function applyTheme() {
       }
 
       updateHistoryChrome();
+      renderLayoutEditor();
     }
 
     function getCurrentPinName() {
@@ -1068,8 +1106,10 @@ function applyTheme() {
       currentView = Object.values(VIEW_MODES).includes(view) ? view : VIEW_MODES.TRACK;
 
       const trackView = document.getElementById('trackView');
+      const layoutView = document.getElementById('layoutView');
       const historyView = document.getElementById('historyView');
       if (trackView) trackView.hidden = currentView !== VIEW_MODES.TRACK;
+      if (layoutView) layoutView.hidden = currentView !== VIEW_MODES.LAYOUT;
       if (historyView) historyView.hidden = currentView !== VIEW_MODES.HISTORY;
 
       document.querySelectorAll('.view-tab').forEach(tab => {
@@ -1079,6 +1119,7 @@ function applyTheme() {
       });
 
       updateHistoryChrome();
+      if (currentView === VIEW_MODES.LAYOUT) renderLayoutEditor();
       if (currentView === VIEW_MODES.HISTORY) updateStats();
       if (currentView === VIEW_MODES.TRACK) requestAnimationFrame(updateCellDiagonalAngle);
       saveViewMode();
@@ -2268,6 +2309,87 @@ function scheduleMathRefresh() {
     }
 
     // ===== RENDER =====
+    function renderLayoutEditor() {
+      const grid = document.getElementById('layoutGrid');
+      if (!grid) return;
+
+      const renderCells = getOrderedLayoutCells();
+      grid.innerHTML = '';
+      grid.dataset.layout = 'cell-layout-editor';
+      grid.dataset.pin = String(currentPin);
+      grid.style.setProperty('--layout-columns', String(getLayoutColumnCount(renderCells)));
+
+      const title = document.getElementById('layoutTitle');
+      if (title) title.textContent = getCurrentPinName();
+
+      const meta = document.getElementById('layoutMeta');
+      if (meta) {
+        const activeCount = renderCells.filter(cell => cell.label.trim()).length;
+        meta.textContent = `${renderCells.length} cells / ${activeCount} active`;
+      }
+
+      renderCells.forEach((cell, index) => {
+        const habit = cell.id;
+        const cellNum = String(cell.slot).padStart(2, '0');
+        const size = `${cell.layout.colSpan}x${cell.layout.rowSpan}`;
+        const label = cell.label.trim() || 'EMPTY';
+        const color = cell.color || habitColors[habit] || '#ffffff';
+
+        const tile = document.createElement('div');
+        tile.className = 'layout-cell';
+        tile.id = `layout-${habit}`;
+        tile.dataset.cellId = habit;
+        tile.dataset.type = cell.type;
+        tile.style.setProperty('--btn-color', color);
+        applyCellLayoutToElement(tile, cell.layout);
+
+        const metaEl = document.createElement('div');
+        metaEl.className = 'layout-cell-meta';
+        metaEl.textContent = `CELL ${cellNum} - ${size} - #${index + 1}`;
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'layout-cell-name';
+        nameEl.textContent = label;
+
+        const typeEl = document.createElement('div');
+        typeEl.className = 'layout-cell-type';
+        typeEl.textContent = (cell.type || CELL_TYPES.UNIT).replace(/_/g, ' ');
+
+        const actions = document.createElement('div');
+        actions.className = 'layout-cell-actions';
+
+        const upBtn = document.createElement('button');
+        upBtn.className = 'layout-action';
+        upBtn.type = 'button';
+        upBtn.textContent = 'UP';
+        upBtn.disabled = index === 0;
+        upBtn.addEventListener('click', () => moveCellInLayout(habit, -1));
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'layout-action';
+        editBtn.type = 'button';
+        editBtn.textContent = 'EDIT';
+        editBtn.addEventListener('click', () => openCellEditModal(habit, cell.slot - 1));
+
+        const downBtn = document.createElement('button');
+        downBtn.className = 'layout-action';
+        downBtn.type = 'button';
+        downBtn.textContent = 'DOWN';
+        downBtn.disabled = index === renderCells.length - 1;
+        downBtn.addEventListener('click', () => moveCellInLayout(habit, 1));
+
+        actions.appendChild(upBtn);
+        actions.appendChild(editBtn);
+        actions.appendChild(downBtn);
+
+        tile.appendChild(metaEl);
+        tile.appendChild(nameEl);
+        tile.appendChild(typeEl);
+        tile.appendChild(actions);
+        grid.appendChild(tile);
+      });
+    }
+
     function renderHabits() {
       const grid = document.getElementById('habitsGrid');
       grid.innerHTML = '';
@@ -3031,7 +3153,7 @@ function scheduleMathRefresh() {
       });
 
       const exportObj = {
-        version: '1.28',
+        version: '1.29',
         schemaVersion: 2,
         pin: currentPin,
         exportedAt: new Date().toISOString(),
@@ -3146,6 +3268,7 @@ function importData() {
             applyTheme();
 
             renderHabits();
+            renderLayoutEditor();
             updateHeader();
             applyPinNamesToUI();
             alert('Data imported successfully');
@@ -3245,6 +3368,7 @@ function importData() {
       currentWeekKey = getWeekKey();
       ensureWeekExists();
       renderHabits();
+      renderLayoutEditor();
       updateHeader();
       applyPinNamesToUI();
     }
@@ -3266,6 +3390,8 @@ function importData() {
       // Update grid data-pin for pattern styling
       const grid = document.getElementById('habitsGrid');
       if (grid) grid.setAttribute('data-pin', pinNum);
+      const layoutGrid = document.getElementById('layoutGrid');
+      if (layoutGrid) layoutGrid.setAttribute('data-pin', pinNum);
 
       loadWeekData();
       loadLabels();
@@ -3292,6 +3418,7 @@ function importData() {
       currentWeekKey = getWeekKey();
       ensureWeekExists();
       renderHabits();
+      renderLayoutEditor();
       updateHeader();
       applyPinNamesToUI();
       // FIXED: Start interval if any timers are running after pin switch
@@ -3761,9 +3888,11 @@ function saveCellEdit() {
       const activeLayoutBtn = document.querySelector('#cellEditModal .type-btn.active[data-layout-size]');
       setCellLayoutSize(editingHabit, activeLayoutBtn?.dataset.layoutSize || '1x1');
 
+      const editModalWasVisible = document.getElementById('editModal')?.classList.contains('visible');
       closeCellEditModal();
-      openEditModal();
+      if (editModalWasVisible) openEditModal();
       renderHabits();
+      renderLayoutEditor();
     }
 
 
@@ -3854,6 +3983,8 @@ function openInfoModal() {
       ensureWeekExists();
 
       renderHabits();
+      renderLayoutEditor();
+      setView(currentView);
       updateHeader();
       
       // Fetch sunrise/sunset data
@@ -3879,6 +4010,8 @@ function openInfoModal() {
 
       document.getElementById('btnDecrease').addEventListener('click', toggleDecrease);
       document.getElementById('btnEdit').addEventListener('click', openEditModal);
+      const layoutPackBtn = document.getElementById('btnLayoutPack');
+      if (layoutPackBtn) layoutPackBtn.addEventListener('click', packCurrentLayout);
       const pinRenameBtn = document.getElementById('btnEditPinName');
       if (pinRenameBtn) {
         pinRenameBtn.addEventListener('click', () => {
