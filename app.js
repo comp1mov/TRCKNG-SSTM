@@ -29,8 +29,7 @@
       COUNTER_LAST_UPDATE: 'trckng_sstm_counter_last_update',
       MONEY_SETTINGS: 'trckng_sstm_money_settings',
       PIN_NAMES: 'trckng_sstm_pin_names',
-      SEEN_INFO: 'trckng_has_seen_info'
-    ,
+      SEEN_INFO: 'trckng_has_seen_info',
       UNIT_SETTINGS: 'trckng_sstm_unit_settings',
       VALUE_FORMATS: 'trckng_sstm_value_formats',
       MATH_SETTINGS: 'trckng_sstm_math_settings',
@@ -38,7 +37,24 @@
       LED_SETTINGS: 'trckng_sstm_led_settings',
       LED_STATES: 'trckng_sstm_led_states',
       CURRENCY_SETTINGS: 'trckng_sstm_currency_settings',
-      CURRENCY_CACHE: 'trckng_sstm_currency_cache'
+      CURRENCY_CACHE: 'trckng_sstm_currency_cache',
+      CELL_FLAGS: 'trckng_sstm_cell_flags',
+      VIEW_MODE: 'trckng_sstm_view_mode'
+    };
+
+    const VIEW_MODES = {
+      TRACK: 'track',
+      HISTORY: 'history'
+    };
+
+    const DEFAULT_CELL_FLAGS = {
+      showInHistory: true,
+      showTotal: true,
+      showLastUpdate: true,
+      pinned: false,
+      archived: false,
+      goalEnabled: false,
+      detailOnLongPress: false
     };
 
     const WEEKS_TO_KEEP = 52;
@@ -67,6 +83,7 @@
     let currentPin = 0;
     let currentWeekKey = getWeekKey();
     let decreaseMode = false;
+    let currentView = VIEW_MODES.TRACK;
 
     let weekData = {};
     let habitLabels = {};
@@ -79,6 +96,7 @@
     let valueFormats = {};
     let mathSettings = {};
     let themeSettings = {};
+    let cellFlags = {};
 
     let timerStates = {}; // Runtime state (iterations, running status)
     let moneySettings = {}; // Money configs per habit
@@ -523,6 +541,51 @@
       localStorage.setItem(key, JSON.stringify(mathSettings));
     }
 
+    function normalizeCellFlags(rawFlags) {
+      const normalized = {};
+      HABITS.forEach(habit => {
+        const incoming = rawFlags && typeof rawFlags === 'object' ? rawFlags[habit] : null;
+        normalized[habit] = {
+          ...DEFAULT_CELL_FLAGS,
+          ...(incoming && typeof incoming === 'object' ? incoming : {})
+        };
+      });
+      return normalized;
+    }
+
+    function loadCellFlags() {
+      const key = `${STORAGE_KEYS.CELL_FLAGS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (!stored) {
+        cellFlags = normalizeCellFlags({});
+        return;
+      }
+
+      try {
+        cellFlags = normalizeCellFlags(JSON.parse(stored));
+      } catch (e) {
+        cellFlags = normalizeCellFlags({});
+      }
+    }
+
+    function saveCellFlags() {
+      const key = `${STORAGE_KEYS.CELL_FLAGS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(normalizeCellFlags(cellFlags)));
+    }
+
+    function getCellFlags(habit) {
+      if (!cellFlags[habit]) {
+        cellFlags[habit] = { ...DEFAULT_CELL_FLAGS };
+      }
+      return cellFlags[habit];
+    }
+
+    function getCellFlag(habit, flagName) {
+      const flags = getCellFlags(habit);
+      if (!(flagName in flags)) return DEFAULT_CELL_FLAGS[flagName];
+      return flags[flagName];
+    }
+
     function loadLedSettings() {
       const key = `${STORAGE_KEYS.LED_SETTINGS}_pin${currentPin}`;
       const stored = localStorage.getItem(key);
@@ -604,6 +667,15 @@
       localStorage.setItem(key, JSON.stringify(themeSettings));
     }
 
+    function loadViewMode() {
+      const stored = localStorage.getItem(STORAGE_KEYS.VIEW_MODE);
+      currentView = Object.values(VIEW_MODES).includes(stored) ? stored : VIEW_MODES.TRACK;
+    }
+
+    function saveViewMode() {
+      localStorage.setItem(STORAGE_KEYS.VIEW_MODE, currentView);
+    }
+
     
     function hexToRgba(hex, alpha) {
       if (!hex) return `rgba(255,255,255,${alpha})`;
@@ -680,6 +752,44 @@ function applyTheme() {
         const name = raw.trim() || getDefaultPinName(currentPin);
         renameBtn.textContent = name;
       }
+
+      updateHistoryChrome();
+    }
+
+    function getCurrentPinName() {
+      const raw = (pinNames && pinNames[currentPin] != null) ? String(pinNames[currentPin]) : '';
+      return raw.trim() || getDefaultPinName(currentPin);
+    }
+
+    function updateHistoryChrome() {
+      const historyTitle = document.getElementById('historyTitle');
+      if (historyTitle) historyTitle.textContent = getCurrentPinName();
+
+      const historyMeta = document.getElementById('historyMeta');
+      if (historyMeta) {
+        const weeks = Object.keys(weekData || {}).length;
+        historyMeta.textContent = `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+      }
+    }
+
+    function setView(view) {
+      currentView = Object.values(VIEW_MODES).includes(view) ? view : VIEW_MODES.TRACK;
+
+      const trackView = document.getElementById('trackView');
+      const historyView = document.getElementById('historyView');
+      if (trackView) trackView.hidden = currentView !== VIEW_MODES.TRACK;
+      if (historyView) historyView.hidden = currentView !== VIEW_MODES.HISTORY;
+
+      document.querySelectorAll('.view-tab').forEach(tab => {
+        const isActive = tab.dataset.view === currentView;
+        tab.classList.toggle('active', isActive);
+        tab.setAttribute('aria-selected', String(isActive));
+      });
+
+      updateHistoryChrome();
+      if (currentView === VIEW_MODES.HISTORY) updateStats();
+      if (currentView === VIEW_MODES.TRACK) requestAnimationFrame(updateCellDiagonalAngle);
+      saveViewMode();
     }
 
 
@@ -1693,7 +1803,7 @@ function scheduleMathRefresh() {
           const breakdownEl = document.getElementById(`breakdown-${habit}`);
           if (breakdownEl) {
             const description = habitDescriptions[habit] || '';
-            const lastUpdateLabel = formatCounterLastUpdate(habit);
+            const lastUpdateLabel = getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '';
             breakdownEl.textContent = lastUpdateLabel || description;
           }
         }
@@ -1902,7 +2012,7 @@ function scheduleMathRefresh() {
         if (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) {
           const value = getUnitDisplayValue(habit);
           const description = habitDescriptions[habit] || '';
-          const lastUpdateLabel = formatCounterLastUpdate(habit);
+          const lastUpdateLabel = getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '';
           const breakdown = lastUpdateLabel || description;
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
@@ -2209,7 +2319,7 @@ function scheduleMathRefresh() {
       const breakdownEl = document.getElementById(`breakdown-${habit}`);
       if (breakdownEl) {
         const description = habitDescriptions[habit] || '';
-        const lastUpdateLabel = formatCounterLastUpdate(habit);
+        const lastUpdateLabel = getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '';
         breakdownEl.textContent = lastUpdateLabel || description;
       }      scheduleMathRefresh();
 
@@ -2417,90 +2527,91 @@ function scheduleMathRefresh() {
     // ===== STATS =====
     function updateStats() {
       const statsEl = document.getElementById('stats');
-      const hasActive = HABITS.some(h => habitLabels[h]?.trim());
+      const historyHabits = HABITS.filter(h => habitLabels[h]?.trim() && getCellFlag(h, 'showInHistory'));
+      const hasActive = historyHabits.length > 0;
 
       if (!hasActive) {
         statsEl.innerHTML = '<div style="padding: 16px; text-align: center; opacity: 0.5; font-size: 12px;">No data yet</div>';
+        updateHistoryChrome();
         return;
       }
 
-      const allWeeks = Object.keys(weekData).sort().reverse().slice(0, 3);
+      const allWeeks = Object.keys(weekData).sort().reverse();
       if (allWeeks.length === 0) {
         statsEl.innerHTML = '<div style="padding: 16px; text-align: center; opacity: 0.5; font-size: 12px;">No data yet</div>';
+        updateHistoryChrome();
         return;
       }
 
       let html = '<table class="stats-table"><thead><tr><th>Week</th>';
-      HABITS.forEach((h, idx) => {
-        if (habitLabels[h]?.trim()) {
-          html += `<th data-col="${idx}">${habitLabels[h]}</th>`;
-        }
+      historyHabits.forEach(h => {
+        const idx = HABITS.indexOf(h);
+        html += `<th data-col="${idx}">${habitLabels[h]}</th>`;
       });
       html += '</tr></thead><tbody>';
 
       allWeeks.forEach(week => {
         html += `<tr><td>${week}</td>`;
-        HABITS.forEach((h, idx) => {
-          if (habitLabels[h]?.trim()) {
-            const weekObj = weekData[week];
-            const value = (weekObj && typeof weekObj === 'object') ? (weekObj[h] || 0) : 0;
-            const type = habitTypes[h] || CELL_TYPES.COUNTER;
-            let display = value;
-            
-            if (type === CELL_TYPES.DURATION_SEC) {
-              const m = Math.floor(value / 60);
-              const s = value % 60;
-              display = `${m}:${String(s).padStart(2, '0')}`;
-            } else if (type === CELL_TYPES.DURATION_MIN) {
-              display = `${value}m`;
-            } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
-              display = `${value}s`;
-            }
-            
-            html += `<td data-col="${idx}">${display}</td>`;
+        historyHabits.forEach(h => {
+          const idx = HABITS.indexOf(h);
+          const weekObj = weekData[week];
+          const value = (weekObj && typeof weekObj === 'object') ? (weekObj[h] || 0) : 0;
+          const typeRaw = habitTypes[h] || CELL_TYPES.UNIT;
+          const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+          let display = value;
+
+          if (type === CELL_TYPES.DURATION_SEC) {
+            const m = Math.floor(value / 60);
+            const s = value % 60;
+            display = `${m}:${String(s).padStart(2, '0')}`;
+          } else if (type === CELL_TYPES.DURATION_MIN) {
+            display = `${value}m`;
+          } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
+            display = `${value}s`;
           }
+
+          html += `<td data-col="${idx}">${display}</td>`;
         });
         html += '</tr>';
       });
 
       // TOTAL row - sum all weeks for ALL types
       html += '<tr style="border-top: 1px solid rgba(255,255,255,0.15);"><td>TOTAL</td>';
-      HABITS.forEach((h, idx) => {
-        if (habitLabels[h]?.trim()) {
-          const type = habitTypes[h] || CELL_TYPES.COUNTER;
-          
-          // Calculate total across ALL weeks (not just displayed 3)
-          let total = 0;
-          Object.keys(weekData).forEach(week => {
-            const weekObj = weekData[week];
-            if (weekObj && typeof weekObj === 'object') {
-              total += (weekObj[h] || 0);
-            }
-          });
-          
-          let display = '-';
-          if (total > 0) {
-            if (type === CELL_TYPES.DURATION_SEC) {
-              const m = Math.floor(total / 60);
-              const s = total % 60;
-              display = `${m}:${String(s).padStart(2, '0')}`;
-            } else if (type === CELL_TYPES.DURATION_MIN) {
-              display = `${total}m`;
-            } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
-              display = `${total}s`;
-            } else {
-              // COUNTER type
-              display = total;
-            }
+      historyHabits.forEach(h => {
+        const idx = HABITS.indexOf(h);
+        const typeRaw = habitTypes[h] || CELL_TYPES.UNIT;
+        const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+
+        let total = 0;
+        Object.keys(weekData).forEach(week => {
+          const weekObj = weekData[week];
+          if (weekObj && typeof weekObj === 'object') {
+            total += (weekObj[h] || 0);
           }
-          
-          html += `<td data-col="${idx}">${display}</td>`;
+        });
+
+        let display = '-';
+        if (total > 0) {
+          if (type === CELL_TYPES.DURATION_SEC) {
+            const m = Math.floor(total / 60);
+            const s = total % 60;
+            display = `${m}:${String(s).padStart(2, '0')}`;
+          } else if (type === CELL_TYPES.DURATION_MIN) {
+            display = `${total}m`;
+          } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
+            display = `${total}s`;
+          } else {
+            display = total;
+          }
         }
+
+        html += `<td data-col="${idx}">${display}</td>`;
       });
       html += '</tr>';
 
       html += '</tbody></table>';
       statsEl.innerHTML = html;
+      updateHistoryChrome();
       
       attachTableHighlight();
     }
@@ -2622,7 +2733,7 @@ function scheduleMathRefresh() {
       });
 
       const exportObj = {
-        version: '1.25',
+        version: '1.26',
         pin: currentPin,
         exportedAt: new Date().toISOString(),
 
@@ -2639,6 +2750,7 @@ function scheduleMathRefresh() {
         unitSettings,
         valueFormats,
         mathSettings,
+        cellFlags,
 
         themeSettings,
         ledSettings,
@@ -2696,6 +2808,7 @@ function importData() {
             if (imported.unitSettings) unitSettings = imported.unitSettings;
             if (imported.valueFormats) valueFormats = imported.valueFormats;
             if (imported.mathSettings) mathSettings = imported.mathSettings;
+            if (imported.cellFlags) cellFlags = normalizeCellFlags(imported.cellFlags);
             if (imported.themeSettings) themeSettings = imported.themeSettings;
             if (imported.ledSettings) ledSettings = imported.ledSettings;
             if (imported.ledStates) ledStates = imported.ledStates;
@@ -2716,6 +2829,7 @@ function importData() {
             saveUnitSettings();
             saveValueFormats();
             saveMathSettings();
+            saveCellFlags();
             saveThemeSettings();
             saveLedSettings();
             saveLedStates();
@@ -2767,6 +2881,7 @@ function importData() {
         STORAGE_KEYS.UNIT_SETTINGS,
         STORAGE_KEYS.VALUE_FORMATS,
         STORAGE_KEYS.MATH_SETTINGS,
+        STORAGE_KEYS.CELL_FLAGS,
         STORAGE_KEYS.THEME,
         STORAGE_KEYS.LED_SETTINGS,
         STORAGE_KEYS.LED_STATES,
@@ -2782,6 +2897,7 @@ function importData() {
       const emptyDescriptions = {};
       const emptyTypes = {};
       const emptyColors = {};
+      const emptyFlags = normalizeCellFlags({});
 
       HABITS.forEach(habit => {
         emptyLabels[habit] = '';
@@ -2794,6 +2910,7 @@ function importData() {
       localStorage.setItem(`${STORAGE_KEYS.DESCRIPTIONS}${suffix}`, JSON.stringify(emptyDescriptions));
       localStorage.setItem(`${STORAGE_KEYS.TYPES}${suffix}`, JSON.stringify(emptyTypes));
       localStorage.setItem(`${STORAGE_KEYS.COLORS}${suffix}`, JSON.stringify(emptyColors));
+      localStorage.setItem(`${STORAGE_KEYS.CELL_FLAGS}${suffix}`, JSON.stringify(emptyFlags));
 
       // Reload state for current pin
       loadWeekData();
@@ -2808,6 +2925,7 @@ function importData() {
       loadUnitSettings();
       loadValueFormats();
       loadMathSettings();
+      loadCellFlags();
       loadLedSettings();
       loadLedStates();
       loadCurrencySettings();
@@ -2852,6 +2970,7 @@ function importData() {
       loadUnitSettings();
       loadValueFormats();
       loadMathSettings();
+      loadCellFlags();
       loadLedSettings();
       loadLedStates();
       loadCurrencySettings();
@@ -2988,6 +3107,13 @@ function openCellEditModal(habit, index) {
       const vFmt = valueFormats[habit] || 'raw';
       const vSel = document.getElementById('valueFormat');
       if (vSel) vSel.value = vFmt;
+
+      // Populate flag fields
+      const flags = getCellFlags(habit);
+      const flagHistory = document.getElementById('cellFlagHistory');
+      const flagLastUpdate = document.getElementById('cellFlagLastUpdate');
+      if (flagHistory) flagHistory.checked = flags.showInHistory !== false;
+      if (flagLastUpdate) flagLastUpdate.checked = flags.showLastUpdate !== false;
 
       // Populate Math selectors/options
       const buildOptions = (selectEl) => {
@@ -3227,6 +3353,13 @@ function saveCellEdit() {
       saveTimerStates();
       saveCounterLastUpdate();
 
+      cellFlags[editingHabit] = {
+        ...getCellFlags(editingHabit),
+        showInHistory: Boolean(document.getElementById('cellFlagHistory')?.checked),
+        showLastUpdate: Boolean(document.getElementById('cellFlagLastUpdate')?.checked)
+      };
+      saveCellFlags();
+
       // Persist settings for new types
       if (normalizedType === CELL_TYPES.UNIT) {
         const step = Number(document.getElementById('unitStep')?.value);
@@ -3374,11 +3507,13 @@ function openInfoModal() {
       loadUnitSettings();
       loadValueFormats();
       loadMathSettings();
+      loadCellFlags();
       loadLedSettings();
       loadLedStates();
       loadCurrencySettings();
       loadCurrencyCache();
       loadThemeSettings();
+      loadViewMode();
       applyTheme();
       loadCounterLastUpdate();
       loadPinNames();
@@ -3412,6 +3547,10 @@ function openInfoModal() {
 
       document.querySelectorAll('.pin').forEach(btn => {
         btn.addEventListener('click', () => switchPin(parseInt(btn.dataset.pin)));
+      });
+
+      document.querySelectorAll('.view-tab').forEach(btn => {
+        btn.addEventListener('click', () => setView(btn.dataset.view));
       });
 
       document.getElementById('btnDecrease').addEventListener('click', toggleDecrease);
@@ -3602,6 +3741,7 @@ function openInfoModal() {
       });
 
       applyPinNamesToUI();
+      setView(currentView);
       updateCellDiagonalAngle();
       window.addEventListener('resize', updateCellDiagonalAngle);
 

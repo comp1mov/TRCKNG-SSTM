@@ -235,6 +235,45 @@ button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
     .btn-control:active { background: rgba(255,255,255,0.12); }
     .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; opacity: 1; }
 
+    /* ===== VIEW TABS ===== */
+    .view-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0;
+      background: var(--app-bg, #000);
+    }
+
+    .view-tab {
+      border: none;
+      background: var(--app-bg, #000);
+      color: var(--app-text, #fff);
+      opacity: 0.5;
+      padding: 9px 6px;
+      min-height: 34px;
+      cursor: pointer;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 100ms ease-out;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .view-tab:hover {
+      background: rgba(255,255,255,0.06);
+      opacity: 0.85;
+    }
+
+    .view-tab.active {
+      background: rgba(53,242,163,0.14);
+      color: #35f2a3;
+      opacity: 1;
+    }
+
+    .view-panel[hidden] {
+      display: none !important;
+    }
+
     /* ===== HABITS GRID ===== */
     .buttons-grid {
       display: grid;
@@ -622,6 +661,22 @@ button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
       padding: 0;
       overflow-x: auto;
     }
+    .history-toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 8px;
+      border-bottom: 1px solid var(--stroke-strong, rgba(80,80,80,1));
+      color: var(--app-text, #fff);
+    }
+    .history-title,
+    .history-meta {
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.55;
+    }
     .stats-table {
       width: 100%;
       border-collapse: collapse;
@@ -894,6 +949,34 @@ button, .btn-habit, .pin, .btn-control, .color-picker, .modal-btn, .type-btn {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px 12px;
+    }
+
+    .flag-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+    }
+
+    .flag-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 8px 6px;
+      background: rgba(255,255,255,0.04);
+      color: var(--app-text, #fff);
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.75;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .flag-toggle input {
+      accent-color: #35f2a3;
     }
 
     .cell-edit-field {

@@ -1,4 +1,4 @@
-# TRCKNG SSTM v1.25
+# TRCKNG SSTM v1.26
 
 Local-first modular tracking dashboard for weekly habits, timers, money, formulas, and small personal metrics.
 
@@ -19,6 +19,7 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, no backend, data 
 - Cell types: Unit, Value, Math, MM:SS, Min, Sec, Timer, Countdown, Income, Budget, LED Pulse, FX Rate
 - Weekly history with 52-week retention
 - Per-PIN labels, descriptions, colors, themes, timer settings, money settings, math settings, LED settings, and currency settings
+- TRACK/HISTORY views
 - JSON export/import for backups
 - PWA install support
 - Mobile fixes for iOS safe areas, double-tap zoom, and Safari active states
@@ -37,7 +38,7 @@ Main stored groups:
 
 ## Backup
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.25 settings.
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.26 settings.
 
 ## Development Roadmap
 
@@ -45,7 +46,7 @@ See `C:\Users\gregt\Desktop\strategic_roadmap.md`.
 
 Recommended next phase:
 
-1. Stabilize v1.25 data export/import/reset.
+1. Finish Phase 1.5 history/details architecture.
 2. Polish mobile/PWA behavior.
 3. Add modular layout editor for variable-size cells.
 4. Add Goal Time.

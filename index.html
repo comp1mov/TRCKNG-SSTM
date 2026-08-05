@@ -57,16 +57,29 @@
       </div>
     </div>
 
-    <div class="buttons-grid" id="habitsGrid" data-pin="0"></div>
+    <div class="view-tabs" role="tablist" aria-label="View">
+      <button class="view-tab active" id="btnViewTrack" data-view="track" role="tab" aria-selected="true">TRACK</button>
+      <button class="view-tab" id="btnViewHistory" data-view="history" role="tab" aria-selected="false">HISTORY</button>
+    </div>
 
-    <div class="stats" id="stats"></div>
+    <div class="view-panel" id="trackView">
+      <div class="buttons-grid" id="habitsGrid" data-pin="0"></div>
+    </div>
+
+    <div class="view-panel" id="historyView" hidden>
+      <div class="history-toolbar">
+        <div class="history-title" id="historyTitle">PIN 01</div>
+        <div class="history-meta" id="historyMeta">0 weeks</div>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
   </div>
 
   <!-- EDIT MODAL -->
   <div class="modal" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">TRCKNG SSTM · v1.25</div>
+        <div class="modal-title">TRCKNG SSTM · v1.26</div>
         <div class="modal-header-right">
           <button class="modal-pin-btn" id="btnEditPinName">PIN 01</button>
           <button class="modal-help-btn" id="btnEditHelp">?</button>
@@ -391,6 +404,20 @@
         </div>
       </div>
 
+      <div id="flagSettingsFields" class="cell-edit-section">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Flags</div>
+        <div class="flag-grid">
+          <label class="flag-toggle">
+            <input type="checkbox" id="cellFlagHistory">
+            <span>History</span>
+          </label>
+          <label class="flag-toggle">
+            <input type="checkbox" id="cellFlagLastUpdate">
+            <span>Last update</span>
+          </label>
+        </div>
+      </div>
+
       <div style="margin-top: 8px;" id="descriptionField">
         <div class="cell-edit-label" style="margin-bottom: 8px;">Description</div>
         <input type="text" class="cell-edit-input" id="cellEditDescription" maxlength="30" autocomplete="off" placeholder="Optional description">
@@ -411,26 +438,21 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.25</div>
+        <div class="info-version">V1.26</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v1.25</div>
+        <div class="info-section-title">What's New in v1.26</div>
         <div class="info-text">
-          <strong>CRITICAL FIXES:</strong><br>
-          • Timer/Duration updates work on mobile after PIN switch<br>
-          • MM:SS shows full time (H:MM:SS when over 60 min)<br>
+          <strong>PHASE 1.5:</strong><br>
+          • TRACK / HISTORY view switch<br>
+          • Weekly history moved out of the main tracking screen<br>
+          • Cell flags for History and Last update display<br>
           <br>
-          <strong>UI IMPROVEMENTS:</strong><br>
-          • Theme simplified to 3 colors (bg, text, lines)<br>
-          • Day/week progress bars in header<br>
-          • Sunrise/sunset color indicator<br>
-          • NOTIFY button for permission request<br>
-          <br>
-          <strong>NEW CELL TYPE:</strong><br>
-          • LED Pulse - rhythmic visual feedback<br>
-          • Configurable interval, duty cycle, mode
+          <strong>BASELINE:</strong><br>
+          • v1.25 split app stabilized for local development<br>
+          • Export/import/reset include newer settings
         </div>
       </div>
       
