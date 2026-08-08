@@ -5353,6 +5353,23 @@ function openInfoModal() {
       el.classList.toggle('visible');
     }
 
+    function registerServiceWorker() {
+      if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        const reloadKey = `trckng_sw_reloaded_${APP_VERSION}`;
+        if (sessionStorage.getItem(reloadKey) === 'true') return;
+        sessionStorage.setItem(reloadKey, 'true');
+        window.location.reload();
+      });
+
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/TRCKNG-SSTM/service-worker.js')
+          .then(registration => registration.update())
+          .catch(error => console.warn('Service worker registration failed', error));
+      });
+    }
+
 // ===== INIT =====
     function updateCellDiagonalAngle() {
       const sampleCell = document.querySelector('.buttons-grid .btn-habit');
@@ -5367,6 +5384,7 @@ function openInfoModal() {
     function init() {
       // Enable CSS :active selector on iOS devices
       document.addEventListener('touchstart', () => {}, { passive: true });
+      registerServiceWorker();
 
       loadCloudSyncState();
       loadSignupUnlockState();
