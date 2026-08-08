@@ -1,8 +1,8 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.32.4';
-    const CLOUD_SNAPSHOT_SCHEMA_VERSION = 3;
+    const APP_VERSION = '1.33.0';
+    const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
     const SIGNUP_UNLOCK_MS = 3000;
@@ -34,6 +34,7 @@
       TIMER_SETTINGS: 'trckng_sstm_timer_settings',
       TIMER_STATES: 'trckng_sstm_timer_states',
       COUNTER_LAST_UPDATE: 'trckng_sstm_counter_last_update',
+      COUNTER_CHANGE_LOG: 'trckng_sstm_counter_change_log',
       MONEY_SETTINGS: 'trckng_sstm_money_settings',
       PIN_NAMES: 'trckng_sstm_pin_names',
       PIN_COLORS: 'trckng_sstm_pin_colors',
@@ -75,6 +76,7 @@
     };
 
     const WEEKS_TO_KEEP = 52;
+    const COUNTER_CHANGE_LOG_LIMIT = 1000;
     const PIN_COUNT = 3;
     const GRID_COLUMNS = 3;
     const LAYOUT_SIZE_PRESETS = {
@@ -94,6 +96,7 @@
       { key: STORAGE_KEYS.TIMER_SETTINGS, prop: 'timerSettings' },
       { key: STORAGE_KEYS.TIMER_STATES, prop: 'timerStates' },
       { key: STORAGE_KEYS.COUNTER_LAST_UPDATE, prop: 'counterLastUpdate' },
+      { key: STORAGE_KEYS.COUNTER_CHANGE_LOG, prop: 'counterChangeLog' },
       { key: STORAGE_KEYS.MONEY_SETTINGS, prop: 'moneySettings' },
       { key: STORAGE_KEYS.UNIT_SETTINGS, prop: 'unitSettings' },
       { key: STORAGE_KEYS.VALUE_FORMATS, prop: 'valueFormats' },
@@ -154,6 +157,7 @@
     let pinNames = {}; // Custom pin names
     let pinColors = {}; // Custom fill colors for PIN buttons
     let counterLastUpdate = {}; // Last update timestamps for simple counters
+    let counterChangeLog = []; // Reversible value changes for counters and numeric cells
     let ledSettings = {}; // LED pulse configurations
     let ledStates = {}; // LED runtime states (active/inactive)
     let ledIntervals = {}; // Active LED pulse intervals
@@ -1399,6 +1403,7 @@
         'timerSettings',
         'timerStates',
         'counterLastUpdate',
+        'counterChangeLog',
         'moneySettings',
         'unitSettings',
         'valueFormats',
@@ -1437,6 +1442,7 @@
       saveCurrencySettings();
       saveCurrencyCache();
       saveCounterLastUpdate();
+      saveCounterChangeLog();
       savePinNames();
       savePinColors();
       saveViewMode();
@@ -1464,6 +1470,7 @@
       loadThemeSettings();
       applyTheme();
       loadCounterLastUpdate();
+      loadCounterChangeLog();
       loadPinNames();
       loadPinColors();
       syncPinsFromState();
@@ -1487,6 +1494,7 @@
         timerSettings,
         timerStates,
         counterLastUpdate,
+        counterChangeLog,
         moneySettings,
         unitSettings,
         valueFormats,
@@ -1508,6 +1516,7 @@
       if (prop === 'cellFlags') return normalizeCellFlags({});
       if (prop === 'cellLayout') return normalizeCellLayout({});
       if (prop === 'themeSettings') return defaultThemeSettings();
+      if (prop === 'counterChangeLog') return [];
       return {};
     }
 
@@ -1529,6 +1538,9 @@
               snapshot[field.prop][k] = CELL_TYPES.UNIT;
             }
           });
+        }
+        if (field.prop === 'counterChangeLog') {
+          snapshot[field.prop] = normalizeCounterChangeLog(snapshot[field.prop]);
         }
       });
       return snapshot;
@@ -1587,6 +1599,7 @@
         if (imported.currencySettings) currencySettings = imported.currencySettings;
         if (imported.currencyCache) currencyCache = imported.currencyCache;
         if (imported.counterLastUpdate) counterLastUpdate = imported.counterLastUpdate;
+        if (imported.counterChangeLog) counterChangeLog = normalizeCounterChangeLog(imported.counterChangeLog);
         if (imported.pinNames) pinNames = { ...pinNames, ...imported.pinNames };
         if (imported.pinColors) pinColors = { ...pinColors, ...imported.pinColors };
 
@@ -1616,6 +1629,7 @@
               }
               if (field.prop === 'cellFlags') value = normalizeCellFlags(value);
               if (field.prop === 'cellLayout') value = normalizeCellLayout(value);
+              if (field.prop === 'counterChangeLog') value = normalizeCounterChangeLog(value);
               writeStoredJson(`${field.key}_pin${pin}`, value);
             }
           });
@@ -2337,6 +2351,100 @@ function applyTheme() {
       markCloudDirty('counter last update');
     }
 
+    function normalizeCounterChangeLog(rawLog) {
+      if (!Array.isArray(rawLog)) return [];
+
+      return rawLog
+        .filter(entry => entry && typeof entry === 'object' && entry.week && entry.habit)
+        .map(entry => ({
+          id: String(entry.id || `${entry.week}-${entry.habit}-${entry.at || Date.now()}`),
+          at: Number(entry.at) || Date.now(),
+          week: String(entry.week),
+          habit: String(entry.habit),
+          previousValue: Number(entry.previousValue) || 0,
+          nextValue: Number(entry.nextValue) || 0,
+          previousLastUpdate: entry.previousLastUpdate ? Number(entry.previousLastUpdate) : null,
+          nextLastUpdate: entry.nextLastUpdate ? Number(entry.nextLastUpdate) : null,
+          source: String(entry.source || 'tap'),
+          undoneAt: entry.undoneAt ? Number(entry.undoneAt) : null
+        }))
+        .sort((a, b) => a.at - b.at)
+        .slice(-COUNTER_CHANGE_LOG_LIMIT);
+    }
+
+    function loadCounterChangeLog() {
+      counterChangeLog = [];
+      const key = `${STORAGE_KEYS.COUNTER_CHANGE_LOG}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try { counterChangeLog = normalizeCounterChangeLog(JSON.parse(stored)); } catch (e) {}
+      }
+    }
+
+    function saveCounterChangeLog() {
+      counterChangeLog = normalizeCounterChangeLog(counterChangeLog);
+      const key = `${STORAGE_KEYS.COUNTER_CHANGE_LOG}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(counterChangeLog));
+      markCloudDirty('counter change log');
+    }
+
+    function recordCounterChange(habit, previousValue, nextValue, previousLastUpdate, nextLastUpdate, source = 'tap') {
+      const before = Number(previousValue) || 0;
+      const after = Number(nextValue) || 0;
+      if (before === after) return;
+
+      counterChangeLog.push({
+        id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${habit}`,
+        at: Date.now(),
+        week: currentWeekKey,
+        habit,
+        previousValue: before,
+        nextValue: after,
+        previousLastUpdate: previousLastUpdate || null,
+        nextLastUpdate: nextLastUpdate || null,
+        source,
+        undoneAt: null
+      });
+
+      if (counterChangeLog.length > COUNTER_CHANGE_LOG_LIMIT) {
+        counterChangeLog = counterChangeLog.slice(-COUNTER_CHANGE_LOG_LIMIT);
+      }
+    }
+
+    function undoLastCounterChange() {
+      ensureWeekExists();
+
+      for (let i = counterChangeLog.length - 1; i >= 0; i--) {
+        const entry = counterChangeLog[i];
+        if (!entry || entry.undoneAt || entry.week !== currentWeekKey) continue;
+
+        const weekObj = weekData[currentWeekKey] || {};
+        weekObj[entry.habit] = Number(entry.previousValue) || 0;
+        weekData[currentWeekKey] = weekObj;
+
+        if (entry.previousLastUpdate) {
+          counterLastUpdate[entry.habit] = entry.previousLastUpdate;
+        } else {
+          delete counterLastUpdate[entry.habit];
+        }
+
+        counterChangeLog[i] = {
+          ...entry,
+          undoneAt: Date.now()
+        };
+
+        saveWeekData();
+        saveCounterLastUpdate();
+        saveCounterChangeLog();
+        renderHabits();
+        scheduleMathRefresh();
+        animateButton(entry.habit);
+        return;
+      }
+
+      alert('Nothing to undo for this week');
+    }
+
 
     function loadPinNames() {
       pinNames = {};
@@ -2633,17 +2741,22 @@ function applyTheme() {
 
     function handleCounterClick(habit) {
       ensureWeekExists();
+      const previousValue = Number(weekData[currentWeekKey][habit] || 0);
+      const previousLastUpdate = counterLastUpdate[habit] || null;
       if (decreaseMode) {
-        weekData[currentWeekKey][habit] = Math.max(0, (weekData[currentWeekKey][habit] || 0) - 1);
+        weekData[currentWeekKey][habit] = Math.max(0, previousValue - 1);
       } else {
-        weekData[currentWeekKey][habit] = (weekData[currentWeekKey][habit] || 0) + 1;
+        weekData[currentWeekKey][habit] = previousValue + 1;
       }
 
       // Track last update time for simple counters
-      counterLastUpdate[habit] = Date.now();
+      const nextLastUpdate = Date.now();
+      counterLastUpdate[habit] = nextLastUpdate;
+      recordCounterChange(habit, previousValue, weekData[currentWeekKey][habit], previousLastUpdate, nextLastUpdate, 'counter');
 
       saveWeekData();
       saveCounterLastUpdate();
+      saveCounterChangeLog();
       updateCellDisplay(habit);
       animateButton(habit);
     }
@@ -2651,16 +2764,21 @@ function applyTheme() {
     function handleUnitClick(habit) {
       ensureWeekExists();
       const step = getUnitStep(habit);
+      const previousValue = Number(weekData[currentWeekKey][habit] || 0);
+      const previousLastUpdate = counterLastUpdate[habit] || null;
 
       if (decreaseMode) {
-        weekData[currentWeekKey][habit] = Math.max(0, (weekData[currentWeekKey][habit] || 0) - step);
+        weekData[currentWeekKey][habit] = Math.max(0, previousValue - step);
       } else {
-        weekData[currentWeekKey][habit] = (weekData[currentWeekKey][habit] || 0) + step;
+        weekData[currentWeekKey][habit] = previousValue + step;
       }
 
-      counterLastUpdate[habit] = Date.now();
+      const nextLastUpdate = Date.now();
+      counterLastUpdate[habit] = nextLastUpdate;
+      recordCounterChange(habit, previousValue, weekData[currentWeekKey][habit], previousLastUpdate, nextLastUpdate, 'unit');
       saveWeekData();
       saveCounterLastUpdate();
+      saveCounterChangeLog();
 
       // Update display depending on total flag
       const el = document.getElementById(`value-${habit}`);
@@ -3068,14 +3186,17 @@ function applyTheme() {
         }
       }
 
+      const previousValue = Number(weekObj[habit]) || 0;
       let next = (Number(weekObj[habit]) || 0) + delta;
 
       // Для бюджета не даем уйти в минус
       if (!isIncome && next < 0) next = 0;
 
       weekObj[habit] = next;
+      recordCounterChange(habit, previousValue, next, null, null, 'money');
 
       saveWeekData();
+      saveCounterChangeLog();
       updateMoneyCellDisplay(habit, type);
       scheduleMathRefresh();
       animateButton(habit);
@@ -4508,7 +4629,7 @@ function scheduleMathRefresh() {
 
       return {
         version: APP_VERSION,
-        schemaVersion: 2,
+        schemaVersion: 3,
         pin: currentPin,
         exportedAt: new Date().toISOString(),
 
@@ -4536,6 +4657,7 @@ function scheduleMathRefresh() {
         currencySettings,
         currencyCache,
         counterLastUpdate,
+        counterChangeLog: normalizeCounterChangeLog(counterChangeLog),
         pinNames,
         pinColors
       };
@@ -4611,6 +4733,7 @@ function importData() {
         STORAGE_KEYS.TIMER_SETTINGS,
         STORAGE_KEYS.TIMER_STATES,
         STORAGE_KEYS.COUNTER_LAST_UPDATE,
+        STORAGE_KEYS.COUNTER_CHANGE_LOG,
         STORAGE_KEYS.MONEY_SETTINGS,
         STORAGE_KEYS.UNIT_SETTINGS,
         STORAGE_KEYS.VALUE_FORMATS,
@@ -4670,6 +4793,7 @@ function importData() {
       loadThemeSettings();
       applyTheme();
       loadCounterLastUpdate();
+      loadCounterChangeLog();
 
       currentWeekKey = getWeekKey();
       ensureWeekExists();
@@ -5269,6 +5393,7 @@ function openInfoModal() {
         loadViewMode();
         applyTheme();
         loadCounterLastUpdate();
+        loadCounterChangeLog();
         loadPinNames();
         loadPinColors();
         syncPinsFromState();
@@ -5313,6 +5438,7 @@ function openInfoModal() {
       });
 
       document.getElementById('btnDecrease').addEventListener('click', toggleDecrease);
+      document.getElementById('btnUndo').addEventListener('click', undoLastCounterChange);
       const layoutPackBtn = document.getElementById('btnLayoutPack');
       if (layoutPackBtn) layoutPackBtn.addEventListener('click', packCurrentLayout);
       const layoutPinNameBtn = document.getElementById('btnLayoutPinName');
@@ -5355,9 +5481,13 @@ function openInfoModal() {
     document.getElementById('valueModalSave').addEventListener('click', () => {
       if (!editingValueHabit) return closeValueModal();
       ensureWeekExists();
+      const previousValue = Number(weekData[currentWeekKey][editingValueHabit] || 0);
       const v = Number(document.getElementById('valueModalInput').value);
-      weekData[currentWeekKey][editingValueHabit] = Number.isFinite(v) ? v : 0;
+      const nextValue = Number.isFinite(v) ? v : 0;
+      weekData[currentWeekKey][editingValueHabit] = nextValue;
+      recordCounterChange(editingValueHabit, previousValue, nextValue, null, null, 'value');
       saveWeekData();
+      saveCounterChangeLog();
       renderHabits();
       closeValueModal();
     });

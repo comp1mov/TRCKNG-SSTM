@@ -46,9 +46,16 @@
       </div>
       <!-- Controls row 2 -->
       <div class="controls-edit">
-        <button class="btn-control btn-control-third" id="btnDecrease">DECREASE</button>
-        <button class="btn-control btn-control-third" id="btnAccount">ACCOUNT</button>
-        <button class="btn-control btn-control-third pin-sync-btn" id="btnCloudSync" type="button" title="Sync now" aria-label="Sync now">SYNC</button>
+        <button class="btn-control btn-control-quarter" id="btnDecrease">DECREASE</button>
+        <button class="btn-control btn-control-quarter" id="btnUndo" type="button">UNDO</button>
+        <button class="btn-control btn-control-quarter" id="btnAccount">ACCOUNT</button>
+        <button class="btn-control btn-control-quarter pin-sync-btn" id="btnCloudSync" type="button" title="Sync now" aria-label="Sync now">SYNC</button>
+      </div>
+      <!-- Pins -->
+      <div class="pins">
+        <button class="pin active" data-pin="0" id="pin0">PIN 01</button>
+        <button class="pin" data-pin="1" id="pin1">PIN 02</button>
+        <button class="pin" data-pin="2" id="pin2">PIN 03</button>
       </div>
     </div>
 
@@ -56,13 +63,6 @@
       <button class="view-tab active" id="btnViewTrack" data-view="track" role="tab" aria-selected="true">TRACK</button>
       <button class="view-tab" id="btnViewLayout" data-view="layout" role="tab" aria-selected="false">LAYOUT</button>
       <button class="view-tab" id="btnViewHistory" data-view="history" role="tab" aria-selected="false">HISTORY</button>
-    </div>
-
-    <!-- Pins -->
-    <div class="pins">
-      <button class="pin active" data-pin="0" id="pin0">PIN 01</button>
-      <button class="pin" data-pin="1" id="pin1">PIN 02</button>
-      <button class="pin" data-pin="2" id="pin2">PIN 03</button>
     </div>
 
     <div class="view-panel" id="trackView">
@@ -500,13 +500,22 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.32.4</div>
+        <div class="info-version">V1.33.0</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v1.32.4</div>
+        <div class="info-section-title">What's New in v1.33.0</div>
         <div class="info-text">
+          <strong>UNDO HISTORY:</strong><br>
+          - UNDO added next to DECREASE<br>
+          - Counter, Unit, Money and Value changes record before/after values<br>
+          - Undo restores the previous value and counter last-update time<br>
+          - Change history is included in export/import and cloud snapshots<br>
+          <br>
+          <strong>DESKTOP TRACK SIZE:</strong><br>
+          - TRACK cells are twice as tall on desktop screens<br>
+          <br>
           <strong>RESPONSIVE FIELD SHELL:</strong><br>
           - Field width now adapts for phone, laptop, and desktop<br>
           - Cell rows keep a stable rhythm on wide screens<br>
@@ -606,6 +615,7 @@
         <div class="info-section-title">Controls</div>
         <div class="info-text">
           <strong>DECREASE</strong> - subtract mode / reset duration<br>
+          <strong>UNDO</strong> - restore the previous value for the latest current-week change<br>
           <strong>COPY</strong> - copy current week<br>
           <strong>COPY PREV</strong> - copy previous week<br>
           <strong>EXPORT</strong> - download backup.json<br>

@@ -12,6 +12,9 @@ Running list for small interface corrections collected during hands-on testing. 
 - `v1.32.3`: moved the PIN switcher below the active work surface.
 - `v1.32.4`: corrected the PIN switcher to sit between view tabs and the work surface.
 - `v1.32.4`: returned PIN labels to normal `8px` text.
+- `v1.33.0`: added UNDO beside DECREASE.
+- `v1.33.0`: doubled desktop TRACK cell heights.
+- `v1.33.0`: moved PIN row below the main action row while keeping utility controls under the week header.
 
 ## Incoming
 

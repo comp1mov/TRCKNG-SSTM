@@ -182,3 +182,12 @@
 - Corrected the PIN switcher position to sit between `TRACK / LAYOUT / HISTORY` and the active work surface, not at the page bottom.
 - Returned PIN label text to the normal compact `8px` size.
 - Bumped app/export/cache version to `v1.32.4`.
+
+### Numeric Change History + Undo
+
+- Added per-PIN numeric change logs for Unit/Counter, Money, and Value changes.
+- Added `UNDO` beside `DECREASE` to restore the previous value for the latest current-week change.
+- Restored counter last-update timestamps when undoing Unit/Counter changes.
+- Included change logs in export/import, reset coverage, and Supabase full-app snapshots.
+- Doubled desktop TRACK cell heights for a taller field surface on computer screens.
+- Bumped app/export/cache version to `v1.33.0`.

@@ -232,7 +232,7 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       }
     .controls-edit {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(8, 1fr);
       gap: 0px;
       background: var(--app-bg, #000000);
       }
@@ -240,6 +240,9 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       grid-column: span 3;
     }
     .btn-control-third {
+      grid-column: span 2;
+    }
+    .btn-control-quarter {
       grid-column: span 2;
     }
     .btn-control-edit {
@@ -306,7 +309,7 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     @media (min-width: 1100px) {
       :root {
         --field-max-width: 1080px;
-        --field-cell-min: 210px;
+        --field-cell-min: 420px;
       }
 
       body {
@@ -318,13 +321,13 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     @media (min-width: 1500px) {
       :root {
         --field-max-width: 1220px;
-        --field-cell-min: 240px;
+        --field-cell-min: 480px;
       }
     }
 
     @media (min-width: 900px) and (max-height: 780px) {
       :root {
-        --field-cell-min: 176px;
+        --field-cell-min: 352px;
       }
     }
 

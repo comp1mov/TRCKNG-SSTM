@@ -1,4 +1,4 @@
-# TRCKNG SSTM v1.32.4
+# TRCKNG SSTM v1.33.0
 
 Local-first modular tracking field for weekly habits, timers, money, formulas, and small personal metrics.
 
@@ -14,6 +14,9 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `l
 - `service-worker.js` - offline cache
 - `SUPABASE_SETUP.md` - SQL and first-sync checklist
 - `UI_CHANGE_NOTES.md` - running list for small UI corrections during testing
+- `GLOBAL_STRATEGY.md` - larger v2/v3 product and architecture direction
+- `FEATURE_PLANS.md` - feature bank with MVP/later/data/UX/risk notes
+- `TIME_GRID.md` - Now / Next / Later / Parked planning grid
 
 ## Features
 
@@ -21,6 +24,8 @@ The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `l
 - 9 configurable cells per PIN
 - Cell types: Unit, Value, Math, MM:SS, Min, Sec, Timer, Countdown, Income, Budget, LED Pulse, FX Rate
 - Weekly history with 52-week retention
+- Per-PIN numeric change log for recent counter/value changes
+- UNDO control for restoring the latest current-week numeric change
 - Per-PIN labels, descriptions, colors, themes, timer settings, money settings, math settings, LED settings, and currency settings
 - TRACK/HISTORY views
 - Internal v2 `cells` + `cellLayout` adapter for the upcoming modular grid editor
@@ -56,6 +61,7 @@ All user data is stored locally in browser `localStorage`. Per-PIN keys use suff
 Main stored groups:
 
 - weekly values: `trckng_sstm_data_pinX`
+- numeric change log: `trckng_sstm_counter_change_log_pinX`
 - cell labels/types/colors/descriptions
 - duration/timer runtime and settings
 - unit/value/math/money/LED/currency settings
@@ -64,7 +70,7 @@ Main stored groups:
 
 ## Backup
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.32.4 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
+Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.33.0 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
 
 ## Supabase
 
@@ -82,7 +88,12 @@ The public build uses the `/TRCKNG-SSTM/` base path already configured in `manif
 
 ## Development Roadmap
 
-See `C:\Users\gregt\Desktop\strategic_roadmap.md`.
+See:
+
+- `GLOBAL_STRATEGY.md` for the larger modular grid, timeline, privacy, and sequencer direction.
+- `FEATURE_PLANS.md` for scoped feature plans and implementation options.
+- `TIME_GRID.md` for active order and parking lot.
+- `DEVELOPMENT_PLAN.md` for the current implementation roadmap.
 
 Recommended next phase:
 
