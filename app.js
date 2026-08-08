@@ -1322,11 +1322,20 @@
     }
 
     async function manualCloudSync() {
-      await triggerCloudSync('manual sync', {
+      if (cloudConflictPending) {
+        await loadCloudSnapshot();
+        return;
+      }
+
+      const result = await triggerCloudSync('manual sync', {
         manual: true,
         force: true,
         immediateUpload: true
       });
+
+      if (result === 'conflict') {
+        await loadCloudSnapshot();
+      }
     }
 
     function readStoredJson(key, fallback = {}) {
