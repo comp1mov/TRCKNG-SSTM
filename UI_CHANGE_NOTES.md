@@ -13,7 +13,8 @@ Running list for small interface corrections collected during hands-on testing. 
 - `v1.32.4`: corrected the PIN switcher to sit between view tabs and the work surface.
 - `v1.32.4`: returned PIN labels to normal `8px` text.
 - `v1.33.0`: added UNDO beside DECREASE.
-- `v1.33.0`: doubled desktop TRACK cell heights.
+- `v1.33.0`: increased desktop TRACK / LAYOUT / HISTORY tab height.
+- `v1.33.0`: aligned PIN and view bars to the active field width.
 - `v1.33.0`: moved PIN row below the main action row while keeping utility controls under the week header.
 
 ## Incoming
