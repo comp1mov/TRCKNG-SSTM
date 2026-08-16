@@ -44,6 +44,11 @@
         <button class="btn-control" id="btnReset">RESET</button>
         <button class="btn-control" id="btnQuickInfo">?</button>
       </div>
+      <div class="view-tabs" role="tablist" aria-label="View">
+        <button class="view-tab active" id="btnViewTrack" data-view="track" role="tab" aria-selected="true">TRACK</button>
+        <button class="view-tab" id="btnViewLayout" data-view="layout" role="tab" aria-selected="false">LAYOUT</button>
+        <button class="view-tab" id="btnViewHistory" data-view="history" role="tab" aria-selected="false">HISTORY</button>
+      </div>
       <!-- Controls row 2 -->
       <div class="controls-edit">
         <button class="btn-control btn-control-quarter" id="btnDecrease">DECREASE</button>
@@ -57,12 +62,6 @@
         <button class="pin" data-pin="1" id="pin1">PIN 02</button>
         <button class="pin" data-pin="2" id="pin2">PIN 03</button>
       </div>
-    </div>
-
-    <div class="view-tabs" role="tablist" aria-label="View">
-      <button class="view-tab active" id="btnViewTrack" data-view="track" role="tab" aria-selected="true">TRACK</button>
-      <button class="view-tab" id="btnViewLayout" data-view="layout" role="tab" aria-selected="false">LAYOUT</button>
-      <button class="view-tab" id="btnViewHistory" data-view="history" role="tab" aria-selected="false">HISTORY</button>
     </div>
 
     <div class="view-panel" id="trackView">

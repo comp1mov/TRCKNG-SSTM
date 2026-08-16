@@ -27,6 +27,10 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       --cell-line-width: 1px;
       --field-max-width: 620px;
       --field-cell-min: 92px;
+      --week-strip-color: rgba(93, 220, 190, 0.18);
+      --view-tab-active-bg: rgba(38, 63, 112, 0.34);
+      --view-tab-active-text: #9db7e8;
+      --view-tab-hover-bg: rgba(70, 93, 140, 0.16);
     }
     .container {
       width: 100%;
@@ -58,7 +62,9 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       position: relative;
       width: 100%;
       height: 32px;
-      background: var(--app-bg, #000);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.018), transparent 42%, rgba(255,255,255,0.012)),
+        var(--app-bg, #000);
       overflow: hidden;
     }
     
@@ -71,11 +77,11 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     }
     
     .progress-strip-fill.day-fill {
-      background: var(--day-strip-color, rgba(102,170,255,0.3));
+      background: rgba(76, 98, 152, 0.26);
     }
     
     .progress-strip-fill.week-fill {
-      background: var(--week-strip-color, rgba(255,140,66,0.25));
+      background: var(--week-strip-color);
     }
     
     .progress-strip-content {
@@ -280,6 +286,9 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     .btn-control:hover { background: rgba(255,255,255,0.06); opacity: 0.9; }
     .btn-control:active { background: rgba(255,255,255,0.12); }
     .btn-control.active { background: rgba(255,79,106,0.3); color: #ff4f6a; opacity: 1; }
+    .controls .btn-control:not(#btnQuickInfo) {
+      color: color-mix(in srgb, var(--app-text, #ffffff) 56%, var(--app-bg, #000000));
+    }
 
     @media (min-width: 900px) {
       .controls,
@@ -375,13 +384,13 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     }
 
     .view-tab:hover {
-      background: rgba(255,255,255,0.06);
+      background: var(--view-tab-hover-bg);
       opacity: 0.85;
     }
 
     .view-tab.active {
-      background: rgba(53,242,163,0.14);
-      color: #35f2a3;
+      background: var(--view-tab-active-bg);
+      color: var(--view-tab-active-text);
       opacity: 1;
     }
 

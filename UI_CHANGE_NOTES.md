@@ -16,6 +16,10 @@ Running list for small interface corrections collected during hands-on testing. 
 - `v1.33.0`: increased desktop TRACK / LAYOUT / HISTORY tab height.
 - `v1.33.0`: aligned PIN and view bars to the active field width.
 - `v1.33.0`: moved PIN row below the main action row while keeping utility controls under the week header.
+- `v1.33.0`: reordered header controls to utility, view tabs, action row, then PIN row; utility labels are dimmer except `?`.
+- `v1.33.0`: softened day/week progress strip colors to a quieter blue-mint palette.
+- `v1.33.0`: moved active TRACK / LAYOUT / HISTORY styling from green to neutral dark blue.
+- `v1.33.0`: changed the day strip to a 12-step sky-color progression across the day.
 
 ## Incoming
 

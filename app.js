@@ -4352,6 +4352,34 @@ function scheduleMathRefresh() {
       dayStrip.appendChild(sunsetMarker);
     }
 
+    const DAY_SKY_STOPS = [
+      [10, 16, 38, 0.32],
+      [18, 28, 64, 0.34],
+      [36, 43, 92, 0.32],
+      [76, 58, 108, 0.28],
+      [126, 84, 116, 0.26],
+      [164, 126, 118, 0.24],
+      [126, 152, 178, 0.22],
+      [84, 134, 176, 0.22],
+      [64, 112, 166, 0.23],
+      [82, 82, 142, 0.26],
+      [42, 50, 104, 0.3],
+      [16, 22, 58, 0.34]
+    ];
+
+    function getDaySkyColor(progressPercent) {
+      const stops = DAY_SKY_STOPS;
+      const progress = Math.max(0, Math.min(100, Number(progressPercent) || 0));
+      const position = (progress / 100) * stops.length;
+      const index = Math.floor(position) % stops.length;
+      const nextIndex = (index + 1) % stops.length;
+      const ratio = position - Math.floor(position);
+      const current = stops[index];
+      const next = stops[nextIndex];
+      const mixed = current.map((value, channel) => value + (next[channel] - value) * ratio);
+      return `rgba(${Math.round(mixed[0])}, ${Math.round(mixed[1])}, ${Math.round(mixed[2])}, ${mixed[3].toFixed(3)})`;
+    }
+
     function updateHeader() {
       const weekEl = document.getElementById('weekDisplay');
       const dateEl = document.getElementById('dateDisplay');
@@ -4408,24 +4436,12 @@ function scheduleMathRefresh() {
       
       if (dayStripFill) {
         dayStripFill.style.width = `${dayProgress}%`;
-        // Sunrise/sunset colors
-        const hour = now.getHours();
-        let dayColor;
-        if (hour >= 5 && hour < 8) {
-          dayColor = 'rgba(255,170,68,0.4)'; // Dawn orange
-        } else if (hour >= 8 && hour < 17) {
-          dayColor = 'rgba(102,170,255,0.3)'; // Day blue
-        } else if (hour >= 17 && hour < 20) {
-          dayColor = 'rgba(255,119,68,0.4)'; // Dusk orange
-        } else {
-          dayColor = 'rgba(68,102,170,0.3)'; // Night blue
-        }
-        dayStripFill.style.background = dayColor;
+        dayStripFill.style.background = getDaySkyColor(dayProgress);
       }
       
       if (weekStripFill) {
         weekStripFill.style.width = `${weekProgress}%`;
-        weekStripFill.style.background = 'rgba(255,140,66,0.25)';
+        weekStripFill.style.background = 'var(--week-strip-color)';
       }
     }
 
