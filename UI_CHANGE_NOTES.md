@@ -20,6 +20,11 @@ Running list for small interface corrections collected during hands-on testing. 
 - `v1.33.0`: softened day/week progress strip colors to a quieter blue-mint palette.
 - `v1.33.0`: moved active TRACK / LAYOUT / HISTORY styling from green to neutral dark blue.
 - `v1.33.0`: changed the day strip to a 12-step sky-color progression across the day.
+- `v1.33.0`: changed the day strip from one current color to a revealed full-day sky timeline.
+- `v1.33.0`: added subtle white day divider marks to the week progress strip.
+- `v1.33.0`: added duration-min session history and week-strip interval overlays.
+- `v1.33.0`: mirrored duration-min intervals and counter/unit tap markers on both day and week strips.
+- `v1.33.0`: added long-press HISTORY preview for previous-week button values.
 
 ## Incoming
 

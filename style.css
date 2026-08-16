@@ -73,15 +73,58 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       left: 0;
       top: 0;
       height: 100%;
-      transition: width 1s linear;
+      transition: width 1s linear, transform 1s linear;
     }
     
     .progress-strip-fill.day-fill {
       background: rgba(76, 98, 152, 0.26);
+      width: 100%;
+      transform: scaleX(0);
+      transform-origin: left center;
     }
     
     .progress-strip-fill.week-fill {
       background: var(--week-strip-color);
+    }
+
+    .timeline-duration-layer,
+    .timeline-count-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .timeline-duration-layer {
+      z-index: 1;
+    }
+
+    .timeline-count-layer {
+      z-index: 2;
+    }
+
+    .timeline-duration-segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.18), transparent 36%, rgba(255,255,255,0.1)),
+        var(--segment-color, #ff8c42);
+      border-left: 1px solid rgba(255,255,255,0.28);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--segment-color, #ff8c42) 45%, transparent);
+      opacity: 0.62;
+    }
+
+    .timeline-count-marker {
+      position: absolute;
+      top: 5px;
+      bottom: 5px;
+      width: 2px;
+      min-width: 2px;
+      background: var(--marker-color, #ffffff);
+      border-radius: 2px;
+      box-shadow: 0 0 8px color-mix(in srgb, var(--marker-color, #ffffff) 70%, transparent);
+      opacity: 0.78;
+      transform: translateX(-1px);
     }
     
     .progress-strip-content {
@@ -92,6 +135,26 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       align-items: center;
       height: 100%;
       padding: 0 12px;
+    }
+
+    #weekStrip::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background-image:
+        linear-gradient(90deg, transparent calc(14.2857% - 0.5px), rgba(255,255,255,0.34) calc(14.2857% - 0.5px), rgba(255,255,255,0.34) calc(14.2857% + 0.5px), transparent calc(14.2857% + 0.5px)),
+        linear-gradient(90deg, transparent calc(28.5714% - 0.5px), rgba(255,255,255,0.34) calc(28.5714% - 0.5px), rgba(255,255,255,0.34) calc(28.5714% + 0.5px), transparent calc(28.5714% + 0.5px)),
+        linear-gradient(90deg, transparent calc(42.8571% - 0.5px), rgba(255,255,255,0.34) calc(42.8571% - 0.5px), rgba(255,255,255,0.34) calc(42.8571% + 0.5px), transparent calc(42.8571% + 0.5px)),
+        linear-gradient(90deg, transparent calc(57.1429% - 0.5px), rgba(255,255,255,0.34) calc(57.1429% - 0.5px), rgba(255,255,255,0.34) calc(57.1429% + 0.5px), transparent calc(57.1429% + 0.5px)),
+        linear-gradient(90deg, transparent calc(71.4286% - 0.5px), rgba(255,255,255,0.34) calc(71.4286% - 0.5px), rgba(255,255,255,0.34) calc(71.4286% + 0.5px), transparent calc(71.4286% + 0.5px)),
+        linear-gradient(90deg, transparent calc(85.7143% - 0.5px), rgba(255,255,255,0.34) calc(85.7143% - 0.5px), rgba(255,255,255,0.34) calc(85.7143% + 0.5px), transparent calc(85.7143% + 0.5px));
+      opacity: 0.8;
+    }
+
+    #weekStrip .progress-strip-content {
+      z-index: 3;
     }
     
     /* Sunrise/sunset markers */
@@ -391,6 +454,12 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     .view-tab.active {
       background: var(--view-tab-active-bg);
       color: var(--view-tab-active-text);
+      opacity: 1;
+    }
+
+    .view-tab.preview-hold {
+      background: rgba(157, 183, 232, 0.22);
+      color: #d8e4ff;
       opacity: 1;
     }
 
@@ -741,6 +810,7 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       opacity: 0.6;
       margin-left: 0.1em;
     }
+
     .btn-breakdown {
       font-size: 9px;
       opacity: 0.5;
@@ -767,6 +837,14 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     /* Running states base */
     .btn-habit.running {
       position: relative;
+    }
+
+    .btn-habit.prev-week-preview {
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--btn-color, #ffffff) 12%, transparent), transparent 42%),
+        var(--btn-bg, #000);
+      outline: 1px solid color-mix(in srgb, var(--btn-color, #ffffff) 32%, transparent);
+      opacity: 0.82;
     }
 
     /* Duration types - colored border and background pulse */

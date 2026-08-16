@@ -33,6 +33,7 @@
       DURATION: 'trckng_sstm_duration',
       TIMER_SETTINGS: 'trckng_sstm_timer_settings',
       TIMER_STATES: 'trckng_sstm_timer_states',
+      DURATION_SESSIONS: 'trckng_sstm_duration_sessions',
       COUNTER_LAST_UPDATE: 'trckng_sstm_counter_last_update',
       COUNTER_CHANGE_LOG: 'trckng_sstm_counter_change_log',
       MONEY_SETTINGS: 'trckng_sstm_money_settings',
@@ -77,6 +78,7 @@
 
     const WEEKS_TO_KEEP = 52;
     const COUNTER_CHANGE_LOG_LIMIT = 1000;
+    const DURATION_SESSION_LOG_LIMIT = 1000;
     const PIN_COUNT = 3;
     const GRID_COLUMNS = 3;
     const LAYOUT_SIZE_PRESETS = {
@@ -95,6 +97,7 @@
       { key: STORAGE_KEYS.DURATION, prop: 'durationStates' },
       { key: STORAGE_KEYS.TIMER_SETTINGS, prop: 'timerSettings' },
       { key: STORAGE_KEYS.TIMER_STATES, prop: 'timerStates' },
+      { key: STORAGE_KEYS.DURATION_SESSIONS, prop: 'durationSessions' },
       { key: STORAGE_KEYS.COUNTER_LAST_UPDATE, prop: 'counterLastUpdate' },
       { key: STORAGE_KEYS.COUNTER_CHANGE_LOG, prop: 'counterChangeLog' },
       { key: STORAGE_KEYS.MONEY_SETTINGS, prop: 'moneySettings' },
@@ -135,6 +138,10 @@
     let currentWeekKey = getWeekKey();
     let decreaseMode = false;
     let currentView = VIEW_MODES.TRACK;
+    let previousWeekPreview = false;
+    let previousWeekPreviewView = null;
+    let previousWeekPreviewTimer = null;
+    let suppressNextHistoryClick = false;
 
     let weekData = {};
     let habitLabels = {};
@@ -153,6 +160,7 @@
     let pins = [];
 
     let timerStates = {}; // Runtime state (iterations, running status)
+    let durationSessions = []; // Completed min-duration intervals for week timeline overlays
     let moneySettings = {}; // Money configs per habit
     let pinNames = {}; // Custom pin names
     let pinColors = {}; // Custom fill colors for PIN buttons
@@ -575,6 +583,66 @@
       const key = `${STORAGE_KEYS.TIMER_STATES}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(timerStates));
       markCloudDirty('timer states');
+    }
+
+    function normalizeDurationSessions(rawSessions) {
+      if (!Array.isArray(rawSessions)) return [];
+
+      return rawSessions
+        .filter(entry => entry && typeof entry === 'object' && entry.habit && entry.startTime && entry.endTime)
+        .map(entry => {
+          const startTime = Number(entry.startTime) || Date.now();
+          const endTime = Math.max(startTime, Number(entry.endTime) || startTime);
+          return {
+            id: String(entry.id || `${startTime}-${entry.habit}`),
+            habit: String(entry.habit),
+            label: String(entry.label || ''),
+            color: String(entry.color || ''),
+            startTime,
+            endTime,
+            week: String(entry.week || getWeekKey(new Date(startTime))),
+            source: String(entry.source || 'duration_min')
+          };
+        })
+        .sort((a, b) => a.startTime - b.startTime)
+        .slice(-DURATION_SESSION_LOG_LIMIT);
+    }
+
+    function loadDurationSessions() {
+      durationSessions = [];
+      const key = `${STORAGE_KEYS.DURATION_SESSIONS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try { durationSessions = normalizeDurationSessions(JSON.parse(stored)); } catch(e) {}
+      }
+    }
+
+    function saveDurationSessions() {
+      durationSessions = normalizeDurationSessions(durationSessions);
+      const key = `${STORAGE_KEYS.DURATION_SESSIONS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(durationSessions));
+      markCloudDirty('duration sessions');
+    }
+
+    function recordDurationSession(habit, startTime, endTime, source = 'duration_min') {
+      const startedAt = Number(startTime) || 0;
+      const endedAt = Number(endTime) || Date.now();
+      if (!startedAt || endedAt <= startedAt) return;
+
+      durationSessions.push({
+        id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${habit}`,
+        habit,
+        label: habitLabels[habit] || '',
+        color: habitColors[habit] || '#9db7e8',
+        startTime: startedAt,
+        endTime: endedAt,
+        week: getWeekKey(new Date(startedAt)),
+        source
+      });
+
+      if (durationSessions.length > DURATION_SESSION_LOG_LIMIT) {
+        durationSessions = durationSessions.slice(-DURATION_SESSION_LOG_LIMIT);
+      }
     }
 
     function loadMoneySettings() {
@@ -1411,6 +1479,7 @@
         'durationStates',
         'timerSettings',
         'timerStates',
+        'durationSessions',
         'counterLastUpdate',
         'counterChangeLog',
         'moneySettings',
@@ -1439,6 +1508,7 @@
       saveDurationStates();
       saveTimerSettings();
       saveTimerStates();
+      saveDurationSessions();
       saveMoneySettings();
       saveUnitSettings();
       saveValueFormats();
@@ -1466,6 +1536,7 @@
       loadDurationStates();
       loadTimerSettings();
       loadTimerStates();
+      loadDurationSessions();
       loadMoneySettings();
       loadUnitSettings();
       loadValueFormats();
@@ -1502,6 +1573,7 @@
         durationStates,
         timerSettings,
         timerStates,
+        durationSessions,
         counterLastUpdate,
         counterChangeLog,
         moneySettings,
@@ -1526,6 +1598,7 @@
       if (prop === 'cellLayout') return normalizeCellLayout({});
       if (prop === 'themeSettings') return defaultThemeSettings();
       if (prop === 'counterChangeLog') return [];
+      if (prop === 'durationSessions') return [];
       return {};
     }
 
@@ -1550,6 +1623,9 @@
         }
         if (field.prop === 'counterChangeLog') {
           snapshot[field.prop] = normalizeCounterChangeLog(snapshot[field.prop]);
+        }
+        if (field.prop === 'durationSessions') {
+          snapshot[field.prop] = normalizeDurationSessions(snapshot[field.prop]);
         }
       });
       return snapshot;
@@ -1594,6 +1670,7 @@
 
         if (imported.durationStates) durationStates = { ...durationStates, ...imported.durationStates };
         if (imported.timerSettings) timerSettings = { ...timerSettings, ...imported.timerSettings };
+        if (imported.durationSessions) durationSessions = normalizeDurationSessions(imported.durationSessions);
         if (imported.moneySettings) moneySettings = { ...moneySettings, ...imported.moneySettings };
 
         if (imported.unitSettings) unitSettings = imported.unitSettings;
@@ -1639,6 +1716,7 @@
               if (field.prop === 'cellFlags') value = normalizeCellFlags(value);
               if (field.prop === 'cellLayout') value = normalizeCellLayout(value);
               if (field.prop === 'counterChangeLog') value = normalizeCounterChangeLog(value);
+              if (field.prop === 'durationSessions') value = normalizeDurationSessions(value);
               writeStoredJson(`${field.key}_pin${pin}`, value);
             }
           });
@@ -2583,12 +2661,90 @@ function applyTheme() {
         tab.classList.toggle('active', isActive);
         tab.setAttribute('aria-selected', String(isActive));
       });
+      updatePreviousWeekPreviewChrome();
 
       updateHistoryChrome();
       if (currentView === VIEW_MODES.LAYOUT) renderLayoutEditor();
       if (currentView === VIEW_MODES.HISTORY) updateStats();
       if (currentView === VIEW_MODES.TRACK) requestAnimationFrame(updateCellDiagonalAngle);
       saveViewMode();
+    }
+
+    function updatePreviousWeekPreviewChrome() {
+      const historyBtn = document.getElementById('btnViewHistory');
+      if (historyBtn) historyBtn.classList.toggle('preview-hold', previousWeekPreview);
+    }
+
+    function setPreviousWeekPreview(active) {
+      const next = Boolean(active);
+      if (previousWeekPreview === next) return;
+
+      if (next) {
+        previousWeekPreviewView = currentView;
+        previousWeekPreview = true;
+        if (currentView !== VIEW_MODES.TRACK) {
+          setView(VIEW_MODES.TRACK);
+        } else {
+          renderHabits();
+          updatePreviousWeekPreviewChrome();
+        }
+        return;
+      }
+
+      previousWeekPreview = false;
+      renderHabits();
+      updatePreviousWeekPreviewChrome();
+
+      if (previousWeekPreviewView && previousWeekPreviewView !== currentView) {
+        const returnView = previousWeekPreviewView;
+        previousWeekPreviewView = null;
+        setView(returnView);
+      } else {
+        previousWeekPreviewView = null;
+      }
+    }
+
+    function setupViewTabHandlers() {
+      document.querySelectorAll('.view-tab').forEach(btn => {
+        if (btn.dataset.view !== VIEW_MODES.HISTORY) {
+          btn.addEventListener('click', () => setView(btn.dataset.view));
+          return;
+        }
+
+        const clearHoldTimer = () => {
+          if (previousWeekPreviewTimer) {
+            clearTimeout(previousWeekPreviewTimer);
+            previousWeekPreviewTimer = null;
+          }
+        };
+
+        btn.addEventListener('pointerdown', event => {
+          if (event.pointerType === 'mouse' && event.button !== 0) return;
+          clearHoldTimer();
+          suppressNextHistoryClick = false;
+          previousWeekPreviewTimer = setTimeout(() => {
+            suppressNextHistoryClick = true;
+            setPreviousWeekPreview(true);
+          }, 450);
+        });
+
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach(eventName => {
+          btn.addEventListener(eventName, () => {
+            clearHoldTimer();
+            if (previousWeekPreview) setPreviousWeekPreview(false);
+          });
+        });
+
+        btn.addEventListener('click', event => {
+          clearHoldTimer();
+          if (suppressNextHistoryClick) {
+            event.preventDefault();
+            suppressNextHistoryClick = false;
+            return;
+          }
+          setView(btn.dataset.view);
+        });
+      });
     }
 
 
@@ -2602,6 +2758,17 @@ function applyTheme() {
     // ===== FORMATTING =====
     function formatValueWithSuffix(value, suffix) {
       return `${value}<span class="btn-value-suffix">${suffix}</span>`;
+    }
+
+    function getPreviousWeekKey(weekKey = currentWeekKey) {
+      const range = getWeekDateRange(weekKey);
+      const previous = new Date(range.start);
+      previous.setDate(previous.getDate() - 7);
+      return getWeekKey(previous);
+    }
+
+    function getDisplayWeekKey() {
+      return previousWeekPreview ? getPreviousWeekKey() : currentWeekKey;
     }
 
     function formatDurationSec(totalSeconds) {
@@ -2791,7 +2958,7 @@ function applyTheme() {
 
       // Update display depending on total flag
       const el = document.getElementById(`value-${habit}`);
-      if (el) el.textContent = String(getUnitDisplayValue(habit));
+      if (el) el.innerHTML = getUnitDisplayMarkup(habit);
       scheduleMathRefresh();
       animateButton(habit);
     }
@@ -2839,8 +3006,17 @@ function applyTheme() {
         });
         return sum;
       }
-      const weekObj = weekData[currentWeekKey];
+      const weekObj = weekData[getDisplayWeekKey()];
       return (weekObj && typeof weekObj === 'object') ? Number(weekObj[habit] || 0) : 0;
+    }
+
+    function getUnitWeekValue(habit, weekKey) {
+      const weekObj = weekData[weekKey];
+      return (weekObj && typeof weekObj === 'object') ? Number(weekObj[habit] || 0) : 0;
+    }
+
+    function getUnitDisplayMarkup(habit) {
+      return String(getUnitDisplayValue(habit));
     }
 
     function formatValueByFormat(value, fmt) {
@@ -3259,7 +3435,8 @@ function handleDurationClick(habit, type) {
         };
         startGlobalInterval();
       } else {
-        const elapsed = Math.max(0, Math.floor((Date.now() - state.startTime) / 1000));
+        const stoppedAt = Date.now();
+        const elapsed = Math.max(0, Math.floor((stoppedAt - state.startTime) / 1000));
         const newAccumulated = (state.accumulated || 0) + elapsed;
 
         const nextState = {
@@ -3278,6 +3455,8 @@ function handleDurationClick(habit, type) {
         ensureWeekExists();
         if (type === CELL_TYPES.DURATION_MIN) {
           weekData[currentWeekKey][habit] = Math.floor(newAccumulated / 60);
+          recordDurationSession(habit, state.startTime, stoppedAt);
+          saveDurationSessions();
         } else {
           weekData[currentWeekKey][habit] = newAccumulated;
         }
@@ -3785,6 +3964,7 @@ function scheduleMathRefresh() {
 
       // Ensure Math cells stay in sync with changing sources (timers/durations/countdown)
       scheduleMathRefresh();
+      renderTimelineOverlays();
     }
 
     // ===== RENDER =====
@@ -3897,6 +4077,7 @@ function scheduleMathRefresh() {
         btn.dataset.cellId = habit;
         btn.dataset.type = type.toLowerCase();
         applyCellLayoutToElement(btn, cell.layout);
+        if (previousWeekPreview) btn.classList.add('prev-week-preview');
 
         if (!isActive) {
           btn.classList.add('inactive', 'empty-field-cell');
@@ -3915,9 +4096,11 @@ function scheduleMathRefresh() {
         btn.style.setProperty('--btn-color', btnColor);
 
         if (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) {
-          const value = getUnitDisplayValue(habit);
+          const value = getUnitDisplayMarkup(habit);
           const description = habitDescriptions[habit] || '';
-          const lastUpdateLabel = getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '';
+          const lastUpdateLabel = previousWeekPreview
+            ? `previous week ${getPreviousWeekKey()}`
+            : (getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '');
           const breakdown = lastUpdateLabel || description;
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
@@ -4137,8 +4320,11 @@ function scheduleMathRefresh() {
           });
         } else {
           // Duration types (DURATION_SEC, DURATION_MIN, DURATION_SEC_COUNT)
-          const isRunning = state.isRunning;
-          const accumulated = state.accumulated || 0;
+          const isRunning = !previousWeekPreview && state.isRunning;
+          const previewValue = previousWeekPreview ? getUnitWeekValue(habit, getPreviousWeekKey()) : null;
+          const accumulated = previousWeekPreview
+            ? (type === CELL_TYPES.DURATION_MIN ? previewValue * 60 : previewValue)
+            : (state.accumulated || 0);
           let total = accumulated;
           let runtimeSeconds = 0;
 
@@ -4152,7 +4338,9 @@ function scheduleMathRefresh() {
 
           if (type === CELL_TYPES.DURATION_SEC) {
             // Show current session length as main value
-            const sessionSeconds = (isRunning && state.startTime)
+            const sessionSeconds = previousWeekPreview
+              ? total
+              : (isRunning && state.startTime)
               ? runtimeSeconds
               : (state.lastSession || 0);
 
@@ -4173,7 +4361,7 @@ function scheduleMathRefresh() {
             breakdown = fmt.breakdown;
           }
 
-          const description = habitDescriptions[habit] || breakdown;
+          const description = previousWeekPreview ? `previous week ${getPreviousWeekKey()}` : (habitDescriptions[habit] || breakdown);
 
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
@@ -4217,8 +4405,7 @@ function scheduleMathRefresh() {
 
       const valueEl = document.getElementById(`value-${habit}`);
       if (valueEl) {
-        const value = getUnitDisplayValue(habit);
-        valueEl.textContent = value;
+        valueEl.innerHTML = getUnitDisplayMarkup(habit);
       }
 
       const breakdownEl = document.getElementById(`breakdown-${habit}`);
@@ -4367,17 +4554,142 @@ function scheduleMathRefresh() {
       [16, 22, 58, 0.34]
     ];
 
-    function getDaySkyColor(progressPercent) {
-      const stops = DAY_SKY_STOPS;
-      const progress = Math.max(0, Math.min(100, Number(progressPercent) || 0));
-      const position = (progress / 100) * stops.length;
-      const index = Math.floor(position) % stops.length;
-      const nextIndex = (index + 1) % stops.length;
-      const ratio = position - Math.floor(position);
-      const current = stops[index];
-      const next = stops[nextIndex];
-      const mixed = current.map((value, channel) => value + (next[channel] - value) * ratio);
-      return `rgba(${Math.round(mixed[0])}, ${Math.round(mixed[1])}, ${Math.round(mixed[2])}, ${mixed[3].toFixed(3)})`;
+    function formatSkyStop(stop) {
+      return `rgba(${stop[0]}, ${stop[1]}, ${stop[2]}, ${stop[3]})`;
+    }
+
+    function getDaySkyGradient() {
+      const maxIndex = DAY_SKY_STOPS.length - 1;
+      const stops = DAY_SKY_STOPS.map((stop, index) => {
+        const position = Math.round((index / maxIndex) * 100);
+        return `${formatSkyStop(stop)} ${position}%`;
+      });
+      return `linear-gradient(90deg, ${stops.join(', ')})`;
+    }
+
+    function getWeekBoundsMs(weekKey) {
+      const range = getWeekDateRange(weekKey);
+      const start = new Date(range.start);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 7);
+      return { startMs: start.getTime(), endMs: end.getTime() };
+    }
+
+    function getDayBoundsMs(date = new Date()) {
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 1);
+      return { startMs: start.getTime(), endMs: end.getTime() };
+    }
+
+    function getDurationSegmentsForBounds(bounds) {
+      const { startMs, endMs } = bounds;
+      const weekLength = endMs - startMs;
+      const completed = normalizeDurationSessions(durationSessions);
+      const running = HABITS
+        .filter(habit => habitTypes[habit] === CELL_TYPES.DURATION_MIN && durationStates[habit]?.isRunning)
+        .map(habit => ({
+          id: `running-${habit}`,
+          habit,
+          label: habitLabels[habit] || '',
+          color: habitColors[habit] || '#ff8c42',
+          startTime: Number(durationStates[habit].startTime) || Date.now(),
+          endTime: Date.now(),
+          source: 'duration_min_running'
+        }));
+
+      return completed.concat(running)
+        .map(session => {
+          const startTime = Math.max(Number(session.startTime) || 0, startMs);
+          const endTime = Math.min(Number(session.endTime) || 0, endMs);
+          if (endTime <= startTime) return null;
+          return {
+            ...session,
+            left: ((startTime - startMs) / weekLength) * 100,
+            width: Math.max(((endTime - startTime) / weekLength) * 100, 0.08)
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function getCounterEventsForBounds(bounds) {
+      const { startMs, endMs } = bounds;
+      const length = endMs - startMs;
+      return normalizeCounterChangeLog(counterChangeLog)
+        .filter(entry => {
+          const type = habitTypes[entry.habit];
+          return !entry.undoneAt &&
+            (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) &&
+            entry.at >= startMs &&
+            entry.at < endMs;
+        })
+        .map(entry => ({
+          ...entry,
+          left: ((entry.at - startMs) / length) * 100,
+          color: habitColors[entry.habit] || '#ffffff',
+          label: habitLabels[entry.habit] || entry.habit
+        }));
+    }
+
+    function renderTimelineDurationSegments(stripId, layerId, bounds) {
+      const strip = document.getElementById(stripId);
+      if (!strip) return;
+
+      let layer = document.getElementById(layerId);
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.id = layerId;
+        layer.className = 'timeline-duration-layer';
+        strip.appendChild(layer);
+      }
+
+      const segments = getDurationSegmentsForBounds(bounds);
+      layer.innerHTML = '';
+      segments.forEach(segment => {
+        const el = document.createElement('div');
+        el.className = 'timeline-duration-segment';
+        el.style.left = `${Math.max(0, Math.min(100, segment.left))}%`;
+        el.style.width = `${Math.max(0.08, Math.min(100, segment.width))}%`;
+        el.style.setProperty('--segment-color', segment.color || '#ff8c42');
+        el.title = segment.label || segment.habit;
+        layer.appendChild(el);
+      });
+    }
+
+    function renderTimelineCounterEvents(stripId, layerId, bounds) {
+      const strip = document.getElementById(stripId);
+      if (!strip) return;
+
+      let layer = document.getElementById(layerId);
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.id = layerId;
+        layer.className = 'timeline-count-layer';
+        strip.appendChild(layer);
+      }
+
+      const events = getCounterEventsForBounds(bounds);
+      layer.innerHTML = '';
+      events.forEach(event => {
+        const el = document.createElement('div');
+        el.className = 'timeline-count-marker';
+        el.style.left = `${Math.max(0, Math.min(100, event.left))}%`;
+        el.style.setProperty('--marker-color', event.color || '#ffffff');
+        el.title = `${event.label}: ${event.previousValue} -> ${event.nextValue}`;
+        layer.appendChild(el);
+      });
+    }
+
+    function renderTimelineOverlays() {
+      const dayBounds = getDayBoundsMs();
+      const weekBounds = getWeekBoundsMs(currentWeekKey);
+
+      renderTimelineDurationSegments('dayStrip', 'dayDurationLayer', dayBounds);
+      renderTimelineCounterEvents('dayStrip', 'dayCountLayer', dayBounds);
+      renderTimelineDurationSegments('weekStrip', 'weekDurationLayer', weekBounds);
+      renderTimelineCounterEvents('weekStrip', 'weekCountLayer', weekBounds);
     }
 
     function updateHeader() {
@@ -4435,14 +4747,17 @@ function scheduleMathRefresh() {
       const weekStripFill = document.getElementById('weekStripFill');
       
       if (dayStripFill) {
-        dayStripFill.style.width = `${dayProgress}%`;
-        dayStripFill.style.background = getDaySkyColor(dayProgress);
+        dayStripFill.style.width = '100%';
+        dayStripFill.style.transform = `scaleX(${dayProgress / 100})`;
+        dayStripFill.style.background = getDaySkyGradient();
       }
       
       if (weekStripFill) {
         weekStripFill.style.width = `${weekProgress}%`;
         weekStripFill.style.background = 'var(--week-strip-color)';
       }
+
+      renderTimelineOverlays();
     }
 
     // ===== STATS =====
@@ -4669,6 +4984,7 @@ function scheduleMathRefresh() {
 
         durationStates,
         timerSettings,
+        durationSessions: normalizeDurationSessions(durationSessions),
         moneySettings,
 
         unitSettings,
@@ -4757,6 +5073,7 @@ function importData() {
         STORAGE_KEYS.DURATION,
         STORAGE_KEYS.TIMER_SETTINGS,
         STORAGE_KEYS.TIMER_STATES,
+        STORAGE_KEYS.DURATION_SESSIONS,
         STORAGE_KEYS.COUNTER_LAST_UPDATE,
         STORAGE_KEYS.COUNTER_CHANGE_LOG,
         STORAGE_KEYS.MONEY_SETTINGS,
@@ -4806,6 +5123,7 @@ function importData() {
       loadDurationStates();
       loadTimerSettings();
       loadTimerStates();
+      loadDurationSessions();
       loadMoneySettings();
       loadUnitSettings();
       loadValueFormats();
@@ -4857,6 +5175,7 @@ function importData() {
       loadDurationStates();
       loadTimerSettings();
       loadTimerStates();
+      loadDurationSessions();
       loadMoneySettings();
       loadUnitSettings();
       loadValueFormats();
@@ -5422,6 +5741,7 @@ function openInfoModal() {
         loadDurationStates();
         loadTimerSettings();
         loadTimerStates();
+        loadDurationSessions();
         loadMoneySettings();
         loadUnitSettings();
         loadValueFormats();
@@ -5476,9 +5796,7 @@ function openInfoModal() {
         btn.addEventListener('click', () => switchPin(parseInt(btn.dataset.pin)));
       });
 
-      document.querySelectorAll('.view-tab').forEach(btn => {
-        btn.addEventListener('click', () => setView(btn.dataset.view));
-      });
+      setupViewTabHandlers();
 
       document.getElementById('btnDecrease').addEventListener('click', toggleDecrease);
       document.getElementById('btnUndo').addEventListener('click', undoLastCounterChange);
