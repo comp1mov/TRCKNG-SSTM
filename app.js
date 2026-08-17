@@ -15,6 +15,7 @@
       MATH: 'math',
       DURATION_SEC: 'duration_sec',
       DURATION_MIN: 'duration_min',
+      SLEEP: 'sleep',
       DURATION_SEC_COUNT: 'duration_sec_count',
       TIMER: 'timer',
       COUNTDOWN: 'countdown',
@@ -222,6 +223,7 @@
       
       if (type === CELL_TYPES.DURATION_SEC) return '#35f2a3';
       if (type === CELL_TYPES.DURATION_MIN) return '#ff8c42';
+      if (type === CELL_TYPES.SLEEP) return '#8fb7ff';
       if (type === CELL_TYPES.DURATION_SEC_COUNT) return '#6b9dff';
       
       const color = colorPalette[paletteIndex % colorPalette.length];
@@ -2826,6 +2828,10 @@ function applyTheme() {
       return { main, breakdown };
     }
 
+    function formatSleepStoredMinutes(totalMinutes) {
+      return formatDurationSec(Math.max(0, Number(totalMinutes) || 0) * 60).main;
+    }
+
     function formatCounterLastUpdate(habit) {
       const ts = counterLastUpdate[habit];
       if (!ts) return '';
@@ -3121,7 +3127,7 @@ function applyTheme() {
         return (weekObj && typeof weekObj === 'object') ? Number(weekObj[habit] || 0) : 0;
       }
       if (t === CELL_TYPES.DURATION_SEC || t === CELL_TYPES.DURATION_SEC_COUNT) return computeDurationTotalSeconds(habit);
-      if (t === CELL_TYPES.DURATION_MIN) return computeDurationTotalSeconds(habit); // unified: seconds
+      if (t === CELL_TYPES.DURATION_MIN || t === CELL_TYPES.SLEEP) return computeDurationTotalSeconds(habit); // unified: seconds
       if (t === CELL_TYPES.TIMER) return computeTimerElapsedSeconds(habit); // unified: seconds elapsed while running
       if (t === CELL_TYPES.COUNTDOWN) return computeCountdownSecondsLeft(habit); // unified: seconds left
       if (t === CELL_TYPES.MATH) return computeMathValue(habit, visited);
@@ -3233,6 +3239,11 @@ function applyTheme() {
 
       // Time types (Math uses unified seconds)
       if (refType === CELL_TYPES.DURATION_SEC || refType === CELL_TYPES.DURATION_SEC_COUNT) {
+        const secs = Math.max(0, Math.floor(value));
+        return formatDurationSec(secs).main;
+      }
+
+      if (refType === CELL_TYPES.SLEEP) {
         const secs = Math.max(0, Math.floor(value));
         return formatDurationSec(secs).main;
       }
@@ -3465,17 +3476,17 @@ function handleDurationClick(habit, type) {
           accumulated: newAccumulated
         };
 
-        // For second-based duration, remember the last session length
-        if (type === CELL_TYPES.DURATION_SEC) {
+        // For session-focused durations, remember the last session length
+        if (type === CELL_TYPES.DURATION_SEC || type === CELL_TYPES.SLEEP) {
           nextState.lastSession = elapsed;
         }
 
         durationStates[habit] = nextState;
 
         ensureWeekExists();
-        if (type === CELL_TYPES.DURATION_MIN) {
+        if (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP) {
           weekData[currentWeekKey][habit] = Math.floor(newAccumulated / 60);
-          recordDurationSession(habit, state.startTime, stoppedAt);
+          recordDurationSession(habit, state.startTime, stoppedAt, type === CELL_TYPES.SLEEP ? 'sleep' : 'duration_min');
           saveDurationSessions();
         } else {
           weekData[currentWeekKey][habit] = newAccumulated;
@@ -3850,6 +3861,11 @@ function scheduleMathRefresh() {
             const fmt = formatDurationMin(totalMin, total);
             if (valueEl) valueEl.innerHTML = formatValueWithSuffix(fmt.main, 'm');
             if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
+          } else if (type === CELL_TYPES.SLEEP) {
+            const fmtSession = formatDurationSec(elapsed);
+            const fmtTotal = formatDurationSec(total);
+            if (valueEl) valueEl.textContent = fmtSession.main;
+            if (breakdownEl) breakdownEl.textContent = description || fmtTotal.breakdown;
           } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
             const fmt = formatDurationSec(total);
             if (valueEl) valueEl.innerHTML = formatValueWithSuffix(total, 's');
@@ -4111,6 +4127,7 @@ function scheduleMathRefresh() {
         if (!btnColor || btnColor === '#ffffff') {
           if (type === CELL_TYPES.DURATION_SEC) btnColor = '#35f2a3';
           else if (type === CELL_TYPES.DURATION_MIN) btnColor = '#ff8c42';
+          else if (type === CELL_TYPES.SLEEP) btnColor = '#8fb7ff';
           else if (type === CELL_TYPES.DURATION_SEC_COUNT) btnColor = '#6b9dff';
         }
         btn.style.setProperty('--btn-color', btnColor);
@@ -4343,7 +4360,7 @@ function scheduleMathRefresh() {
           const isRunning = !previousWeekPreview && state.isRunning;
           const previewValue = previousWeekPreview ? getUnitWeekValue(habit, getDisplayWeekKey()) : null;
           const accumulated = previousWeekPreview
-            ? (type === CELL_TYPES.DURATION_MIN ? previewValue * 60 : previewValue)
+            ? (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP ? previewValue * 60 : previewValue)
             : (state.accumulated || 0);
           let total = accumulated;
           let runtimeSeconds = 0;
@@ -4375,6 +4392,14 @@ function scheduleMathRefresh() {
             const fmt = formatDurationMin(totalMin, total);
             displayValue = formatValueWithSuffix(fmt.main, 'm');
             breakdown = fmt.breakdown;
+          } else if (type === CELL_TYPES.SLEEP) {
+            const sessionSeconds = (isRunning && state.startTime)
+              ? runtimeSeconds
+              : (state.lastSession || 0);
+            const fmtSession = formatDurationSec(sessionSeconds);
+            const fmtTotal = formatDurationSec(total);
+            displayValue = fmtSession.main;
+            breakdown = fmtTotal.breakdown;
           } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
             const fmt = formatDurationSec(total);
             displayValue = formatValueWithSuffix(total, 's');
@@ -4609,7 +4634,10 @@ function scheduleMathRefresh() {
       const weekLength = endMs - startMs;
       const completed = normalizeDurationSessions(durationSessions);
       const running = HABITS
-        .filter(habit => habitTypes[habit] === CELL_TYPES.DURATION_MIN && durationStates[habit]?.isRunning)
+        .filter(habit => {
+          const type = habitTypes[habit];
+          return (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP) && durationStates[habit]?.isRunning;
+        })
         .map(habit => ({
           id: `running-${habit}`,
           habit,
@@ -4617,7 +4645,7 @@ function scheduleMathRefresh() {
           color: habitColors[habit] || '#ff8c42',
           startTime: Number(durationStates[habit].startTime) || Date.now(),
           endTime: Date.now(),
-          source: 'duration_min_running'
+          source: habitTypes[habit] === CELL_TYPES.SLEEP ? 'sleep_running' : 'duration_min_running'
         }));
 
       return completed.concat(running)
@@ -4822,6 +4850,8 @@ function scheduleMathRefresh() {
             display = `${m}:${String(s).padStart(2, '0')}`;
           } else if (type === CELL_TYPES.DURATION_MIN) {
             display = `${value}m`;
+          } else if (type === CELL_TYPES.SLEEP) {
+            display = formatSleepStoredMinutes(value);
           } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
             display = `${value}s`;
           }
@@ -4854,6 +4884,8 @@ function scheduleMathRefresh() {
             display = `${m}:${String(s).padStart(2, '0')}`;
           } else if (type === CELL_TYPES.DURATION_MIN) {
             display = `${total}m`;
+          } else if (type === CELL_TYPES.SLEEP) {
+            display = formatSleepStoredMinutes(total);
           } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
             display = `${total}s`;
           } else {
@@ -4949,6 +4981,8 @@ function scheduleMathRefresh() {
           display = `${m}:${String(s).padStart(2, '0')}`;
         } else if (type === CELL_TYPES.DURATION_MIN) {
           display = `${value}m`;
+        } else if (type === CELL_TYPES.SLEEP) {
+          display = formatSleepStoredMinutes(value);
         }
         text += `${label}: ${display}\n`;
       });
@@ -4975,6 +5009,8 @@ function scheduleMathRefresh() {
           display = `${m}:${String(s).padStart(2, '0')}`;
         } else if (type === CELL_TYPES.DURATION_MIN) {
           display = `${value}m`;
+        } else if (type === CELL_TYPES.SLEEP) {
+          display = formatSleepStoredMinutes(value);
         }
         text += `${label}: ${display}\n`;
       });
@@ -5208,6 +5244,7 @@ function importData() {
       loadThemeSettings();
       applyTheme();
       loadCounterLastUpdate();
+      loadCounterChangeLog();
       loadPinNames();
       loadPinColors();
       syncPinsFromState();
@@ -5467,11 +5504,13 @@ function saveCellEdit() {
       const oldIsDuration =
         oldType === CELL_TYPES.DURATION_SEC ||
         oldType === CELL_TYPES.DURATION_MIN ||
+        oldType === CELL_TYPES.SLEEP ||
         oldType === CELL_TYPES.DURATION_SEC_COUNT;
 
       const newIsDuration =
         normalizedType === CELL_TYPES.DURATION_SEC ||
         normalizedType === CELL_TYPES.DURATION_MIN ||
+        normalizedType === CELL_TYPES.SLEEP ||
         normalizedType === CELL_TYPES.DURATION_SEC_COUNT;
 
       const oldIsTimer =
@@ -5492,10 +5531,10 @@ function saveCellEdit() {
             if (weekData[week] && typeof weekData[week] === 'object') {
               const oldValue = weekData[week][editingHabit] || 0;
               let seconds = oldValue;
-              if (oldType === CELL_TYPES.DURATION_MIN) {
+              if (oldType === CELL_TYPES.DURATION_MIN || oldType === CELL_TYPES.SLEEP) {
                 seconds = oldValue * 60;
               }
-              if (normalizedType === CELL_TYPES.DURATION_MIN) {
+              if (normalizedType === CELL_TYPES.DURATION_MIN || normalizedType === CELL_TYPES.SLEEP) {
                 weekData[week][editingHabit] = Math.floor(seconds / 60);
               } else {
                 weekData[week][editingHabit] = seconds;
@@ -5786,7 +5825,9 @@ function openInfoModal() {
       const lastWeekKey = localStorage.getItem('trckng_last_week_key');
       if (lastWeekKey && lastWeekKey !== currentWeekKey) {
         console.log('New week detected! Resetting duration states.');
-        durationStates = {};
+        Object.keys(durationStates).forEach(habit => {
+          if (habitTypes[habit] !== CELL_TYPES.SLEEP) delete durationStates[habit];
+        });
         saveDurationStates();
       }
       localStorage.setItem('trckng_last_week_key', currentWeekKey);

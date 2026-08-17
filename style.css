@@ -847,6 +847,7 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     /* Duration types - colored border and background pulse */
     .btn-habit[data-type="duration_sec"].running,
     .btn-habit[data-type="duration_min"].running,
+    .btn-habit[data-type="sleep"].running,
     .btn-habit[data-type="duration_sec_count"].running {
       border: 3px solid rgba(255, 255, 255, 0.1);
       background: color-mix(in srgb, var(--btn-color, #35f2a3) 15%, transparent);
@@ -937,6 +938,7 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     /* Value color for active cells */
     .btn-habit[data-type="duration_sec"].running .btn-value,
     .btn-habit[data-type="duration_min"].running .btn-value,
+    .btn-habit[data-type="sleep"].running .btn-value,
     .btn-habit[data-type="duration_sec_count"].running .btn-value,
     .btn-habit[data-type="timer"].running .btn-value {
       color: var(--btn-color, #35f2a3);

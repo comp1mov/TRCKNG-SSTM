@@ -26,6 +26,9 @@ Running list for small interface corrections collected during hands-on testing. 
 - `v1.33.0`: mirrored duration-min intervals and counter/unit tap markers on both day and week strips.
 - `v1.33.0`: added long-press HISTORY preview for previous-week button values.
 - `v1.33.0`: changed previous-week preview to use the latest earlier week with data.
+- `v1.33.0`: fixed count/unit strip markers reusing the previous pin's event history after switching pins.
+- `v1.33.0`: added a Sleep cell type for sleep interval tracking on the day/week strips.
+- `v1.33.0`: changed Sleep display from minutes to duration time.
 
 ## Incoming
 
