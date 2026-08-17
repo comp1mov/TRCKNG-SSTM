@@ -107,23 +107,20 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       top: 0;
       bottom: 0;
       background:
-        linear-gradient(90deg, rgba(255,255,255,0.18), transparent 36%, rgba(255,255,255,0.1)),
-        var(--segment-color, #ff8c42);
-      border-left: 1px solid rgba(255,255,255,0.28);
-      box-shadow: 0 0 12px color-mix(in srgb, var(--segment-color, #ff8c42) 45%, transparent);
-      opacity: 0.62;
+        linear-gradient(90deg, rgba(255,255,255,0.055), transparent 44%),
+        color-mix(in srgb, var(--segment-color, #ff8c42) 42%, var(--app-bg, #000000));
+      border-left: 1px solid rgba(255,255,255,0.12);
+      opacity: 0.46;
     }
 
     .timeline-count-marker {
       position: absolute;
-      top: 5px;
-      bottom: 5px;
+      top: 0;
+      bottom: 0;
       width: 2px;
       min-width: 2px;
-      background: var(--marker-color, #ffffff);
-      border-radius: 2px;
-      box-shadow: 0 0 8px color-mix(in srgb, var(--marker-color, #ffffff) 70%, transparent);
-      opacity: 0.78;
+      background: color-mix(in srgb, var(--marker-color, #ffffff) 56%, var(--app-bg, #000000));
+      opacity: 0.58;
       transform: translateX(-1px);
     }
     
