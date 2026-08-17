@@ -2767,8 +2767,28 @@ function applyTheme() {
       return getWeekKey(previous);
     }
 
+    function hasWeekDisplayData(weekKey) {
+      const weekObj = weekData[weekKey];
+      if (!weekObj || typeof weekObj !== 'object') return false;
+
+      return HABITS.some(habit => {
+        const label = habitLabels[habit];
+        if (!label?.trim()) return false;
+        return Number(weekObj[habit] || 0) !== 0;
+      });
+    }
+
+    function getPreviousDataWeekKey(weekKey = currentWeekKey) {
+      const weeks = Object.keys(weekData || {})
+        .filter(key => key !== weekKey && key < weekKey && hasWeekDisplayData(key))
+        .sort()
+        .reverse();
+
+      return weeks[0] || getPreviousWeekKey(weekKey);
+    }
+
     function getDisplayWeekKey() {
-      return previousWeekPreview ? getPreviousWeekKey() : currentWeekKey;
+      return previousWeekPreview ? getPreviousDataWeekKey() : currentWeekKey;
     }
 
     function formatDurationSec(totalSeconds) {
@@ -4099,7 +4119,7 @@ function scheduleMathRefresh() {
           const value = getUnitDisplayMarkup(habit);
           const description = habitDescriptions[habit] || '';
           const lastUpdateLabel = previousWeekPreview
-            ? `previous week ${getPreviousWeekKey()}`
+            ? `previous week ${getDisplayWeekKey()}`
             : (getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '');
           const breakdown = lastUpdateLabel || description;
           btn.innerHTML = `
@@ -4321,7 +4341,7 @@ function scheduleMathRefresh() {
         } else {
           // Duration types (DURATION_SEC, DURATION_MIN, DURATION_SEC_COUNT)
           const isRunning = !previousWeekPreview && state.isRunning;
-          const previewValue = previousWeekPreview ? getUnitWeekValue(habit, getPreviousWeekKey()) : null;
+          const previewValue = previousWeekPreview ? getUnitWeekValue(habit, getDisplayWeekKey()) : null;
           const accumulated = previousWeekPreview
             ? (type === CELL_TYPES.DURATION_MIN ? previewValue * 60 : previewValue)
             : (state.accumulated || 0);
@@ -4361,7 +4381,7 @@ function scheduleMathRefresh() {
             breakdown = fmt.breakdown;
           }
 
-          const description = previousWeekPreview ? `previous week ${getPreviousWeekKey()}` : (habitDescriptions[habit] || breakdown);
+          const description = previousWeekPreview ? `previous week ${getDisplayWeekKey()}` : (habitDescriptions[habit] || breakdown);
 
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
