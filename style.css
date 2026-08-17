@@ -1358,6 +1358,8 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     .modal-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
     .modal-btn.primary { background: #35f2a3; color: #000; }
     .modal-btn.primary:hover { background: #4df7b5; }
+    .modal-btn.danger { color: rgba(255,79,106,0.78); }
+    .modal-btn.danger.confirming { background: rgba(255,79,106,0.28); color: #ff4f6a; }
     .modal-btn:disabled {
       cursor: not-allowed;
       opacity: 0.25;

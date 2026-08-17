@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.33.10';
+    const APP_VERSION = '1.33.11';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -145,6 +145,7 @@
     let previousWeekPreviewView = null;
     let previousWeekPreviewTimer = null;
     let suppressNextHistoryClick = false;
+    let resetCellConfirmTimer = null;
 
     let weekData = {};
     let habitLabels = {};
@@ -5650,6 +5651,7 @@ function importData() {
 
 function openCellEditModal(habit, index) {
       editingHabit = habit;
+      resetCellConfirmState();
       const cellNum = String(index + 1).padStart(2, '0');
 
       document.getElementById('cellEditLabel').textContent = `CELL ${cellNum}`;
@@ -5845,7 +5847,94 @@ function openCellEditModal(habit, index) {
     
     function closeCellEditModal() {
       document.getElementById('cellEditModal').classList.remove('visible');
+      resetCellConfirmState();
       editingHabit = null;
+    }
+
+    function resetCellConfirmState() {
+      if (resetCellConfirmTimer) {
+        clearTimeout(resetCellConfirmTimer);
+        resetCellConfirmTimer = null;
+      }
+      const resetBtn = document.getElementById('cellEditReset');
+      if (resetBtn) {
+        resetBtn.dataset.confirm = 'false';
+        resetBtn.textContent = 'RESET CELL';
+        resetBtn.classList.remove('confirming');
+      }
+    }
+
+    function resetCellData(habit) {
+      if (!habit) return;
+
+      habitLabels[habit] = '';
+      habitTypes[habit] = CELL_TYPES.UNIT;
+      habitColors[habit] = '#ffffff';
+      habitDescriptions[habit] = '';
+      cellFlags[habit] = { ...DEFAULT_CELL_FLAGS };
+
+      Object.keys(weekData).forEach(week => {
+        if (weekData[week] && typeof weekData[week] === 'object') {
+          delete weekData[week][habit];
+        }
+      });
+
+      delete durationStates[habit];
+      durationSessions = normalizeDurationSessions(durationSessions).filter(session => session.habit !== habit);
+      counterChangeLog = normalizeCounterChangeLog(counterChangeLog).filter(entry => entry.habit !== habit);
+      delete counterLastUpdate[habit];
+      delete timerSettings[habit];
+      delete timerStates[habit];
+      delete unitSettings[habit];
+      delete valueFormats[habit];
+      delete mathSettings[habit];
+      delete moneySettings[habit];
+      delete ledSettings[habit];
+      delete ledStates[habit];
+      delete currencySettings[habit];
+
+      saveLabels();
+      saveTypes();
+      saveColors();
+      saveDescriptions();
+      saveCellFlags();
+      saveWeekData();
+      saveDurationStates();
+      saveDurationSessions();
+      saveCounterChangeLog();
+      saveCounterLastUpdate();
+      saveTimerSettings();
+      saveTimerStates();
+      saveUnitSettings();
+      saveValueFormats();
+      saveMathSettings();
+      saveMoneySettings();
+      saveLedSettings();
+      saveLedStates();
+      saveCurrencySettings();
+      syncCellsFromLegacyState();
+      renderTimelineOverlays();
+    }
+
+    function resetCurrentCell() {
+      if (!editingHabit) return;
+      const resetBtn = document.getElementById('cellEditReset');
+      if (!resetBtn) return;
+
+      if (resetBtn.dataset.confirm !== 'true') {
+        resetBtn.dataset.confirm = 'true';
+        resetBtn.textContent = 'CONFIRM RESET';
+        resetBtn.classList.add('confirming');
+        resetCellConfirmTimer = setTimeout(resetCellConfirmState, 3000);
+        return;
+      }
+
+      const habit = editingHabit;
+      resetCellConfirmState();
+      resetCellData(habit);
+      closeCellEditModal();
+      renderHabits();
+      renderLayoutEditor();
     }
 function saveCellEdit() {
       if (!editingHabit) return;
@@ -6401,6 +6490,7 @@ function openInfoModal() {
       document.getElementById('btnInfoClose').addEventListener('click', closeInfoModal);
 
       document.getElementById('cellEditCancel').addEventListener('click', closeCellEditModal);
+      document.getElementById('cellEditReset').addEventListener('click', resetCurrentCell);
       document.getElementById('cellEditSave').addEventListener('click', saveCellEdit);
 
       document.querySelectorAll('#cellEditModal .type-btn').forEach(btn => {

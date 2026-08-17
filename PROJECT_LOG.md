@@ -225,7 +225,8 @@
 - Updated `Average / day` for Sleep to use a rolling last-7-calendar-days window; if there is less history, it divides by the number of available days from the first sleep day in the window through today.
 - Fixed color resolution after cloud/import snapshots by treating `habitColors` as the primary color source and preventing stale white `cells.color` values from overriding real cell colors.
 - Unified button, layout tile, new duration session, and timeline segment color resolution so Sleep and other duration-like modules render consistently.
-- Bumped app/export/cache version through `v1.33.10`.
+- Added `RESET CELL` in the cell edit modal with a second-click confirmation; it clears the selected cell's name, type, color, settings, values, change logs, duration sessions, and runtime states while keeping its layout slot.
+- Bumped app/export/cache version through `v1.33.11`.
 
 ### Parallel v2 Planning Re-Anchor
 
