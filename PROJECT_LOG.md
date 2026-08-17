@@ -1,5 +1,23 @@
 # TRCKNG SSTM Project Log
 
+## 2026-08-17
+
+### Scenarios And Terminology Note
+
+- Added `V2_SCENARIOS_TERMINOLOGY_NOTES.md` as a collaborative working note for future user scenarios, old notes, terminology, and concept sorting.
+- Kept the note privacy-first: real private labels, doses, places, exact dates, personal totals, screenshots, and media should be abstracted before entering repo documentation.
+
+### v2 Orientation Strips Planning
+
+- Decision: treat the current top day/week progress strips as future `Orientation Strips`, not just header decoration.
+- Product framing: full timeline remains the detailed history/review surface; top strips become compressed live day/week projections for orientation during tracking.
+- Data direction: strips should read derived timeline/event projections rather than store a separate history.
+- Decision: first useful implementation should focus on the week strip, with module-level opt-in such as `showInOrientationStrips`.
+- UX direction: collapsed strips stay compact; later they can expand into a mini-dashboard with day/week bands, active timers, Event Stopwatch ticks, deadline markers, and activity density.
+- Display direction: modules use their own color in the strip by default; span-like modules render as blocks/runs, point-like modules render as ticks/dots, and later settings can override contrast/priority.
+- Dashboard direction: expanded orientation dashboard can have its own settings and should show the active date/range and data source/filter.
+- Visual direction: the strip should feel like an electronic instrument display or artistic mini dashboard, not generic analytics UI.
+
 ## 2026-08-05
 
 ### Baseline Stabilization
@@ -189,5 +207,58 @@
 - Added `UNDO` beside `DECREASE` to restore the previous value for the latest current-week change.
 - Restored counter last-update timestamps when undoing Unit/Counter changes.
 - Included change logs in export/import, reset coverage, and Supabase full-app snapshots.
-- Doubled desktop TRACK cell heights for a taller field surface on computer screens.
+- Increased desktop `TRACK / LAYOUT / HISTORY` tab height while keeping TRACK field cells at their normal responsive sizes.
+- Aligned PIN and view bars to the active field width.
 - Bumped app/export/cache version to `v1.33.0`.
+
+### v1.33 Dashboard Timeline + Sleep Tracker Iteration
+
+- Reordered top controls into the agreed rows: utility actions under the week area, view tabs, secondary actions, then PIN switches.
+- Split date/time/week text out of the progress bars into separate meta rows so day/week strips can stay visually clean.
+- Added compact day and week timeline overlays with duration segments, counter/unit event marks, sun markers, day/week dividers, and a clearer animated current-time marker.
+- Added `DASH` settings inside `LAYOUT` for timeline visibility, all-PIN overlays, day block count, day/week fill colors, and now-marker color.
+- Added duplicate compact day/week timeline strips to the `HISTORY` view so history has the same orientation language as the main dashboard.
+- Changed timeline event colors to prefer the source cell color and added safer fallback colors for Sleep and duration modules.
+- Added `Sleep` as a duration-style cell type with `mm:ss` display, sleep-sourced interval history, timeline rendering, and editable display modes.
+- Added Sleep display modes: `Last session`, `Average / day`, `Total week`, and `Recent 3`.
+- Fixed Sleep rollover at week change: completed state starts clean for the new week while interval history remains available for timeline and recent/average displays.
+- Updated `Average / day` for Sleep to use a rolling last-7-calendar-days window; if there is less history, it divides by the number of available days from the first sleep day in the window through today.
+- Fixed color resolution after cloud/import snapshots by treating `habitColors` as the primary color source and preventing stale white `cells.color` values from overriding real cell colors.
+- Unified button, layout tile, new duration session, and timeline segment color resolution so Sleep and other duration-like modules render consistently.
+- Bumped app/export/cache version through `v1.33.10`.
+
+### Parallel v2 Planning Re-Anchor
+
+- Decision: keep the current root app stable for daily use instead of forcing every future idea through the existing 3x3/PIN interface.
+- Added a plan for a separate `/v2/` GitHub Pages surface where Grid + Views are the starting architecture.
+- Decision: v2 should use its own `trckng_v2_*` storage keys first, with one-way v1 import later, so experiments do not overwrite real v1 tracking data.
+
+### v2 Privacy + Migration Planning
+
+- Decision: planning docs must not preserve real private PIN contents, medication names, counts, budgets, work-hour totals, or exact private dates.
+- Added `V2_DOCUMENTATION_RULES.md` so future agents can anonymize screenshots/scenarios and keep private details out of repo docs.
+- Updated `V2_PRODUCT_SPEC.md` with latest v2 answers: v2 is an evolution of v1, all current module types are required, keep 3 PINs for now while allowing future variability, timeline must be able to include/exclude PINs, and sync remains private for the whole app.
+- Clarified that the first major v2 capability is the correct larger movable modular field, preserving the current button/module logic while expanding beyond fixed 3x3.
+- Clarified target character: personal art/instrument for working and feeling oriented in time, with possible future paid product direction, not generic corporate software.
+
+### v2 Field / View Decisions
+
+- Decision: start v2 with a 10x10 modular field per PIN.
+- Decision: import old v1 `cell01..cell09` modules into a familiar 3x3 area inside the larger 10x10 field, with empty squares available around them.
+- Decision: keep existing size presets first: `1x1`, `2x1`, `1x2`, and `2x2`; larger/free resize comes later.
+- Decision: PINs remain fields/workspaces in the v2 MVP. Views are saved camera/filter/layout states inside PIN fields, not replacements for PINs at the start.
+- Decision: v2 import creates a separate v2 dataset under the user's app/account storage and does not silently write back to v1 data.
+- Decision: separate tracking from navigation/editing. TRACK taps/clicks should track; EDIT/NAV gestures should move, resize, pan, or select.
+- Product note: phone navigation may need a bottom joystick/pad or explicit navigation mode; desktop may use an explicit NAV/EDIT mode, right-click, or modifier-drag.
+- Timeline note: first timeline should be a simple scrollable strip with colored spans for timers/durations and point/callout events above/below the line, built only after event data is trustworthy.
+
+### v2 Event Stopwatch Module Planning
+
+- Decision: add `Event Stopwatch` as a v2-native module type: press/start, name the event, show elapsed time, add checkpoint/lap-style marks, stop, then archive/render on timeline.
+- Product framing: this module covers abstract sequences such as transit, meeting, place change, festival/session markers, or creative/process milestones without hardcoding any private scenario.
+- UX direction: Event Stopwatch should feel like a normal stopwatch inside a grid button; a separate Event mode or quick-capture overlay can be added later, but is not the base interaction.
+- Data direction: start/end become colored timeline spans; checkpoints store elapsed time from start and delta from the previous checkpoint, then become points/callouts on the timeline.
+- Decision: naming should not block capture. Event/checkpoint/segment labels can use defaults first and be edited later.
+- Decision: segments are derived from neighboring boundaries (`start -> checkpoint -> checkpoint -> stop`) instead of stored as separate records in MVP.
+- Media direction: optional camera snapshots or `128x128` thumbnails are a later, privacy-sensitive attachment layer. They should be opt-in and local-first by default.
+- Documentation rule: do not record real routes, place names, private event sequences, faces, rooms, screens, or raw media in repo docs.

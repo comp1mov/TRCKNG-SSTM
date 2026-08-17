@@ -17,23 +17,23 @@
 <body>
   <div class="container">
     <div class="header">
-      <!-- Day progress strip -->
+      <!-- Day progress meta + strip -->
+      <div class="progress-meta day-meta">
+        <span class="meta-primary" id="headerDayDate">-- --- ----</span>
+        <span class="meta-center" id="headerTime">--:--:--</span>
+        <span class="meta-secondary" id="dayPercent">0%</span>
+      </div>
       <div class="progress-strip" id="dayStrip">
         <div class="progress-strip-fill day-fill" id="dayStripFill" style="width: 0%"></div>
-        <div class="progress-strip-content">
-          <span class="strip-left" id="dayPercent">0%</span>
-          <span class="strip-center" id="headerTime">--:--:--</span>
-          <span class="strip-right" id="headerDayDate">-- --- ----</span>
-        </div>
       </div>
-      <!-- Week progress strip -->
+      <!-- Week progress meta + strip -->
+      <div class="progress-meta week-meta">
+        <span class="meta-primary" id="weekDisplay">2026W00</span>
+        <span class="meta-center" id="dateDisplay">-- --- - -- ---</span>
+        <span class="meta-secondary" id="weekPercent">0%</span>
+      </div>
       <div class="progress-strip" id="weekStrip">
         <div class="progress-strip-fill week-fill" id="weekStripFill" style="width: 0%"></div>
-        <div class="progress-strip-content">
-          <span class="strip-left" id="weekPercent">0%</span>
-          <span class="strip-center" id="weekDisplay">2026W00</span>
-          <span class="strip-right" id="dateDisplay">-- --- - -- ---</span>
-        </div>
       </div>
       <!-- Controls row 1 -->
       <div class="controls">
@@ -84,6 +84,7 @@
         <div class="layout-actions">
           <button class="layout-toolbar-btn" id="btnLayoutPack" type="button">PACK</button>
           <button class="layout-toolbar-btn" id="btnLayoutTheme" type="button">THEME</button>
+          <button class="layout-toolbar-btn" id="btnLayoutDash" type="button">DASH</button>
           <button class="layout-toolbar-btn" id="btnLayoutNotify" type="button">NOTIFY</button>
           <button class="layout-toolbar-btn" id="btnLayoutInfo" type="button">INFO</button>
         </div>
@@ -95,6 +96,22 @@
       <div class="history-toolbar">
         <div class="history-title" id="historyTitle">PIN 01</div>
         <div class="history-meta" id="historyMeta">0 weeks</div>
+      </div>
+      <div class="history-timeline-stack">
+        <div class="history-timeline-meta">
+          <span>DAY</span>
+          <span id="historyDayMeta">TODAY</span>
+        </div>
+        <div class="history-progress-strip progress-strip" id="historyDayStrip">
+          <div class="progress-strip-fill day-fill" id="historyDayStripFill" style="width: 0%"></div>
+        </div>
+        <div class="history-timeline-meta">
+          <span>WEEK</span>
+          <span id="historyWeekMeta">2026W00</span>
+        </div>
+        <div class="history-progress-strip progress-strip" id="historyWeekStrip">
+          <div class="progress-strip-fill week-fill" id="historyWeekStripFill" style="width: 0%"></div>
+        </div>
       </div>
       <div class="stats" id="stats"></div>
     </div>
@@ -197,6 +214,20 @@
               opens numeric input
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- SLEEP SETTINGS -->
+      <div id="sleepSettingsFields" class="cell-edit-section" style="display: none;">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Sleep</div>
+        <div class="cell-edit-field">
+          <div class="cell-edit-label">Display</div>
+          <select class="cell-edit-input" id="sleepDisplayMode">
+            <option value="sleep_last">Last session</option>
+            <option value="sleep_avg_day">Average / day</option>
+            <option value="sleep_total">Total week</option>
+            <option value="sleep_recent">Recent 3</option>
+          </select>
         </div>
       </div>
 
@@ -500,12 +531,12 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.33.0</div>
+        <div class="info-version">V1.33.10</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v1.33.0</div>
+        <div class="info-section-title">What's New in v1.33.10</div>
         <div class="info-text">
           <strong>UNDO HISTORY:</strong><br>
           - UNDO added next to DECREASE<br>
@@ -669,6 +700,62 @@
         <button class="modal-btn" id="currencyModalReset">RESET</button>
         <button class="modal-btn" id="currencyModalCancel">CANCEL</button>
         <button class="modal-btn" id="currencyModalSave">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD MODAL -->
+  <div class="modal" id="dashboardModal">
+    <div class="modal-content">
+      <div class="modal-title">DASHBOARD</div>
+      <div class="dashboard-settings-grid">
+        <label class="flag-toggle dashboard-toggle">
+          <input type="checkbox" id="dashCurrentMarker">
+          <span>Now marker</span>
+        </label>
+        <label class="flag-toggle dashboard-toggle">
+          <input type="checkbox" id="dashDayDividers">
+          <span>Day dividers</span>
+        </label>
+        <label class="flag-toggle dashboard-toggle">
+          <input type="checkbox" id="dashWeekDividers">
+          <span>Week dividers</span>
+        </label>
+        <label class="flag-toggle dashboard-toggle">
+          <input type="checkbox" id="dashEvents">
+          <span>Events</span>
+        </label>
+        <label class="flag-toggle dashboard-toggle">
+          <input type="checkbox" id="dashSun">
+          <span>Sun marks</span>
+        </label>
+        <label class="flag-toggle dashboard-toggle">
+          <input type="checkbox" id="dashAllPins">
+          <span>All pins</span>
+        </label>
+        <div class="cell-edit-field">
+          <div class="cell-edit-label">Day blocks</div>
+          <div class="type-selector">
+            <button class="type-btn" id="dashDayBlocks4" data-day-blocks="4" type="button">4</button>
+            <button class="type-btn" id="dashDayBlocks6" data-day-blocks="6" type="button">6</button>
+          </div>
+        </div>
+        <div class="cell-edit-field">
+          <div class="cell-edit-label">Day fill</div>
+          <input type="color" class="color-picker dashboard-color-picker" id="dashDayFill" value="#6080b2" autocomplete="off">
+        </div>
+        <div class="cell-edit-field">
+          <div class="cell-edit-label">Week fill</div>
+          <input type="color" class="color-picker dashboard-color-picker" id="dashWeekFill" value="#5ddcbe" autocomplete="off">
+        </div>
+        <div class="cell-edit-field">
+          <div class="cell-edit-label">Now marker</div>
+          <input type="color" class="color-picker dashboard-color-picker" id="dashNowMarkerFill" value="#ffffff" autocomplete="off">
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn" id="dashboardReset">RESET</button>
+        <button class="modal-btn" id="dashboardClose">DONE</button>
       </div>
     </div>
   </div>

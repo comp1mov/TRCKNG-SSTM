@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.33.0';
+    const APP_VERSION = '1.33.10';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -49,6 +49,7 @@
       LED_STATES: 'trckng_sstm_led_states',
       CURRENCY_SETTINGS: 'trckng_sstm_currency_settings',
       CURRENCY_CACHE: 'trckng_sstm_currency_cache',
+      DASHBOARD_SETTINGS: 'trckng_sstm_dashboard_settings',
       CELL_FLAGS: 'trckng_sstm_cell_flags',
       CELL_LAYOUT: 'trckng_sstm_cell_layout',
       VIEW_MODE: 'trckng_sstm_view_mode',
@@ -110,7 +111,8 @@
       { key: STORAGE_KEYS.THEME, prop: 'themeSettings' },
       { key: STORAGE_KEYS.LED_SETTINGS, prop: 'ledSettings' },
       { key: STORAGE_KEYS.LED_STATES, prop: 'ledStates' },
-      { key: STORAGE_KEYS.CURRENCY_SETTINGS, prop: 'currencySettings' }
+      { key: STORAGE_KEYS.CURRENCY_SETTINGS, prop: 'currencySettings' },
+      { key: STORAGE_KEYS.DASHBOARD_SETTINGS, prop: 'dashboardSettings' }
     ];
 
     // Default configuration
@@ -155,6 +157,7 @@
     let valueFormats = {};
     let mathSettings = {};
     let themeSettings = {};
+    let dashboardSettings = {};
     let cellFlags = {};
     let cellLayout = {};
     let cells = [];
@@ -229,6 +232,25 @@
       const color = colorPalette[paletteIndex % colorPalette.length];
       paletteIndex++;
       return color;
+    }
+
+    function getDefaultColorForType(typeRaw) {
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+      if (type === CELL_TYPES.DURATION_SEC) return '#35f2a3';
+      if (type === CELL_TYPES.DURATION_MIN) return '#ff8c42';
+      if (type === CELL_TYPES.SLEEP) return '#8fb7ff';
+      if (type === CELL_TYPES.DURATION_SEC_COUNT) return '#6b9dff';
+      return '#ffffff';
+    }
+
+    function resolveHabitColor(habit, snapshot = null, cellColor = null) {
+      const colors = snapshot?.colors || habitColors;
+      const types = snapshot?.types || habitTypes;
+      const storedColor = colors?.[habit];
+      const fallbackColor = cellColor || getDefaultColorForType(types?.[habit]);
+      if (storedColor && storedColor !== '#ffffff') return storedColor;
+      if (fallbackColor && fallbackColor !== '#ffffff') return fallbackColor;
+      return storedColor || fallbackColor || '#ffffff';
     }
 
     // ===== NOTIFICATION SOUNDS =====
@@ -635,7 +657,7 @@
         id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${habit}`,
         habit,
         label: habitLabels[habit] || '',
-        color: habitColors[habit] || '#9db7e8',
+        color: resolveHabitColor(habit, null, '#9db7e8'),
         startTime: startedAt,
         endTime: endedAt,
         week: getWeekKey(new Date(startedAt)),
@@ -963,7 +985,7 @@
         slot: index + 1,
         label: habitLabels[habit] || '',
         type,
-        color: habitColors[habit] || '#ffffff',
+        color: resolveHabitColor(habit),
         description: habitDescriptions[habit] || '',
         flags: { ...getCellFlags(habit) },
         layout: { ...getCellLayout(habit) },
@@ -1026,7 +1048,11 @@
         if ('type' in cell) {
           habitTypes[cell.id] = cell.type === CELL_TYPES.COUNTER ? CELL_TYPES.UNIT : String(cell.type || CELL_TYPES.UNIT);
         }
-        if ('color' in cell) habitColors[cell.id] = String(cell.color || '#ffffff');
+        if ('color' in cell) {
+          const incomingCellColor = String(cell.color || '#ffffff');
+          const existingColor = habitColors[cell.id];
+          habitColors[cell.id] = existingColor && existingColor !== '#ffffff' ? existingColor : incomingCellColor;
+        }
         if ('description' in cell) habitDescriptions[cell.id] = String(cell.description || '');
         if (cell.flags && typeof cell.flags === 'object') {
           cellFlags[cell.id] = { ...DEFAULT_CELL_FLAGS, ...cell.flags };
@@ -1141,6 +1167,47 @@
       const key = `${STORAGE_KEYS.THEME}_pin${currentPin}`;
       localStorage.setItem(key, JSON.stringify(themeSettings));
       markCloudDirty('theme settings');
+    }
+
+    function defaultDashboardSettings() {
+      return {
+        currentMarker: true,
+        dayDividers: true,
+        weekDividers: true,
+        events: true,
+        sunMarkers: true,
+        showAllPins: false,
+        dayBlocks: 4,
+        dayFill: '',
+        weekFill: '',
+        nowMarkerFill: ''
+      };
+    }
+
+    function normalizeDashboardSettings(settings) {
+      const defaults = defaultDashboardSettings();
+      const next = { ...defaults, ...(settings && typeof settings === 'object' ? settings : {}) };
+      next.dayBlocks = Number(next.dayBlocks) === 6 ? 6 : 4;
+      next.dayFill = typeof next.dayFill === 'string' ? next.dayFill : '';
+      next.weekFill = typeof next.weekFill === 'string' ? next.weekFill : '';
+      next.nowMarkerFill = typeof next.nowMarkerFill === 'string' ? next.nowMarkerFill : '';
+      return next;
+    }
+
+    function loadDashboardSettings() {
+      const key = `${STORAGE_KEYS.DASHBOARD_SETTINGS}_pin${currentPin}`;
+      const stored = localStorage.getItem(key);
+      try {
+        dashboardSettings = normalizeDashboardSettings(stored ? JSON.parse(stored) : null);
+      } catch (e) {
+        dashboardSettings = defaultDashboardSettings();
+      }
+    }
+
+    function saveDashboardSettings() {
+      const key = `${STORAGE_KEYS.DASHBOARD_SETTINGS}_pin${currentPin}`;
+      localStorage.setItem(key, JSON.stringify(normalizeDashboardSettings(dashboardSettings)));
+      markCloudDirty('dashboard settings');
     }
 
     function loadViewMode() {
@@ -1475,6 +1542,7 @@
       if (!isSameData(normalizeCellFlags(snapshot.cellFlags || {}), normalizeCellFlags({}))) return true;
       if (!isSameData(normalizeCellLayout(snapshot.cellLayout || {}), normalizeCellLayout({}))) return true;
       if (!isSameData(snapshot.themeSettings || defaultThemeSettings(), defaultThemeSettings())) return true;
+      if (!isSameData(normalizeDashboardSettings(snapshot.dashboardSettings), defaultDashboardSettings())) return true;
 
       return [
         'habitDescriptions',
@@ -1518,6 +1586,7 @@
       saveCellFlags();
       saveCellLayout();
       saveThemeSettings();
+      saveDashboardSettings();
       saveLedSettings();
       saveLedStates();
       saveCurrencySettings();
@@ -1550,6 +1619,7 @@
       loadCurrencySettings();
       loadCurrencyCache();
       loadThemeSettings();
+      loadDashboardSettings();
       applyTheme();
       loadCounterLastUpdate();
       loadCounterChangeLog();
@@ -1585,6 +1655,7 @@
         cellFlags,
         cellLayout,
         themeSettings,
+        dashboardSettings,
         ledSettings,
         ledStates,
         currencySettings
@@ -1599,6 +1670,7 @@
       if (prop === 'cellFlags') return normalizeCellFlags({});
       if (prop === 'cellLayout') return normalizeCellLayout({});
       if (prop === 'themeSettings') return defaultThemeSettings();
+      if (prop === 'dashboardSettings') return defaultDashboardSettings();
       if (prop === 'counterChangeLog') return [];
       if (prop === 'durationSessions') return [];
       return {};
@@ -1628,6 +1700,9 @@
         }
         if (field.prop === 'durationSessions') {
           snapshot[field.prop] = normalizeDurationSessions(snapshot[field.prop]);
+        }
+        if (field.prop === 'dashboardSettings') {
+          snapshot[field.prop] = normalizeDashboardSettings(snapshot[field.prop]);
         }
       });
       return snapshot;
@@ -1682,6 +1757,7 @@
         if (imported.cellLayout) cellLayout = normalizeCellLayout(imported.cellLayout);
         if (imported.cells) applyCellsSnapshot(imported.cells);
         if (imported.themeSettings) themeSettings = imported.themeSettings;
+        if (imported.dashboardSettings) dashboardSettings = normalizeDashboardSettings(imported.dashboardSettings);
         if (imported.ledSettings) ledSettings = imported.ledSettings;
         if (imported.ledStates) ledStates = imported.ledStates;
         if (imported.currencySettings) currencySettings = imported.currencySettings;
@@ -2757,9 +2833,73 @@ function applyTheme() {
       }
     }
 
+    function rolloverDurationStatesForNewWeek(lastWeekKey, nextWeekKey) {
+      const weekStartMs = getWeekBoundsMs(nextWeekKey).startMs;
+      const now = Date.now();
+      let statesChanged = false;
+      let weekChanged = false;
+      let sessionsChanged = false;
+
+      Object.keys(durationStates).forEach(habit => {
+        const type = habitTypes[habit];
+        const state = durationStates[habit] || {};
+
+        if (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP) {
+          if (state.isRunning && state.startTime) {
+            const startTime = Number(state.startTime) || now;
+            const accumulated = Number(state.accumulated) || 0;
+
+            if (startTime < weekStartMs) {
+              const beforeWeekRollover = Math.max(0, Math.floor((weekStartMs - startTime) / 1000));
+              const previousWeekTotal = accumulated + beforeWeekRollover;
+
+              if (!weekData[lastWeekKey] || typeof weekData[lastWeekKey] !== 'object') {
+                weekData[lastWeekKey] = {};
+              }
+              weekData[lastWeekKey][habit] = Math.floor(previousWeekTotal / 60);
+              weekChanged = true;
+
+              recordDurationSession(habit, startTime, weekStartMs, type === CELL_TYPES.SLEEP ? 'sleep' : 'duration_min');
+              sessionsChanged = true;
+
+              durationStates[habit] = {
+                startTime: weekStartMs,
+                isRunning: true,
+                accumulated: 0,
+                lastSession: Number(state.lastSession) || 0
+              };
+            } else {
+              durationStates[habit] = {
+                ...state,
+                accumulated: 0,
+                lastSession: Number(state.lastSession) || 0
+              };
+            }
+          } else {
+            durationStates[habit] = {
+              startTime: null,
+              isRunning: false,
+              accumulated: 0,
+              lastSession: Number(state.lastSession) || 0
+            };
+          }
+          statesChanged = true;
+        } else {
+          delete durationStates[habit];
+          statesChanged = true;
+        }
+      });
+
+      if (weekChanged) saveWeekData();
+      if (sessionsChanged) saveDurationSessions();
+      if (statesChanged) saveDurationStates();
+    }
+
     // ===== FORMATTING =====
     function formatValueWithSuffix(value, suffix) {
-      return `${value}<span class="btn-value-suffix">${suffix}</span>`;
+      const safeValue = (value === undefined || value === null) ? '' : String(value);
+      if (suffix === undefined || suffix === null || suffix === '') return safeValue;
+      return `${safeValue}<span class="btn-value-suffix">${suffix}</span>`;
     }
 
     function getPreviousWeekKey(weekKey = currentWeekKey) {
@@ -2830,6 +2970,103 @@ function applyTheme() {
 
     function formatSleepStoredMinutes(totalMinutes) {
       return formatDurationSec(Math.max(0, Number(totalMinutes) || 0) * 60).main;
+    }
+
+    function getRecentSleepSessions(habit, limit = 3) {
+      return normalizeDurationSessions(durationSessions)
+        .filter(session => session.habit === habit && session.source === 'sleep')
+        .sort((a, b) => (Number(b.endTime) || 0) - (Number(a.endTime) || 0))
+        .slice(0, limit);
+    }
+
+    function getRollingSleepAverage(habit, fallbackTotalSeconds, state, runtimeSeconds, isRunning) {
+      const now = Date.now();
+      const todayBounds = getDayBoundsMs(new Date(now));
+      const windowStart = todayBounds.startMs - (6 * 24 * 60 * 60 * 1000);
+      const windowEnd = now;
+      const sessions = normalizeDurationSessions(durationSessions)
+        .filter(session => session.habit === habit && session.source === 'sleep')
+        .map(session => ({
+          startTime: Number(session.startTime) || 0,
+          endTime: Number(session.endTime) || 0
+        }))
+        .filter(session => session.startTime && session.endTime && session.endTime > windowStart && session.startTime < windowEnd);
+
+      if (isRunning && state.startTime) {
+        sessions.push({
+          startTime: Number(state.startTime) || now,
+          endTime: now
+        });
+      }
+
+      if (!sessions.length) {
+        const fallbackDays = getDisplayWeekKey() === currentWeekKey
+          ? Math.max(1, Math.min(7, Math.floor((now - getWeekBoundsMs(currentWeekKey).startMs) / (24 * 60 * 60 * 1000)) + 1))
+          : 7;
+        return {
+          totalSeconds: Math.max(0, Math.floor(Number(fallbackTotalSeconds) || 0)),
+          days: fallbackDays
+        };
+      }
+
+      let totalSeconds = 0;
+      let firstActiveDayStart = todayBounds.startMs;
+      sessions.forEach(session => {
+        const start = Math.max(session.startTime, windowStart);
+        const end = Math.min(session.endTime, windowEnd);
+        if (end <= start) return;
+        totalSeconds += Math.floor((end - start) / 1000);
+        const sessionDay = getDayBoundsMs(new Date(start)).startMs;
+        firstActiveDayStart = Math.min(firstActiveDayStart, sessionDay);
+      });
+
+      const days = Math.max(1, Math.min(7, Math.floor((todayBounds.startMs - firstActiveDayStart) / (24 * 60 * 60 * 1000)) + 1));
+      return { totalSeconds, days };
+    }
+
+    function formatSleepDisplay(habit, totalSeconds, state, runtimeSeconds, isRunning) {
+      const mode = valueFormats[habit] || 'sleep_last';
+      const safeTotal = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+      const lastSeconds = isRunning && state.startTime
+        ? runtimeSeconds
+        : (Number(state.lastSession) || safeTotal || 0);
+
+      if (mode === 'sleep_total') {
+        const fmtTotal = formatDurationSec(safeTotal);
+        return { main: fmtTotal.main, breakdown: `total · ${fmtTotal.breakdown}` };
+      }
+
+      if (mode === 'sleep_last') {
+        const fmtLast = formatDurationSec(lastSeconds);
+        const fmtTotal = formatDurationSec(safeTotal);
+        return { main: fmtLast.main, breakdown: `total · ${fmtTotal.breakdown}` };
+      }
+
+      if (mode === 'sleep_recent') {
+        const recent = getRecentSleepSessions(habit, 3);
+        const recentSeconds = recent.reduce((sum, session) => {
+          return sum + Math.max(0, (Number(session.endTime) || 0) - (Number(session.startTime) || 0));
+        }, 0);
+        const mainSeconds = recentSeconds || lastSeconds;
+        const mainFmt = formatDurationSec(mainSeconds);
+        const parts = recent.map(session => {
+          const seconds = Math.max(0, (Number(session.endTime) || 0) - (Number(session.startTime) || 0));
+          return formatDurationSec(seconds).main;
+        });
+        return {
+          main: mainFmt.main,
+          breakdown: parts.length ? `recent ${parts.length} · ${parts.join(' + ')}` : 'recent · no sessions'
+        };
+      }
+
+      const rolling = getRollingSleepAverage(habit, safeTotal, state, runtimeSeconds, isRunning);
+      const avgSeconds = Math.floor(rolling.totalSeconds / rolling.days);
+      const avgFmt = formatDurationSec(avgSeconds);
+      const totalFmt = formatDurationSec(rolling.totalSeconds);
+      return {
+        main: avgFmt.main,
+        breakdown: `avg/7d · ${rolling.days}d · total ${totalFmt.main}`
+      };
     }
 
     function formatCounterLastUpdate(habit) {
@@ -3862,10 +4099,9 @@ function scheduleMathRefresh() {
             if (valueEl) valueEl.innerHTML = formatValueWithSuffix(fmt.main, 'm');
             if (breakdownEl) breakdownEl.textContent = description || fmt.breakdown;
           } else if (type === CELL_TYPES.SLEEP) {
-            const fmtSession = formatDurationSec(elapsed);
-            const fmtTotal = formatDurationSec(total);
-            if (valueEl) valueEl.textContent = fmtSession.main;
-            if (breakdownEl) breakdownEl.textContent = description || fmtTotal.breakdown;
+            const sleepDisplay = formatSleepDisplay(habit, total, state, elapsed, true);
+            if (valueEl) valueEl.textContent = sleepDisplay.main;
+            if (breakdownEl) breakdownEl.textContent = description || sleepDisplay.breakdown;
           } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
             const fmt = formatDurationSec(total);
             if (valueEl) valueEl.innerHTML = formatValueWithSuffix(total, 's');
@@ -4029,7 +4265,7 @@ function scheduleMathRefresh() {
         const size = `${cell.layout.colSpan}x${cell.layout.rowSpan}`;
         const label = cell.label.trim() || 'EMPTY';
         const isEmpty = !cell.label.trim();
-        const color = cell.color || habitColors[habit] || '#ffffff';
+        const color = resolveHabitColor(habit, null, cell.color);
 
         const tile = document.createElement('div');
         tile.className = 'layout-cell';
@@ -4104,7 +4340,7 @@ function scheduleMathRefresh() {
         const isActive = label?.trim();
         const typeRaw = cell.type || habitTypes[habit] || CELL_TYPES.UNIT;
       const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
-        const color = cell.color || habitColors[habit] || '#ffffff';
+        const color = resolveHabitColor(habit, null, cell.color);
         const state = durationStates[habit] || {};
 
         const btn = document.createElement('button');
@@ -4123,13 +4359,7 @@ function scheduleMathRefresh() {
           return;
         }
 
-        let btnColor = color;
-        if (!btnColor || btnColor === '#ffffff') {
-          if (type === CELL_TYPES.DURATION_SEC) btnColor = '#35f2a3';
-          else if (type === CELL_TYPES.DURATION_MIN) btnColor = '#ff8c42';
-          else if (type === CELL_TYPES.SLEEP) btnColor = '#8fb7ff';
-          else if (type === CELL_TYPES.DURATION_SEC_COUNT) btnColor = '#6b9dff';
-        }
+        let btnColor = resolveHabitColor(habit, null, color);
         btn.style.setProperty('--btn-color', btnColor);
 
         if (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) {
@@ -4393,13 +4623,9 @@ function scheduleMathRefresh() {
             displayValue = formatValueWithSuffix(fmt.main, 'm');
             breakdown = fmt.breakdown;
           } else if (type === CELL_TYPES.SLEEP) {
-            const sessionSeconds = (isRunning && state.startTime)
-              ? runtimeSeconds
-              : (state.lastSession || 0);
-            const fmtSession = formatDurationSec(sessionSeconds);
-            const fmtTotal = formatDurationSec(total);
-            displayValue = fmtSession.main;
-            breakdown = fmtTotal.breakdown;
+            const sleepDisplay = formatSleepDisplay(habit, total, state, runtimeSeconds, isRunning);
+            displayValue = sleepDisplay.main;
+            breakdown = sleepDisplay.breakdown;
           } else if (type === CELL_TYPES.DURATION_SEC_COUNT) {
             const fmt = formatDurationSec(total);
             displayValue = formatValueWithSuffix(total, 's');
@@ -4550,13 +4776,12 @@ function scheduleMathRefresh() {
     }
     
     function updateSunMarkers() {
-      if (!sunData) return;
-      
       const dayStrip = document.getElementById('dayStrip');
       if (!dayStrip) return;
       
       // Remove old markers
       dayStrip.querySelectorAll('.sun-marker').forEach(m => m.remove());
+      if (!sunData || !normalizeDashboardSettings(dashboardSettings).sunMarkers) return;
       
       // Calculate positions (% of day)
       const sunriseMinutes = sunData.sunrise.getHours() * 60 + sunData.sunrise.getMinutes();
@@ -4585,18 +4810,18 @@ function scheduleMathRefresh() {
     }
 
     const DAY_SKY_STOPS = [
-      [10, 16, 38, 0.32],
-      [18, 28, 64, 0.34],
-      [36, 43, 92, 0.32],
-      [76, 58, 108, 0.28],
-      [126, 84, 116, 0.26],
-      [164, 126, 118, 0.24],
-      [126, 152, 178, 0.22],
-      [84, 134, 176, 0.22],
-      [64, 112, 166, 0.23],
-      [82, 82, 142, 0.26],
-      [42, 50, 104, 0.3],
-      [16, 22, 58, 0.34]
+      [18, 26, 58, 0.42],
+      [28, 42, 88, 0.44],
+      [52, 62, 126, 0.43],
+      [96, 72, 142, 0.4],
+      [152, 96, 140, 0.38],
+      [190, 148, 136, 0.36],
+      [156, 182, 210, 0.34],
+      [104, 160, 214, 0.35],
+      [74, 130, 198, 0.36],
+      [94, 96, 170, 0.39],
+      [52, 62, 128, 0.42],
+      [24, 34, 78, 0.44]
     ];
 
     function formatSkyStop(stop) {
@@ -4629,24 +4854,70 @@ function scheduleMathRefresh() {
       return { startMs: start.getTime(), endMs: end.getTime() };
     }
 
+    function getTimelinePinSnapshots() {
+      const settings = normalizeDashboardSettings(dashboardSettings);
+      const pinsToShow = settings.showAllPins
+        ? Array.from({ length: PIN_COUNT }, (_, pin) => pin)
+        : [currentPin];
+
+      return pinsToShow.map(pin => {
+        if (pin === currentPin) {
+          return {
+            pin,
+            labels: habitLabels,
+            types: habitTypes,
+            colors: habitColors,
+            durationStates,
+            durationSessions: normalizeDurationSessions(durationSessions),
+            counterChangeLog: normalizeCounterChangeLog(counterChangeLog)
+          };
+        }
+
+        return {
+          pin,
+          labels: readStoredJson(`${STORAGE_KEYS.LABELS}_pin${pin}`, getDefaultPinProp(pin, 'habitLabels')),
+          types: readStoredJson(`${STORAGE_KEYS.TYPES}_pin${pin}`, getDefaultPinProp(pin, 'habitTypes')),
+          colors: readStoredJson(`${STORAGE_KEYS.COLORS}_pin${pin}`, getDefaultPinProp(pin, 'habitColors')),
+          durationStates: readStoredJson(`${STORAGE_KEYS.DURATION}_pin${pin}`, {}),
+          durationSessions: normalizeDurationSessions(readStoredJson(`${STORAGE_KEYS.DURATION_SESSIONS}_pin${pin}`, [])),
+          counterChangeLog: normalizeCounterChangeLog(readStoredJson(`${STORAGE_KEYS.COUNTER_CHANGE_LOG}_pin${pin}`, []))
+        };
+      });
+    }
+
+    function getTimelineCellColor(snapshot, habit) {
+      return resolveHabitColor(habit, snapshot);
+    }
+
     function getDurationSegmentsForBounds(bounds) {
       const { startMs, endMs } = bounds;
       const weekLength = endMs - startMs;
-      const completed = normalizeDurationSessions(durationSessions);
-      const running = HABITS
-        .filter(habit => {
-          const type = habitTypes[habit];
-          return (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP) && durationStates[habit]?.isRunning;
-        })
-        .map(habit => ({
-          id: `running-${habit}`,
-          habit,
-          label: habitLabels[habit] || '',
-          color: habitColors[habit] || '#ff8c42',
-          startTime: Number(durationStates[habit].startTime) || Date.now(),
-          endTime: Date.now(),
-          source: habitTypes[habit] === CELL_TYPES.SLEEP ? 'sleep_running' : 'duration_min_running'
+      const snapshots = getTimelinePinSnapshots();
+      const completed = snapshots.flatMap(snapshot => {
+        return snapshot.durationSessions.map(session => ({
+          ...session,
+          pin: snapshot.pin,
+          label: snapshot.labels[session.habit] || session.label || '',
+          color: getTimelineCellColor(snapshot, session.habit) || session.color || '#ff8c42'
         }));
+      });
+      const running = snapshots.flatMap(snapshot => {
+        return HABITS
+          .filter(habit => {
+            const type = snapshot.types[habit];
+            return (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP) && snapshot.durationStates[habit]?.isRunning;
+          })
+          .map(habit => ({
+            id: `running-pin${snapshot.pin}-${habit}`,
+            pin: snapshot.pin,
+            habit,
+            label: snapshot.labels[habit] || '',
+            color: getTimelineCellColor(snapshot, habit) || '#ff8c42',
+            startTime: Number(snapshot.durationStates[habit].startTime) || Date.now(),
+            endTime: Date.now(),
+            source: snapshot.types[habit] === CELL_TYPES.SLEEP ? 'sleep_running' : 'duration_min_running'
+          }));
+      });
 
       return completed.concat(running)
         .map(session => {
@@ -4665,20 +4936,23 @@ function scheduleMathRefresh() {
     function getCounterEventsForBounds(bounds) {
       const { startMs, endMs } = bounds;
       const length = endMs - startMs;
-      return normalizeCounterChangeLog(counterChangeLog)
-        .filter(entry => {
-          const type = habitTypes[entry.habit];
-          return !entry.undoneAt &&
-            (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) &&
-            entry.at >= startMs &&
-            entry.at < endMs;
-        })
-        .map(entry => ({
-          ...entry,
-          left: ((entry.at - startMs) / length) * 100,
-          color: habitColors[entry.habit] || '#ffffff',
-          label: habitLabels[entry.habit] || entry.habit
-        }));
+      return getTimelinePinSnapshots().flatMap(snapshot => {
+        return snapshot.counterChangeLog
+          .filter(entry => {
+            const type = snapshot.types[entry.habit];
+            return !entry.undoneAt &&
+              (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) &&
+              entry.at >= startMs &&
+              entry.at < endMs;
+          })
+          .map(entry => ({
+            ...entry,
+            pin: snapshot.pin,
+            left: ((entry.at - startMs) / length) * 100,
+            color: getTimelineCellColor(snapshot, entry.habit) || '#ffffff',
+            label: snapshot.labels[entry.habit] || entry.habit
+          }));
+      });
     }
 
     function renderTimelineDurationSegments(stripId, layerId, bounds) {
@@ -4701,7 +4975,7 @@ function scheduleMathRefresh() {
         el.style.left = `${Math.max(0, Math.min(100, segment.left))}%`;
         el.style.width = `${Math.max(0.08, Math.min(100, segment.width))}%`;
         el.style.setProperty('--segment-color', segment.color || '#ff8c42');
-        el.title = segment.label || segment.habit;
+        el.title = `PIN ${String((segment.pin || 0) + 1).padStart(2, '0')} · ${segment.label || segment.habit}`;
         layer.appendChild(el);
       });
     }
@@ -4725,19 +4999,79 @@ function scheduleMathRefresh() {
         el.className = 'timeline-count-marker';
         el.style.left = `${Math.max(0, Math.min(100, event.left))}%`;
         el.style.setProperty('--marker-color', event.color || '#ffffff');
-        el.title = `${event.label}: ${event.previousValue} -> ${event.nextValue}`;
+        el.title = `PIN ${String((event.pin || 0) + 1).padStart(2, '0')} · ${event.label}: ${event.previousValue} -> ${event.nextValue}`;
         layer.appendChild(el);
       });
+    }
+
+    function renderTimelineDividers(stripId, layerId, divisions, enabled) {
+      const strip = document.getElementById(stripId);
+      if (!strip) return;
+
+      let layer = document.getElementById(layerId);
+      if (!enabled) {
+        if (layer) layer.remove();
+        return;
+      }
+
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.id = layerId;
+        layer.className = 'timeline-divider-layer';
+        strip.appendChild(layer);
+      }
+
+      layer.innerHTML = '';
+      const count = Math.max(2, Number(divisions) || 2);
+      for (let index = 1; index < count; index += 1) {
+        const divider = document.createElement('div');
+        divider.className = `timeline-divider${index === count / 2 ? ' major' : ''}`;
+        divider.style.left = `${(index / count) * 100}%`;
+        layer.appendChild(divider);
+      }
+    }
+
+    function setTimelineLayerVisibility(stripId, visible) {
+      const strip = document.getElementById(stripId);
+      if (!strip) return;
+      strip.querySelectorAll('.timeline-duration-layer, .timeline-count-layer').forEach(layer => {
+        layer.hidden = !visible;
+      });
+    }
+
+    function applyDashboardSettingsToStrips() {
+      const settings = normalizeDashboardSettings(dashboardSettings);
+      document.querySelectorAll('.progress-strip').forEach(strip => {
+        strip.dataset.marker = settings.currentMarker ? 'on' : 'off';
+        strip.style.setProperty('--now-marker-color', settings.nowMarkerFill || '#ffffff');
+      });
+      document.body.dataset.dashboardEvents = settings.events ? 'on' : 'off';
+      document.body.dataset.dashboardSun = settings.sunMarkers ? 'on' : 'off';
     }
 
     function renderTimelineOverlays() {
       const dayBounds = getDayBoundsMs();
       const weekBounds = getWeekBoundsMs(currentWeekKey);
+      const settings = normalizeDashboardSettings(dashboardSettings);
+
+      renderTimelineDividers('dayStrip', 'dayDividerLayer', settings.dayBlocks, settings.dayDividers);
+      renderTimelineDividers('weekStrip', 'weekDividerLayer', 7, settings.weekDividers);
+      renderTimelineDividers('historyDayStrip', 'historyDayDividerLayer', settings.dayBlocks, settings.dayDividers);
+      renderTimelineDividers('historyWeekStrip', 'historyWeekDividerLayer', 7, settings.weekDividers);
 
       renderTimelineDurationSegments('dayStrip', 'dayDurationLayer', dayBounds);
       renderTimelineCounterEvents('dayStrip', 'dayCountLayer', dayBounds);
       renderTimelineDurationSegments('weekStrip', 'weekDurationLayer', weekBounds);
       renderTimelineCounterEvents('weekStrip', 'weekCountLayer', weekBounds);
+      renderTimelineDurationSegments('historyDayStrip', 'historyDayDurationLayer', dayBounds);
+      renderTimelineCounterEvents('historyDayStrip', 'historyDayCountLayer', dayBounds);
+      renderTimelineDurationSegments('historyWeekStrip', 'historyWeekDurationLayer', weekBounds);
+      renderTimelineCounterEvents('historyWeekStrip', 'historyWeekCountLayer', weekBounds);
+      setTimelineLayerVisibility('dayStrip', settings.events);
+      setTimelineLayerVisibility('weekStrip', settings.events);
+      setTimelineLayerVisibility('historyDayStrip', settings.events);
+      setTimelineLayerVisibility('historyWeekStrip', settings.events);
+      applyDashboardSettingsToStrips();
     }
 
     function updateHeader() {
@@ -4749,6 +5083,8 @@ function scheduleMathRefresh() {
         const range = getWeekDateRange(currentWeekKey);
         dateEl.textContent = formatDateRange(range.start, range.end);
       }
+      const historyWeekMeta = document.getElementById('historyWeekMeta');
+      if (historyWeekMeta) historyWeekMeta.textContent = currentWeekKey;
       
       updateHeaderTime();
     }
@@ -4773,36 +5109,54 @@ function scheduleMathRefresh() {
       const minutesInWeek = dayIndex * 24 * 60 + minutesInDay;
       const weekProgress = Math.round((minutesInWeek / (7 * 24 * 60)) * 100);
 
-      // Day percent (left of day strip)
+      // Day percent
       const dayPercentEl = document.getElementById('dayPercent');
-      if (dayPercentEl) dayPercentEl.textContent = `${dayProgress}%`;
+      if (dayPercentEl) dayPercentEl.textContent = `${dayProgress}% DAY`;
 
-      // Day date (right of day strip) - 25 JAN SATURDAY
+      // Day date - 25 JAN SATURDAY
       const dayDateEl = document.getElementById('headerDayDate');
       if (dayDateEl) {
         const day = String(now.getDate()).padStart(2, '0');
         const monthName = now.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
         const dayNameFull = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
         dayDateEl.textContent = `${day} ${monthName} ${dayNameFull}`;
+        const historyDayMeta = document.getElementById('historyDayMeta');
+        if (historyDayMeta) historyDayMeta.textContent = `${day} ${monthName}`;
       }
 
-      // Week percent (left of week strip)
+      // Week percent
       const weekPercentEl = document.getElementById('weekPercent');
-      if (weekPercentEl) weekPercentEl.textContent = `${weekProgress}%`;
+      if (weekPercentEl) weekPercentEl.textContent = `${weekProgress}% WEEK`;
 
       // Update strip fills
+      const settings = normalizeDashboardSettings(dashboardSettings);
       const dayStripFill = document.getElementById('dayStripFill');
       const weekStripFill = document.getElementById('weekStripFill');
+      const historyDayStripFill = document.getElementById('historyDayStripFill');
+      const historyWeekStripFill = document.getElementById('historyWeekStripFill');
       
       if (dayStripFill) {
+        dayStripFill.parentElement?.style.setProperty('--strip-progress', `${dayProgress}%`);
         dayStripFill.style.width = '100%';
         dayStripFill.style.transform = `scaleX(${dayProgress / 100})`;
-        dayStripFill.style.background = getDaySkyGradient();
+        dayStripFill.style.background = settings.dayFill || getDaySkyGradient();
+      }
+      if (historyDayStripFill) {
+        historyDayStripFill.parentElement?.style.setProperty('--strip-progress', `${dayProgress}%`);
+        historyDayStripFill.style.width = '100%';
+        historyDayStripFill.style.transform = `scaleX(${dayProgress / 100})`;
+        historyDayStripFill.style.background = settings.dayFill || getDaySkyGradient();
       }
       
       if (weekStripFill) {
+        weekStripFill.parentElement?.style.setProperty('--strip-progress', `${weekProgress}%`);
         weekStripFill.style.width = `${weekProgress}%`;
-        weekStripFill.style.background = 'var(--week-strip-color)';
+        weekStripFill.style.background = settings.weekFill || 'var(--week-strip-color)';
+      }
+      if (historyWeekStripFill) {
+        historyWeekStripFill.parentElement?.style.setProperty('--strip-progress', `${weekProgress}%`);
+        historyWeekStripFill.style.width = `${weekProgress}%`;
+        historyWeekStripFill.style.background = settings.weekFill || 'var(--week-strip-color)';
       }
 
       renderTimelineOverlays();
@@ -5049,6 +5403,7 @@ function scheduleMathRefresh() {
         cellFlags,
 
         themeSettings,
+        dashboardSettings: normalizeDashboardSettings(dashboardSettings),
         ledSettings,
         ledStates,
         currencySettings,
@@ -5139,6 +5494,7 @@ function importData() {
         STORAGE_KEYS.CELL_FLAGS,
         STORAGE_KEYS.CELL_LAYOUT,
         STORAGE_KEYS.THEME,
+        STORAGE_KEYS.DASHBOARD_SETTINGS,
         STORAGE_KEYS.LED_SETTINGS,
         STORAGE_KEYS.LED_STATES,
         STORAGE_KEYS.CURRENCY_SETTINGS
@@ -5190,6 +5546,7 @@ function importData() {
       loadLedStates();
       loadCurrencySettings();
       loadThemeSettings();
+      loadDashboardSettings();
       applyTheme();
       loadCounterLastUpdate();
       loadCounterChangeLog();
@@ -5390,6 +5747,8 @@ function openCellEditModal(habit, index) {
       const vFmt = valueFormats[habit] || 'raw';
       const vSel = document.getElementById('valueFormat');
       if (vSel) vSel.value = vFmt;
+      const sleepSel = document.getElementById('sleepDisplayMode');
+      if (sleepSel) sleepSel.value = valueFormats[habit] || 'sleep_last';
 
       // Populate flag fields
       const flags = getCellFlags(habit);
@@ -5456,6 +5815,7 @@ function openCellEditModal(habit, index) {
       const moneyFields = document.getElementById('moneySettingsFields');
       const unitFields = document.getElementById('unitSettingsFields');
       const valueFields = document.getElementById('valueSettingsFields');
+      const sleepFields = document.getElementById('sleepSettingsFields');
       const mathFields = document.getElementById('mathSettingsFields');
       const ledFields = document.getElementById('ledSettingsFields');
       const currencyFields = document.getElementById('currencySettingsFields');
@@ -5471,6 +5831,7 @@ function openCellEditModal(habit, index) {
       show(moneyFields, t === CELL_TYPES.MONEY_INCOME || t === CELL_TYPES.MONEY_BUDGET);
       show(unitFields, t === CELL_TYPES.UNIT || t === CELL_TYPES.COUNTER);
       show(valueFields, t === CELL_TYPES.VALUE);
+      show(sleepFields, t === CELL_TYPES.SLEEP);
       show(mathFields, t === CELL_TYPES.MATH);
       show(ledFields, t === CELL_TYPES.LED_PULSE);
       show(currencyFields, t === CELL_TYPES.CURRENCY);
@@ -5651,6 +6012,10 @@ function saveCellEdit() {
         const fmt = document.getElementById('valueFormat')?.value || 'raw';
         valueFormats[editingHabit] = fmt;
         saveValueFormats();
+      } else if (normalizedType === CELL_TYPES.SLEEP) {
+        const fmt = document.getElementById('sleepDisplayMode')?.value || 'sleep_last';
+        valueFormats[editingHabit] = fmt;
+        saveValueFormats();
       } else {
         delete valueFormats[editingHabit];
         saveValueFormats();
@@ -5748,6 +6113,58 @@ function openInfoModal() {
       document.getElementById('themeModal').classList.remove('visible');
     }
 
+    function syncDashboardModalInputs() {
+      const settings = normalizeDashboardSettings(dashboardSettings);
+      const pairs = [
+        ['dashCurrentMarker', settings.currentMarker],
+        ['dashDayDividers', settings.dayDividers],
+        ['dashWeekDividers', settings.weekDividers],
+        ['dashEvents', settings.events],
+        ['dashSun', settings.sunMarkers],
+        ['dashAllPins', settings.showAllPins]
+      ];
+      pairs.forEach(([id, checked]) => {
+        const input = document.getElementById(id);
+        if (input) input.checked = checked;
+      });
+      document.querySelectorAll('[data-day-blocks]').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.dayBlocks) === settings.dayBlocks);
+      });
+      const dayFillInput = document.getElementById('dashDayFill');
+      const weekFillInput = document.getElementById('dashWeekFill');
+      const nowMarkerInput = document.getElementById('dashNowMarkerFill');
+      if (dayFillInput) dayFillInput.value = settings.dayFill || '#6080b2';
+      if (weekFillInput) weekFillInput.value = settings.weekFill || '#5ddcbe';
+      if (nowMarkerInput) nowMarkerInput.value = settings.nowMarkerFill || '#ffffff';
+    }
+
+    function openDashboardModal() {
+      syncDashboardModalInputs();
+      document.getElementById('dashboardModal')?.classList.add('visible');
+    }
+
+    function closeDashboardModal() {
+      document.getElementById('dashboardModal')?.classList.remove('visible');
+    }
+
+    function updateDashboardSetting(key, value) {
+      dashboardSettings = normalizeDashboardSettings({ ...dashboardSettings, [key]: value });
+      syncDashboardModalInputs();
+      applyDashboardSettingsToStrips();
+      updateSunMarkers();
+      renderTimelineOverlays();
+      saveDashboardSettings();
+    }
+
+    function resetDashboardSettings() {
+      dashboardSettings = defaultDashboardSettings();
+      syncDashboardModalInputs();
+      applyDashboardSettingsToStrips();
+      updateSunMarkers();
+      renderTimelineOverlays();
+      saveDashboardSettings();
+    }
+
 
     // Simple helper to toggle help panels
     function togglePanelVisibility(id) {
@@ -5812,6 +6229,7 @@ function openInfoModal() {
         loadCurrencySettings();
         loadCurrencyCache();
         loadThemeSettings();
+        loadDashboardSettings();
         loadViewMode();
         applyTheme();
         loadCounterLastUpdate();
@@ -5824,11 +6242,8 @@ function openInfoModal() {
       // Check if week changed - reset duration states for new week
       const lastWeekKey = localStorage.getItem('trckng_last_week_key');
       if (lastWeekKey && lastWeekKey !== currentWeekKey) {
-        console.log('New week detected! Resetting duration states.');
-        Object.keys(durationStates).forEach(habit => {
-          if (habitTypes[habit] !== CELL_TYPES.SLEEP) delete durationStates[habit];
-        });
-        saveDurationStates();
+        console.log('New week detected! Rolling duration states forward.');
+        rolloverDurationStatesForNewWeek(lastWeekKey, currentWeekKey);
       }
       localStorage.setItem('trckng_last_week_key', currentWeekKey);
       
@@ -5871,6 +6286,8 @@ function openInfoModal() {
       }
       const layoutThemeBtn = document.getElementById('btnLayoutTheme');
       if (layoutThemeBtn) layoutThemeBtn.addEventListener('click', openThemeModal);
+      const layoutDashBtn = document.getElementById('btnLayoutDash');
+      if (layoutDashBtn) layoutDashBtn.addEventListener('click', openDashboardModal);
       const layoutNotifyBtn = document.getElementById('btnLayoutNotify');
       if (layoutNotifyBtn) layoutNotifyBtn.addEventListener('click', requestNotificationPermission);
       const layoutInfoBtn = document.getElementById('btnLayoutInfo');
@@ -5948,6 +6365,38 @@ function openInfoModal() {
       applyTheme();
       saveThemeSettings();
       closeThemeModal();
+    });
+    document.getElementById('dashboardClose').addEventListener('click', closeDashboardModal);
+    document.getElementById('dashboardReset').addEventListener('click', resetDashboardSettings);
+    document.getElementById('dashCurrentMarker').addEventListener('change', event => {
+      updateDashboardSetting('currentMarker', event.target.checked);
+    });
+    document.getElementById('dashDayDividers').addEventListener('change', event => {
+      updateDashboardSetting('dayDividers', event.target.checked);
+    });
+    document.getElementById('dashWeekDividers').addEventListener('change', event => {
+      updateDashboardSetting('weekDividers', event.target.checked);
+    });
+    document.getElementById('dashEvents').addEventListener('change', event => {
+      updateDashboardSetting('events', event.target.checked);
+    });
+    document.getElementById('dashSun').addEventListener('change', event => {
+      updateDashboardSetting('sunMarkers', event.target.checked);
+    });
+    document.getElementById('dashAllPins').addEventListener('change', event => {
+      updateDashboardSetting('showAllPins', event.target.checked);
+    });
+    document.querySelectorAll('#dashboardModal [data-day-blocks]').forEach(btn => {
+      btn.addEventListener('click', () => updateDashboardSetting('dayBlocks', Number(btn.dataset.dayBlocks)));
+    });
+    document.getElementById('dashDayFill').addEventListener('input', event => {
+      updateDashboardSetting('dayFill', event.target.value);
+    });
+    document.getElementById('dashWeekFill').addEventListener('input', event => {
+      updateDashboardSetting('weekFill', event.target.value);
+    });
+    document.getElementById('dashNowMarkerFill').addEventListener('input', event => {
+      updateDashboardSetting('nowMarkerFill', event.target.value);
     });
       document.getElementById('btnInfoClose').addEventListener('click', closeInfoModal);
 
