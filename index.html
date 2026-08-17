@@ -127,7 +127,7 @@
         <strong>Cell editor</strong><br>
         Here you configure one cell of the grid.<br>
         • Name and optional description define the label under the number.<br>
-        • Type switches behaviour: counter, MM:SS / MIN / SEC, timer, countdown, income or budget.<br>
+        • Type switches behaviour: counter, MM:SS / MIN / SEC, alarm, countdown, income or budget.<br>
         • Money types use step, currency symbol and optional budget start amount.<br>
         This is a draft help text – final version will describe all types and use cases in detail.
       </div>
@@ -144,7 +144,7 @@
         <div class="type-selector" style="margin-top: 1px;">
           <button class="type-btn" data-type="value">Value</button>
           <button class="type-btn" data-type="math">Math</button>
-          <button class="type-btn" data-type="timer">Timer</button>
+          <button class="type-btn" data-type="timer">Alarm</button>
           <button class="type-btn" data-type="countdown">Countdown</button>
         </div>
         <div class="type-selector" style="margin-top: 1px;">
@@ -322,9 +322,9 @@
         </div>
       </div>
 
-      <!-- TIMER SETTINGS -->
+      <!-- ALARM SETTINGS -->
       <div id="timerSettingsFields" class="cell-edit-section" style="display: none;">
-        <div class="cell-edit-label" style="margin-bottom: 8px;">Timer</div>
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Alarm</div>
         <div class="cell-edit-grid-2">
           <div class="cell-edit-field">
             <div class="cell-edit-label">Duration (minutes)</div>
