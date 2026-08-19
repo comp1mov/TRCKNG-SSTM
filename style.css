@@ -61,8 +61,9 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     .progress-meta {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      grid-template-columns: minmax(128px, 0.8fr) minmax(0, 1.4fr) auto;
       align-items: center;
+      column-gap: 10px;
       min-height: 20px;
       padding: 0 12px;
       color: var(--app-text, #fff);
@@ -84,27 +85,70 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
 
     .meta-primary {
       justify-self: start;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
       text-transform: uppercase;
-      opacity: 0.74;
+    }
+
+    .meta-primary-pair {
+      display: flex;
+      align-items: center;
+      gap: clamp(32px, 5.5vw, 86px);
+      max-width: 100%;
+    }
+
+    .meta-primary-pair span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .meta-center {
-      justify-self: center;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
+      justify-self: stretch;
       color: var(--app-text, #fff);
+      text-align: center;
+    }
+
+    .meta-inspector {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      color: var(--app-text, #ffffff);
+      opacity: 0.38;
+    }
+
+    .meta-inspector[data-active="true"] {
+      opacity: 0.92;
+    }
+
+    .timeline-inspector-dot {
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: var(--timeline-info-color, #ffffff);
+      box-shadow: 0 0 6px color-mix(in srgb, var(--timeline-info-color, #ffffff) 52%, transparent);
+    }
+
+    .timeline-inspector-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .meta-secondary {
       justify-self: end;
+      text-align: right;
+    }
+
+    .meta-primary,
+    .meta-secondary,
+    .meta-center {
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.02em;
-      opacity: 0.9;
+      opacity: 0.82;
     }
     
     .progress-strip {
@@ -143,6 +187,32 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
 
     .progress-strip[data-marker="off"]::before {
       display: none;
+    }
+
+    .timeline-info {
+      min-height: 18px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: color-mix(in srgb, var(--timeline-info-color, var(--app-text, #ffffff)) 72%, var(--app-bg, #000000));
+      background: var(--app-bg, #000000);
+      font-family: "Roboto Condensed", -apple-system, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      opacity: 0.38;
+    }
+
+    .timeline-info[data-active="true"] {
+      opacity: 0.92;
     }
 
     @keyframes currentMarkerPulse {
@@ -194,11 +264,20 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       position: absolute;
       top: 0;
       bottom: 0;
+      pointer-events: auto;
       background:
         linear-gradient(90deg, rgba(255,255,255,0.055), transparent 44%),
         color-mix(in srgb, var(--segment-color, #ff8c42) 42%, var(--app-bg, #000000));
       border-left: 1px solid rgba(255,255,255,0.12);
+      cursor: help;
       opacity: 0.46;
+    }
+
+    .timeline-duration-segment:hover,
+    .timeline-duration-segment:focus-visible {
+      opacity: 0.72;
+      outline: 1px solid color-mix(in srgb, var(--segment-color, #ff8c42) 65%, #ffffff);
+      outline-offset: -1px;
     }
 
     .timeline-count-marker {
@@ -207,9 +286,18 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       bottom: 0;
       width: 2px;
       min-width: 2px;
+      pointer-events: auto;
       background: color-mix(in srgb, var(--marker-color, #ffffff) 56%, var(--app-bg, #000000));
+      cursor: help;
       opacity: 0.58;
       transform: translateX(-1px);
+    }
+
+    .timeline-count-marker:hover,
+    .timeline-count-marker:focus-visible {
+      opacity: 0.92;
+      outline: 1px solid color-mix(in srgb, var(--marker-color, #ffffff) 65%, #ffffff);
+      outline-offset: 2px;
     }
 
     .timeline-divider-layer {

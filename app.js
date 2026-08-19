@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.33.11';
+    const APP_VERSION = '1.33.19';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -70,6 +70,7 @@
 
     const DEFAULT_CELL_FLAGS = {
       showInHistory: true,
+      showInTimeline: false,
       showTotal: true,
       showLastUpdate: true,
       pinned: false,
@@ -254,6 +255,28 @@
       return storedColor || fallbackColor || '#ffffff';
     }
 
+    function isSpanDurationType(typeRaw) {
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+      return type === CELL_TYPES.DURATION_SEC ||
+        type === CELL_TYPES.DURATION_MIN ||
+        type === CELL_TYPES.SLEEP ||
+        type === CELL_TYPES.DURATION_SEC_COUNT;
+    }
+
+    function spanTypeStoresMinutes(typeRaw) {
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+      return type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP;
+    }
+
+    function getSpanSessionSource(typeRaw) {
+      const type = (typeRaw === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : typeRaw;
+      if (type === CELL_TYPES.SLEEP) return 'sleep';
+      if (type === CELL_TYPES.DURATION_MIN) return 'duration_min';
+      if (type === CELL_TYPES.DURATION_SEC_COUNT) return 'duration_sec_count';
+      if (type === CELL_TYPES.DURATION_SEC) return 'duration_sec';
+      return 'duration';
+    }
+
     // ===== NOTIFICATION SOUNDS =====
     function getAudioContext() {
       if (!audioContext) {
@@ -436,6 +459,23 @@
     function formatDateRange(start, end) {
       const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
       return `${start.getDate()} ${months[start.getMonth()]} - ${end.getDate()} ${months[end.getMonth()]}`;
+    }
+
+    function formatNumericDateRange(start, end) {
+      const startDay = String(start.getDate()).padStart(2, '0');
+      const startMonth = String(start.getMonth() + 1).padStart(2, '0');
+      const endDay = String(end.getDate()).padStart(2, '0');
+      const endMonth = String(end.getMonth() + 1).padStart(2, '0');
+      return `${startDay}.${startMonth}-${endDay}.${endMonth}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     // ===== STORAGE =====
@@ -2845,7 +2885,7 @@ function applyTheme() {
         const type = habitTypes[habit];
         const state = durationStates[habit] || {};
 
-        if (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP) {
+        if (isSpanDurationType(type)) {
           if (state.isRunning && state.startTime) {
             const startTime = Number(state.startTime) || now;
             const accumulated = Number(state.accumulated) || 0;
@@ -2857,10 +2897,12 @@ function applyTheme() {
               if (!weekData[lastWeekKey] || typeof weekData[lastWeekKey] !== 'object') {
                 weekData[lastWeekKey] = {};
               }
-              weekData[lastWeekKey][habit] = Math.floor(previousWeekTotal / 60);
+              weekData[lastWeekKey][habit] = spanTypeStoresMinutes(type)
+                ? Math.floor(previousWeekTotal / 60)
+                : previousWeekTotal;
               weekChanged = true;
 
-              recordDurationSession(habit, startTime, weekStartMs, type === CELL_TYPES.SLEEP ? 'sleep' : 'duration_min');
+              recordDurationSession(habit, startTime, weekStartMs, getSpanSessionSource(type));
               sessionsChanged = true;
 
               durationStates[habit] = {
@@ -3722,12 +3764,14 @@ function handleDurationClick(habit, type) {
         durationStates[habit] = nextState;
 
         ensureWeekExists();
-        if (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP) {
+        if (spanTypeStoresMinutes(type)) {
           weekData[currentWeekKey][habit] = Math.floor(newAccumulated / 60);
-          recordDurationSession(habit, state.startTime, stoppedAt, type === CELL_TYPES.SLEEP ? 'sleep' : 'duration_min');
-          saveDurationSessions();
         } else {
           weekData[currentWeekKey][habit] = newAccumulated;
+        }
+        if (isSpanDurationType(type)) {
+          recordDurationSession(habit, state.startTime, stoppedAt, getSpanSessionSource(type));
+          saveDurationSessions();
         }
         saveWeekData();
       }
@@ -4868,6 +4912,7 @@ function scheduleMathRefresh() {
             labels: habitLabels,
             types: habitTypes,
             colors: habitColors,
+            cellFlags: normalizeCellFlags(cellFlags),
             durationStates,
             durationSessions: normalizeDurationSessions(durationSessions),
             counterChangeLog: normalizeCounterChangeLog(counterChangeLog)
@@ -4879,6 +4924,7 @@ function scheduleMathRefresh() {
           labels: readStoredJson(`${STORAGE_KEYS.LABELS}_pin${pin}`, getDefaultPinProp(pin, 'habitLabels')),
           types: readStoredJson(`${STORAGE_KEYS.TYPES}_pin${pin}`, getDefaultPinProp(pin, 'habitTypes')),
           colors: readStoredJson(`${STORAGE_KEYS.COLORS}_pin${pin}`, getDefaultPinProp(pin, 'habitColors')),
+          cellFlags: normalizeCellFlags(readStoredJson(`${STORAGE_KEYS.CELL_FLAGS}_pin${pin}`, {})),
           durationStates: readStoredJson(`${STORAGE_KEYS.DURATION}_pin${pin}`, {}),
           durationSessions: normalizeDurationSessions(readStoredJson(`${STORAGE_KEYS.DURATION_SESSIONS}_pin${pin}`, [])),
           counterChangeLog: normalizeCounterChangeLog(readStoredJson(`${STORAGE_KEYS.COUNTER_CHANGE_LOG}_pin${pin}`, []))
@@ -4890,23 +4936,94 @@ function scheduleMathRefresh() {
       return resolveHabitColor(habit, snapshot);
     }
 
-    function getDurationSegmentsForBounds(bounds) {
+    function formatTimelinePoint(timestamp, includeDate = true) {
+      const date = new Date(Number(timestamp) || Date.now());
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      if (!includeDate) return `${hours}:${minutes}`;
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+      return `${day} ${month} ${hours}:${minutes}`;
+    }
+
+    function getTimelineInfoElement(stripId) {
+      if (stripId === 'dayStrip') return document.getElementById('dayInspector');
+      if (stripId === 'weekStrip') return document.getElementById('weekInspector');
+      return document.getElementById('historyTimelineInfo');
+    }
+
+    function setTimelineInfo(stripId, text, color = '#ffffff') {
+      const infoEl = getTimelineInfoElement(stripId);
+      if (!infoEl) return;
+      infoEl.innerHTML = text
+        ? `<span class="timeline-inspector-dot" aria-hidden="true"></span><span class="timeline-inspector-text">${escapeHtml(text)}</span>`
+        : '';
+      infoEl.style.setProperty('--timeline-info-color', color || '#ffffff');
+      infoEl.dataset.active = text ? 'true' : 'false';
+    }
+
+    function resetTimelineInfo(stripId) {
+      setTimelineInfo(stripId, '', '#ffffff');
+    }
+
+    function bindTimelineInfo(el, stripId, text, color) {
+      el.tabIndex = 0;
+      el.setAttribute('aria-label', text);
+      el.addEventListener('mouseenter', () => setTimelineInfo(stripId, text, color));
+      el.addEventListener('focus', () => setTimelineInfo(stripId, text, color));
+      el.addEventListener('pointerdown', () => setTimelineInfo(stripId, text, color));
+      el.addEventListener('mouseleave', () => resetTimelineInfo(stripId));
+      el.addEventListener('blur', () => resetTimelineInfo(stripId));
+    }
+
+    function describeTimelineSegment(segment) {
+      const startTime = Number(segment.startTime) || 0;
+      const endTime = Number(segment.endTime) || 0;
+      const duration = formatDurationSec(Math.max(0, Math.round((endTime - startTime) / 1000))).main;
+      const label = segment.label || segment.habit || 'Span';
+      const pin = `PIN ${String((segment.pin || 0) + 1).padStart(2, '0')}`;
+      return `${label} · ${duration} · ${formatTimelinePoint(startTime, false)}-${formatTimelinePoint(endTime, false)} · ${pin}`;
+    }
+
+    function describeTimelineEvent(event) {
+      const label = event.label || event.habit || 'Event';
+      const pin = `PIN ${String((event.pin || 0) + 1).padStart(2, '0')}`;
+      const delta = (Number(event.nextValue) || 0) - (Number(event.previousValue) || 0);
+      const signedDelta = delta > 0 ? `+${delta}` : String(delta);
+      return `${label} · ${formatTimelinePoint(event.at, false)} · ${signedDelta} · ${event.previousValue}->${event.nextValue} · ${pin}`;
+    }
+
+    function getSnapshotCellFlag(snapshot, habit, flagName) {
+      const flags = snapshot.cellFlags?.[habit] || DEFAULT_CELL_FLAGS;
+      if (!(flagName in flags)) return DEFAULT_CELL_FLAGS[flagName];
+      return flags[flagName];
+    }
+
+    function shouldShowTimelineHabit(snapshot, habit, flagName) {
+      return getSnapshotCellFlag(snapshot, habit, flagName) === true;
+    }
+
+    function getDurationSegmentsForBounds(bounds, flagName = 'showInTimeline') {
       const { startMs, endMs } = bounds;
       const weekLength = endMs - startMs;
       const snapshots = getTimelinePinSnapshots();
       const completed = snapshots.flatMap(snapshot => {
-        return snapshot.durationSessions.map(session => ({
-          ...session,
-          pin: snapshot.pin,
-          label: snapshot.labels[session.habit] || session.label || '',
-          color: getTimelineCellColor(snapshot, session.habit) || session.color || '#ff8c42'
-        }));
+        return snapshot.durationSessions
+          .filter(session => shouldShowTimelineHabit(snapshot, session.habit, flagName))
+          .map(session => ({
+            ...session,
+            pin: snapshot.pin,
+            label: snapshot.labels[session.habit] || session.label || '',
+            color: getTimelineCellColor(snapshot, session.habit) || session.color || '#ff8c42'
+          }));
       });
       const running = snapshots.flatMap(snapshot => {
         return HABITS
           .filter(habit => {
             const type = snapshot.types[habit];
-            return (type === CELL_TYPES.DURATION_MIN || type === CELL_TYPES.SLEEP) && snapshot.durationStates[habit]?.isRunning;
+            return shouldShowTimelineHabit(snapshot, habit, flagName) &&
+              isSpanDurationType(type) &&
+              snapshot.durationStates[habit]?.isRunning;
           })
           .map(habit => ({
             id: `running-pin${snapshot.pin}-${habit}`,
@@ -4916,7 +5033,7 @@ function scheduleMathRefresh() {
             color: getTimelineCellColor(snapshot, habit) || '#ff8c42',
             startTime: Number(snapshot.durationStates[habit].startTime) || Date.now(),
             endTime: Date.now(),
-            source: snapshot.types[habit] === CELL_TYPES.SLEEP ? 'sleep_running' : 'duration_min_running'
+            source: `${getSpanSessionSource(snapshot.types[habit])}_running`
           }));
       });
 
@@ -4934,7 +5051,7 @@ function scheduleMathRefresh() {
         .filter(Boolean);
     }
 
-    function getCounterEventsForBounds(bounds) {
+    function getCounterEventsForBounds(bounds, flagName = 'showInTimeline') {
       const { startMs, endMs } = bounds;
       const length = endMs - startMs;
       return getTimelinePinSnapshots().flatMap(snapshot => {
@@ -4942,6 +5059,7 @@ function scheduleMathRefresh() {
           .filter(entry => {
             const type = snapshot.types[entry.habit];
             return !entry.undoneAt &&
+              shouldShowTimelineHabit(snapshot, entry.habit, flagName) &&
               (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) &&
               entry.at >= startMs &&
               entry.at < endMs;
@@ -4956,7 +5074,7 @@ function scheduleMathRefresh() {
       });
     }
 
-    function renderTimelineDurationSegments(stripId, layerId, bounds) {
+    function renderTimelineDurationSegments(stripId, layerId, bounds, flagName = 'showInTimeline') {
       const strip = document.getElementById(stripId);
       if (!strip) return;
 
@@ -4968,7 +5086,7 @@ function scheduleMathRefresh() {
         strip.appendChild(layer);
       }
 
-      const segments = getDurationSegmentsForBounds(bounds);
+      const segments = getDurationSegmentsForBounds(bounds, flagName);
       layer.innerHTML = '';
       segments.forEach(segment => {
         const el = document.createElement('div');
@@ -4976,12 +5094,14 @@ function scheduleMathRefresh() {
         el.style.left = `${Math.max(0, Math.min(100, segment.left))}%`;
         el.style.width = `${Math.max(0.08, Math.min(100, segment.width))}%`;
         el.style.setProperty('--segment-color', segment.color || '#ff8c42');
-        el.title = `PIN ${String((segment.pin || 0) + 1).padStart(2, '0')} · ${segment.label || segment.habit}`;
+        const description = describeTimelineSegment(segment);
+        el.title = description;
+        bindTimelineInfo(el, stripId, description, segment.color || '#ff8c42');
         layer.appendChild(el);
       });
     }
 
-    function renderTimelineCounterEvents(stripId, layerId, bounds) {
+    function renderTimelineCounterEvents(stripId, layerId, bounds, flagName = 'showInTimeline') {
       const strip = document.getElementById(stripId);
       if (!strip) return;
 
@@ -4993,14 +5113,16 @@ function scheduleMathRefresh() {
         strip.appendChild(layer);
       }
 
-      const events = getCounterEventsForBounds(bounds);
+      const events = getCounterEventsForBounds(bounds, flagName);
       layer.innerHTML = '';
       events.forEach(event => {
         const el = document.createElement('div');
         el.className = 'timeline-count-marker';
         el.style.left = `${Math.max(0, Math.min(100, event.left))}%`;
         el.style.setProperty('--marker-color', event.color || '#ffffff');
-        el.title = `PIN ${String((event.pin || 0) + 1).padStart(2, '0')} · ${event.label}: ${event.previousValue} -> ${event.nextValue}`;
+        const description = describeTimelineEvent(event);
+        el.title = description;
+        bindTimelineInfo(el, stripId, description, event.color || '#ffffff');
         layer.appendChild(el);
       });
     }
@@ -5064,10 +5186,10 @@ function scheduleMathRefresh() {
       renderTimelineCounterEvents('dayStrip', 'dayCountLayer', dayBounds);
       renderTimelineDurationSegments('weekStrip', 'weekDurationLayer', weekBounds);
       renderTimelineCounterEvents('weekStrip', 'weekCountLayer', weekBounds);
-      renderTimelineDurationSegments('historyDayStrip', 'historyDayDurationLayer', dayBounds);
-      renderTimelineCounterEvents('historyDayStrip', 'historyDayCountLayer', dayBounds);
-      renderTimelineDurationSegments('historyWeekStrip', 'historyWeekDurationLayer', weekBounds);
-      renderTimelineCounterEvents('historyWeekStrip', 'historyWeekCountLayer', weekBounds);
+      renderTimelineDurationSegments('historyDayStrip', 'historyDayDurationLayer', dayBounds, 'showInHistory');
+      renderTimelineCounterEvents('historyDayStrip', 'historyDayCountLayer', dayBounds, 'showInHistory');
+      renderTimelineDurationSegments('historyWeekStrip', 'historyWeekDurationLayer', weekBounds, 'showInHistory');
+      renderTimelineCounterEvents('historyWeekStrip', 'historyWeekCountLayer', weekBounds, 'showInHistory');
       setTimelineLayerVisibility('dayStrip', settings.events);
       setTimelineLayerVisibility('weekStrip', settings.events);
       setTimelineLayerVisibility('historyDayStrip', settings.events);
@@ -5077,12 +5199,9 @@ function scheduleMathRefresh() {
 
     function updateHeader() {
       const weekEl = document.getElementById('weekDisplay');
-      const dateEl = document.getElementById('dateDisplay');
-      
-      if (weekEl) weekEl.textContent = currentWeekKey;
-      if (dateEl) {
+      if (weekEl) {
         const range = getWeekDateRange(currentWeekKey);
-        dateEl.textContent = formatDateRange(range.start, range.end);
+        weekEl.innerHTML = `<span>${currentWeekKey}</span><span>${formatNumericDateRange(range.start, range.end)}</span>`;
       }
       const historyWeekMeta = document.getElementById('historyWeekMeta');
       if (historyWeekMeta) historyWeekMeta.textContent = currentWeekKey;
@@ -5095,10 +5214,6 @@ function scheduleMathRefresh() {
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
-
-      // Time display
-      const timeEl = document.getElementById('headerTime');
-      if (timeEl) timeEl.textContent = `${hours}:${minutes}:${seconds}`;
 
       // Day calculations
       const minutesInDay = now.getHours() * 60 + now.getMinutes();
@@ -5114,13 +5229,13 @@ function scheduleMathRefresh() {
       const dayPercentEl = document.getElementById('dayPercent');
       if (dayPercentEl) dayPercentEl.textContent = `${dayProgress}% DAY`;
 
-      // Day date - 25 JAN SATURDAY
+      // Day date - 25 JANUARY SATURDAY
       const dayDateEl = document.getElementById('headerDayDate');
       if (dayDateEl) {
         const day = String(now.getDate()).padStart(2, '0');
-        const monthName = now.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+        const monthName = now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
         const dayNameFull = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-        dayDateEl.textContent = `${day} ${monthName} ${dayNameFull}`;
+        dayDateEl.innerHTML = `<span>${day} ${monthName} ${dayNameFull}</span><span>${hours}:${minutes}:${seconds}</span>`;
         const historyDayMeta = document.getElementById('historyDayMeta');
         if (historyDayMeta) historyDayMeta.textContent = `${day} ${monthName}`;
       }
@@ -5755,8 +5870,10 @@ function openCellEditModal(habit, index) {
       // Populate flag fields
       const flags = getCellFlags(habit);
       const flagHistory = document.getElementById('cellFlagHistory');
+      const flagTimeline = document.getElementById('cellFlagTimeline');
       const flagLastUpdate = document.getElementById('cellFlagLastUpdate');
       if (flagHistory) flagHistory.checked = flags.showInHistory !== false;
+      if (flagTimeline) flagTimeline.checked = flags.showInTimeline === true;
       if (flagLastUpdate) flagLastUpdate.checked = flags.showLastUpdate !== false;
 
       // Populate Math selectors/options
@@ -6080,6 +6197,7 @@ function saveCellEdit() {
       cellFlags[editingHabit] = {
         ...getCellFlags(editingHabit),
         showInHistory: Boolean(document.getElementById('cellFlagHistory')?.checked),
+        showInTimeline: Boolean(document.getElementById('cellFlagTimeline')?.checked),
         showLastUpdate: Boolean(document.getElementById('cellFlagLastUpdate')?.checked)
       };
       saveCellFlags();

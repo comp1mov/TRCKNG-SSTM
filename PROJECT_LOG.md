@@ -227,7 +227,19 @@
 - Unified button, layout tile, new duration session, and timeline segment color resolution so Sleep and other duration-like modules render consistently.
 - Added `RESET CELL` in the cell edit modal with a second-click confirmation; it clears the selected cell's name, type, color, settings, values, change logs, duration sessions, and runtime states while keeping its layout slot.
 - Renamed the visible `Timer` cell type label to `Alarm` while keeping the existing internal storage type unchanged for compatibility.
-- Bumped app/export/cache version through `v1.33.11`.
+- Strategy decision: `MM:SS`, `MIN`, `SEC`, and `SLEEP` should converge into one Span / Duration module family that writes timeline blocks; Alarm / Countdown remains a separate notification-oriented family.
+- Implementation plan for Span / Duration unification: keep existing storage types for compatibility, add shared span helpers, record start-stop sessions for every span type, render both completed and running spans on day/week strips, and keep weekly totals in each type's existing display unit.
+- Implemented timeline span recording for `MM:SS` and `SEC` in addition to `MIN` and `SLEEP`.
+- Extended week rollover so running `MM:SS`, `MIN`, `SEC`, and `SLEEP` spans split cleanly across week boundaries.
+- Added a per-cell `Timeline` flag in the edit modal. It defaults off, so day/week timeline strips now show only cells that are explicitly opted in.
+- Added timeline hover/focus/tap info: duration blocks and counter markers now expose PIN, label, duration/value change, and time range in a compact status line.
+- Reworked the top day/week meta rows into inspectors: left side now holds day+time or week+range, right side keeps progress percent, and the center shows the hovered/tapped timeline segment context.
+- Refined header meta labels: day month uses the full month name, date/time are visually separated in the left block, and empty inspectors no longer show placeholder `DAY` / `WEEK` text.
+- Matched day/week meta typography, removed dot separators between date/time and week/range, and widened the spacing between paired meta values.
+- Changed timeline inspectors to use a colored dot for the source cell and white text for readability; unit events now show `previous->current` instead of `prev/week` wording.
+- History day/week strips now render all cells enabled for History, while the top dashboard strips still require the per-cell Timeline flag.
+- Removed the separate HISTORY event-log UI from this iteration; event history remains stored for undo/timeline work, but the table-based history expansion will be designed separately.
+- Bumped app/export/cache version through `v1.33.19`.
 
 ### Parallel v2 Planning Re-Anchor
 

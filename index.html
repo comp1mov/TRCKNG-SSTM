@@ -19,8 +19,8 @@
     <div class="header">
       <!-- Day progress meta + strip -->
       <div class="progress-meta day-meta">
-        <span class="meta-primary" id="headerDayDate">-- --- ----</span>
-        <span class="meta-center" id="headerTime">--:--:--</span>
+        <span class="meta-primary meta-primary-pair" id="headerDayDate"><span>-- ------- ----</span><span>--:--:--</span></span>
+        <span class="meta-center meta-inspector" id="dayInspector" data-active="false"></span>
         <span class="meta-secondary" id="dayPercent">0%</span>
       </div>
       <div class="progress-strip" id="dayStrip">
@@ -28,8 +28,8 @@
       </div>
       <!-- Week progress meta + strip -->
       <div class="progress-meta week-meta">
-        <span class="meta-primary" id="weekDisplay">2026W00</span>
-        <span class="meta-center" id="dateDisplay">-- --- - -- ---</span>
+        <span class="meta-primary meta-primary-pair" id="weekDisplay"><span>2026W00</span><span>--.--.--.--</span></span>
+        <span class="meta-center meta-inspector" id="weekInspector" data-active="false"></span>
         <span class="meta-secondary" id="weekPercent">0%</span>
       </div>
       <div class="progress-strip" id="weekStrip">
@@ -112,6 +112,7 @@
         <div class="history-progress-strip progress-strip" id="historyWeekStrip">
           <div class="progress-strip-fill week-fill" id="historyWeekStripFill" style="width: 0%"></div>
         </div>
+        <div class="timeline-info history-timeline-info" id="historyTimelineInfo" data-active="false">TIMELINE</div>
       </div>
       <div class="stats" id="stats"></div>
     </div>
@@ -449,6 +450,10 @@
             <span>History</span>
           </label>
           <label class="flag-toggle">
+            <input type="checkbox" id="cellFlagTimeline">
+            <span>Timeline</span>
+          </label>
+          <label class="flag-toggle">
             <input type="checkbox" id="cellFlagLastUpdate">
             <span>Last update</span>
           </label>
@@ -532,12 +537,12 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.33.11</div>
+        <div class="info-version">V1.33.19</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
       <div class="info-section">
-        <div class="info-section-title">What's New in v1.33.11</div>
+        <div class="info-section-title">What's New in v1.33.19</div>
         <div class="info-text">
           <strong>UNDO HISTORY:</strong><br>
           - UNDO added next to DECREASE<br>
