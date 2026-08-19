@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.33.19';
+    const APP_VERSION = '1.33.20';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -1218,6 +1218,7 @@
         events: true,
         sunMarkers: true,
         showAllPins: false,
+        showAllData: false,
         dayBlocks: 4,
         dayFill: '',
         weekFill: '',
@@ -5182,10 +5183,11 @@ function scheduleMathRefresh() {
       renderTimelineDividers('historyDayStrip', 'historyDayDividerLayer', settings.dayBlocks, settings.dayDividers);
       renderTimelineDividers('historyWeekStrip', 'historyWeekDividerLayer', 7, settings.weekDividers);
 
-      renderTimelineDurationSegments('dayStrip', 'dayDurationLayer', dayBounds);
-      renderTimelineCounterEvents('dayStrip', 'dayCountLayer', dayBounds);
-      renderTimelineDurationSegments('weekStrip', 'weekDurationLayer', weekBounds);
-      renderTimelineCounterEvents('weekStrip', 'weekCountLayer', weekBounds);
+      const topTimelineFlag = settings.showAllData ? 'showInHistory' : 'showInTimeline';
+      renderTimelineDurationSegments('dayStrip', 'dayDurationLayer', dayBounds, topTimelineFlag);
+      renderTimelineCounterEvents('dayStrip', 'dayCountLayer', dayBounds, topTimelineFlag);
+      renderTimelineDurationSegments('weekStrip', 'weekDurationLayer', weekBounds, topTimelineFlag);
+      renderTimelineCounterEvents('weekStrip', 'weekCountLayer', weekBounds, topTimelineFlag);
       renderTimelineDurationSegments('historyDayStrip', 'historyDayDurationLayer', dayBounds, 'showInHistory');
       renderTimelineCounterEvents('historyDayStrip', 'historyDayCountLayer', dayBounds, 'showInHistory');
       renderTimelineDurationSegments('historyWeekStrip', 'historyWeekDurationLayer', weekBounds, 'showInHistory');
@@ -6328,7 +6330,8 @@ function openInfoModal() {
         ['dashWeekDividers', settings.weekDividers],
         ['dashEvents', settings.events],
         ['dashSun', settings.sunMarkers],
-        ['dashAllPins', settings.showAllPins]
+        ['dashAllPins', settings.showAllPins],
+        ['dashAllData', settings.showAllData]
       ];
       pairs.forEach(([id, checked]) => {
         const input = document.getElementById(id);
@@ -6592,6 +6595,9 @@ function openInfoModal() {
     });
     document.getElementById('dashAllPins').addEventListener('change', event => {
       updateDashboardSetting('showAllPins', event.target.checked);
+    });
+    document.getElementById('dashAllData').addEventListener('change', event => {
+      updateDashboardSetting('showAllData', event.target.checked);
     });
     document.querySelectorAll('#dashboardModal [data-day-blocks]').forEach(btn => {
       btn.addEventListener('click', () => updateDashboardSetting('dayBlocks', Number(btn.dataset.dayBlocks)));

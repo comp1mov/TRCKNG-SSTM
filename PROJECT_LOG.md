@@ -238,8 +238,9 @@
 - Matched day/week meta typography, removed dot separators between date/time and week/range, and widened the spacing between paired meta values.
 - Changed timeline inspectors to use a colored dot for the source cell and white text for readability; unit events now show `previous->current` instead of `prev/week` wording.
 - History day/week strips now render all cells enabled for History, while the top dashboard strips still require the per-cell Timeline flag.
+- Added `All data` to DASH settings. When enabled, the top day/week strips render all History-visible events; when disabled, they keep using the per-cell Timeline flag.
 - Removed the separate HISTORY event-log UI from this iteration; event history remains stored for undo/timeline work, but the table-based history expansion will be designed separately.
-- Bumped app/export/cache version through `v1.33.19`.
+- Bumped app/export/cache version through `v1.33.20`.
 
 ### Parallel v2 Planning Re-Anchor
 
