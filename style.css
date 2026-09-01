@@ -1538,6 +1538,22 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       padding: 20px;
     }
 
+    @media (max-width: 640px) {
+      .modal {
+        align-items: flex-start;
+        padding: calc(12px + env(safe-area-inset-top)) 12px calc(96px + env(safe-area-inset-bottom));
+        overflow-y: auto;
+      }
+
+      .modal-content,
+      .cell-edit-content,
+      .info-modal-content,
+      .correction-modal-content {
+        max-height: none;
+        padding-bottom: calc(128px + env(safe-area-inset-bottom));
+      }
+    }
+
     .modal-header {
       display: flex;
       align-items: center;
