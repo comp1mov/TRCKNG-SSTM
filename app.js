@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.33.20';
+    const APP_VERSION = '1.33.21';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -148,6 +148,7 @@
     let suppressNextHistoryClick = false;
     let resetCellConfirmTimer = null;
     let correctionHabit = null;
+    let historyTimelineWeekKey = currentWeekKey;
 
     let weekData = {};
     let habitLabels = {};
@@ -2757,18 +2758,54 @@ function applyTheme() {
     }
 
     function updateHistoryChrome() {
+      historyTimelineWeekKey = historyTimelineWeekKey || currentWeekKey;
+      const historyWeeks = getHistoryWeekKeys();
+      if (!historyWeeks.includes(historyTimelineWeekKey)) {
+        historyTimelineWeekKey = historyWeeks[0] || currentWeekKey;
+      }
       const historyTitle = document.getElementById('historyTitle');
       if (historyTitle) historyTitle.textContent = getCurrentPinName();
 
       const historyMeta = document.getElementById('historyMeta');
       if (historyMeta) {
         const weeks = Object.keys(weekData || {}).length;
-        historyMeta.textContent = `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+        const range = getWeekDateRange(historyTimelineWeekKey);
+        const dateRange = formatNumericDateRange(range.start, range.end);
+        historyMeta.textContent = `${historyTimelineWeekKey} · ${dateRange}`;
+        historyMeta.title = `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
       }
+
+      const currentIndex = Math.max(0, historyWeeks.indexOf(historyTimelineWeekKey));
+      const prevBtn = document.getElementById('btnHistoryPrevWeek');
+      const nextBtn = document.getElementById('btnHistoryNextWeek');
+      if (prevBtn) prevBtn.disabled = currentIndex >= historyWeeks.length - 1;
+      if (nextBtn) nextBtn.disabled = currentIndex <= 0;
+    }
+
+    function getHistoryWeekKeys() {
+      return Array.from(new Set([currentWeekKey].concat(Object.keys(weekData || {}))))
+        .filter(Boolean)
+        .sort()
+        .reverse();
+    }
+
+    function setHistoryTimelineWeek(weekKey) {
+      if (!weekKey) return;
+      historyTimelineWeekKey = weekKey;
+      updateHeader();
+      updateStats();
+    }
+
+    function shiftHistoryTimelineWeek(direction) {
+      const weeks = getHistoryWeekKeys();
+      const currentIndex = Math.max(0, weeks.indexOf(historyTimelineWeekKey));
+      const nextIndex = Math.max(0, Math.min(weeks.length - 1, currentIndex + direction));
+      setHistoryTimelineWeek(weeks[nextIndex] || currentWeekKey);
     }
 
     function setView(view) {
       currentView = Object.values(VIEW_MODES).includes(view) ? view : VIEW_MODES.TRACK;
+      document.body.dataset.view = currentView;
 
       const trackView = document.getElementById('trackView');
       const layoutView = document.getElementById('layoutView');
@@ -5231,6 +5268,76 @@ function scheduleMathRefresh() {
       setTimelineInfo(stripId, '', '#ffffff');
     }
 
+    function getTimelineBoundsForStrip(stripId) {
+      if (stripId === 'dayStrip') return getDayBoundsMs();
+      if (stripId === 'historyDayStrip') return getHistoryTimelineDayBounds();
+      if (stripId === 'weekStrip') return getWeekBoundsMs(currentWeekKey);
+      if (stripId === 'historyWeekStrip') return getWeekBoundsMs(historyTimelineWeekKey || currentWeekKey);
+      return null;
+    }
+
+    function getHistoryTimelineDayBounds() {
+      if ((historyTimelineWeekKey || currentWeekKey) === currentWeekKey) return getDayBoundsMs();
+      const range = getWeekDateRange(historyTimelineWeekKey || currentWeekKey);
+      return getDayBoundsMs(range.start);
+    }
+
+    function describeTimelineScrub(stripId, timestamp) {
+      const date = new Date(Number(timestamp) || Date.now());
+      if (stripId === 'weekStrip' || stripId === 'historyWeekStrip') {
+        const day = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+        const dayNum = String(date.getDate()).padStart(2, '0');
+        const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+        return `${day} ${dayNum} ${month} · ${formatTimelinePoint(timestamp, false)}`;
+      }
+      return `TODAY · ${formatTimelinePoint(timestamp, false)}`;
+    }
+
+    function setTimelineScrubMarker(strip, percent) {
+      let marker = strip.querySelector('.timeline-scrub-marker');
+      if (!marker) {
+        marker = document.createElement('div');
+        marker.className = 'timeline-scrub-marker';
+        strip.appendChild(marker);
+      }
+      marker.style.left = `${Math.max(0, Math.min(100, percent))}%`;
+      marker.hidden = false;
+    }
+
+    function hideTimelineScrubMarker(strip) {
+      const marker = strip.querySelector('.timeline-scrub-marker');
+      if (marker) marker.hidden = true;
+    }
+
+    function updateTimelineScrub(strip, event) {
+      const bounds = getTimelineBoundsForStrip(strip.id);
+      if (!bounds) return;
+      const rect = strip.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+      const timestamp = bounds.startMs + (bounds.endMs - bounds.startMs) * ratio;
+      setTimelineScrubMarker(strip, ratio * 100);
+      setTimelineInfo(strip.id, describeTimelineScrub(strip.id, timestamp), '#ffffff');
+    }
+
+    function bindTimelineScrub(stripId) {
+      const strip = document.getElementById(stripId);
+      if (!strip || strip.dataset.scrubBound === 'true') return;
+      strip.dataset.scrubBound = 'true';
+
+      strip.addEventListener('pointerdown', event => {
+        if (event.target.closest('.timeline-duration-segment, .timeline-count-marker')) return;
+        strip.setPointerCapture?.(event.pointerId);
+        updateTimelineScrub(strip, event);
+      });
+      strip.addEventListener('pointermove', event => {
+        if (event.buttons !== 1 && event.pointerType !== 'touch') return;
+        updateTimelineScrub(strip, event);
+      });
+      strip.addEventListener('pointerleave', () => hideTimelineScrubMarker(strip));
+      strip.addEventListener('lostpointercapture', () => hideTimelineScrubMarker(strip));
+    }
+
     function bindTimelineInfo(el, stripId, text, color) {
       el.tabIndex = 0;
       el.setAttribute('aria-label', text);
@@ -5433,6 +5540,10 @@ function scheduleMathRefresh() {
         strip.dataset.marker = settings.currentMarker ? 'on' : 'off';
         strip.style.setProperty('--now-marker-color', settings.nowMarkerFill || '#ffffff');
       });
+      if ((historyTimelineWeekKey || currentWeekKey) !== currentWeekKey) {
+        document.getElementById('historyDayStrip')?.setAttribute('data-marker', 'off');
+        document.getElementById('historyWeekStrip')?.setAttribute('data-marker', 'off');
+      }
       document.body.dataset.dashboardEvents = settings.events ? 'on' : 'off';
       document.body.dataset.dashboardSun = settings.sunMarkers ? 'on' : 'off';
     }
@@ -5440,6 +5551,8 @@ function scheduleMathRefresh() {
     function renderTimelineOverlays() {
       const dayBounds = getDayBoundsMs();
       const weekBounds = getWeekBoundsMs(currentWeekKey);
+      const historyDayBounds = getHistoryTimelineDayBounds();
+      const historyWeekBounds = getWeekBoundsMs(historyTimelineWeekKey || currentWeekKey);
       const settings = normalizeDashboardSettings(dashboardSettings);
 
       renderTimelineDividers('dayStrip', 'dayDividerLayer', settings.dayBlocks, settings.dayDividers);
@@ -5452,14 +5565,15 @@ function scheduleMathRefresh() {
       renderTimelineCounterEvents('dayStrip', 'dayCountLayer', dayBounds, topTimelineFlag);
       renderTimelineDurationSegments('weekStrip', 'weekDurationLayer', weekBounds, topTimelineFlag);
       renderTimelineCounterEvents('weekStrip', 'weekCountLayer', weekBounds, topTimelineFlag);
-      renderTimelineDurationSegments('historyDayStrip', 'historyDayDurationLayer', dayBounds, 'showInHistory');
-      renderTimelineCounterEvents('historyDayStrip', 'historyDayCountLayer', dayBounds, 'showInHistory');
-      renderTimelineDurationSegments('historyWeekStrip', 'historyWeekDurationLayer', weekBounds, 'showInHistory');
-      renderTimelineCounterEvents('historyWeekStrip', 'historyWeekCountLayer', weekBounds, 'showInHistory');
+      renderTimelineDurationSegments('historyDayStrip', 'historyDayDurationLayer', historyDayBounds, 'showInHistory');
+      renderTimelineCounterEvents('historyDayStrip', 'historyDayCountLayer', historyDayBounds, 'showInHistory');
+      renderTimelineDurationSegments('historyWeekStrip', 'historyWeekDurationLayer', historyWeekBounds, 'showInHistory');
+      renderTimelineCounterEvents('historyWeekStrip', 'historyWeekCountLayer', historyWeekBounds, 'showInHistory');
       setTimelineLayerVisibility('dayStrip', settings.events);
       setTimelineLayerVisibility('weekStrip', settings.events);
       setTimelineLayerVisibility('historyDayStrip', settings.events);
       setTimelineLayerVisibility('historyWeekStrip', settings.events);
+      ['dayStrip', 'weekStrip', 'historyDayStrip', 'historyWeekStrip'].forEach(bindTimelineScrub);
       applyDashboardSettingsToStrips();
     }
 
@@ -5470,7 +5584,7 @@ function scheduleMathRefresh() {
         weekEl.innerHTML = `<span>${currentWeekKey}</span><span>${formatNumericDateRange(range.start, range.end)}</span>`;
       }
       const historyWeekMeta = document.getElementById('historyWeekMeta');
-      if (historyWeekMeta) historyWeekMeta.textContent = currentWeekKey;
+      if (historyWeekMeta) historyWeekMeta.textContent = historyTimelineWeekKey || currentWeekKey;
       
       updateHeaderTime();
     }
@@ -5503,7 +5617,13 @@ function scheduleMathRefresh() {
         const dayNameFull = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
         dayDateEl.innerHTML = `<span>${day} ${monthName} ${dayNameFull}</span><span>${hours}:${minutes}:${seconds}</span>`;
         const historyDayMeta = document.getElementById('historyDayMeta');
-        if (historyDayMeta) historyDayMeta.textContent = `${day} ${monthName}`;
+        if (historyDayMeta) {
+          const historyDayDate = new Date(getHistoryTimelineDayBounds().startMs);
+          const historyDay = String(historyDayDate.getDate()).padStart(2, '0');
+          const historyMonthName = historyDayDate.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+          const historyDayName = historyDayDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+          historyDayMeta.textContent = `${historyDayName} ${historyDay} ${historyMonthName}`;
+        }
       }
 
       // Week percent
@@ -5516,6 +5636,9 @@ function scheduleMathRefresh() {
       const weekStripFill = document.getElementById('weekStripFill');
       const historyDayStripFill = document.getElementById('historyDayStripFill');
       const historyWeekStripFill = document.getElementById('historyWeekStripFill');
+      const selectedHistoryWeek = historyTimelineWeekKey || currentWeekKey;
+      const historyDayProgress = selectedHistoryWeek === currentWeekKey ? dayProgress : 100;
+      const historyWeekProgress = selectedHistoryWeek === currentWeekKey ? weekProgress : 100;
       
       if (dayStripFill) {
         dayStripFill.parentElement?.style.setProperty('--strip-progress', `${dayProgress}%`);
@@ -5524,9 +5647,9 @@ function scheduleMathRefresh() {
         dayStripFill.style.background = settings.dayFill || getDaySkyGradient();
       }
       if (historyDayStripFill) {
-        historyDayStripFill.parentElement?.style.setProperty('--strip-progress', `${dayProgress}%`);
+        historyDayStripFill.parentElement?.style.setProperty('--strip-progress', `${historyDayProgress}%`);
         historyDayStripFill.style.width = '100%';
-        historyDayStripFill.style.transform = `scaleX(${dayProgress / 100})`;
+        historyDayStripFill.style.transform = `scaleX(${historyDayProgress / 100})`;
         historyDayStripFill.style.background = settings.dayFill || getDaySkyGradient();
       }
       
@@ -5536,8 +5659,8 @@ function scheduleMathRefresh() {
         weekStripFill.style.background = settings.weekFill || 'var(--week-strip-color)';
       }
       if (historyWeekStripFill) {
-        historyWeekStripFill.parentElement?.style.setProperty('--strip-progress', `${weekProgress}%`);
-        historyWeekStripFill.style.width = `${weekProgress}%`;
+        historyWeekStripFill.parentElement?.style.setProperty('--strip-progress', `${historyWeekProgress}%`);
+        historyWeekStripFill.style.width = `${historyWeekProgress}%`;
         historyWeekStripFill.style.background = settings.weekFill || 'var(--week-strip-color)';
       }
 
@@ -5556,7 +5679,7 @@ function scheduleMathRefresh() {
         return;
       }
 
-      const allWeeks = Object.keys(weekData).sort().reverse();
+      const allWeeks = getHistoryWeekKeys();
       if (allWeeks.length === 0) {
         statsEl.innerHTML = '<div style="padding: 16px; text-align: center; opacity: 0.5; font-size: 12px;">No data yet</div>';
         updateHistoryChrome();
@@ -5571,7 +5694,8 @@ function scheduleMathRefresh() {
       html += '</tr></thead><tbody>';
 
       allWeeks.forEach(week => {
-        html += `<tr><td>${week}</td>`;
+        const activeClass = week === (historyTimelineWeekKey || currentWeekKey) ? ' class="history-week-selected"' : '';
+        html += `<tr data-history-week="${escapeHtml(week)}"${activeClass}><td>${week}</td>`;
         historyHabits.forEach(h => {
           const idx = HABITS.indexOf(h);
           const weekObj = weekData[week];
@@ -5692,6 +5816,10 @@ function scheduleMathRefresh() {
           // Keep highlight visible for a moment on touch
           setTimeout(clearHighlight, 500);
         }, { passive: true });
+      });
+
+      table.querySelectorAll('tbody tr[data-history-week]').forEach(row => {
+        row.addEventListener('click', () => setHistoryTimelineWeek(row.dataset.historyWeek));
       });
     }
 
@@ -5934,6 +6062,7 @@ function importData() {
       loadCounterChangeLog();
 
       currentWeekKey = getWeekKey();
+      historyTimelineWeekKey = currentWeekKey;
       ensureWeekExists();
       renderHabits();
       renderLayoutEditor();
@@ -5988,6 +6117,7 @@ function importData() {
       loadPinColors();
       syncPinsFromState();
       currentWeekKey = getWeekKey();
+      historyTimelineWeekKey = currentWeekKey;
       ensureWeekExists();
       renderHabits();
       renderLayoutEditor();
@@ -6720,6 +6850,7 @@ function openInfoModal() {
         rolloverDurationStatesForNewWeek(lastWeekKey, currentWeekKey);
       }
       localStorage.setItem('trckng_last_week_key', currentWeekKey);
+      historyTimelineWeekKey = currentWeekKey;
       
       runWithoutCloudDirty(() => ensureWeekExists());
 
@@ -6768,6 +6899,10 @@ function openInfoModal() {
       if (layoutInfoBtn) layoutInfoBtn.addEventListener('click', openInfoModal);
       const historyCorrectBtn = document.getElementById('btnHistoryCorrect');
       if (historyCorrectBtn) historyCorrectBtn.addEventListener('click', openDurationCorrectionModal);
+      const historyPrevWeekBtn = document.getElementById('btnHistoryPrevWeek');
+      if (historyPrevWeekBtn) historyPrevWeekBtn.addEventListener('click', () => shiftHistoryTimelineWeek(1));
+      const historyNextWeekBtn = document.getElementById('btnHistoryNextWeek');
+      if (historyNextWeekBtn) historyNextWeekBtn.addEventListener('click', () => shiftHistoryTimelineWeek(-1));
       const cellEditHelpBtn = document.getElementById('btnCellEditHelp');
       if (cellEditHelpBtn) {
         cellEditHelpBtn.addEventListener('click', () => togglePanelVisibility('cellEditHelpPanel'));
