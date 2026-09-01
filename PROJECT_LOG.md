@@ -242,6 +242,60 @@
 - Removed the separate HISTORY event-log UI from this iteration; event history remains stored for undo/timeline work, but the table-based history expansion will be designed separately.
 - Bumped app/export/cache version through `v1.33.20`.
 
+#### v1.33.20 Iteration Summary
+
+This iteration turned the top day/week progress strips into a more useful orientation and inspection layer without replacing the main tracker.
+
+What changed:
+
+- The top day/week rows now separate meta text from the strips: date/time or week/range on the left, progress percent on the right, and an inspector in the center.
+- Hover/tap/focus on a strip segment or marker updates the center inspector.
+- Inspector text uses a small colored dot from the source cell, while the text itself stays white for readability.
+- `MM:SS`, `MIN`, `SEC`, and `SLEEP` now share span-session recording so they can render as timeline blocks.
+- `Unit`/counter events render as timeline markers, with inspector text showing time, delta, previous/current value, and PIN.
+- Each cell has a `Timeline` flag in the edit modal. It defaults off, so the top strips stay quiet unless a cell is explicitly opted in.
+- DASH has `All pins` and `All data`: `All pins` controls PIN scope, while `All data` temporarily shows all History-visible events on the top strips.
+- HISTORY has its own day/week strips and now shows History-visible events there, independent of the per-cell Timeline flag.
+- Sleep was added as a duration-style module with display modes and rolling recent/average behavior.
+- `RESET CELL` clears a cell's label, type, color, settings, values, history, sessions, and runtime state.
+
+Important product decision:
+
+- Do not make a separate free-floating event list in HISTORY yet.
+- Event data should become useful inside the history table/review workflow: weekly rows, cell columns, expandable details, and later timeline lanes.
+- Keep v1 usable and stable; deeper event architecture belongs to the next Event Layer / Timeline work.
+
+#### Next Steps From This Discussion
+
+1. Header inspector polish
+   - Test desktop and phone readability.
+   - Decide whether inspector text should persist after tap on mobile or clear automatically.
+   - Consider a small active-source affordance when `All data` is enabled.
+
+2. HISTORY table expansion
+   - Keep the weekly summary table as the main History surface for now.
+   - Make weeks or cells expandable.
+   - Expanded state should show the event/change history related to that week/cell: Unit clicks, undo state, value/money changes, and span/sleep sessions.
+   - Prefer grouped display by week -> day -> cell/event, rather than a separate disconnected log.
+
+3. Event data model
+   - Keep current `counterChangeLog` and `durationSessions` working.
+   - Add a generic Event Layer only after projections are clearly defined.
+   - Record undo as an event/correction, not just hidden state.
+   - Later include layout, reset, import/sync, formula, alarm/countdown, and module setting changes.
+
+4. Span / Duration unification
+   - Treat `MM:SS`, `MIN`, `SEC`, and `SLEEP` as one Span / Duration family with different display modes.
+   - Keep Sleep as a special preset with sleep-specific summaries.
+   - Keep Alarm / Countdown separate because they are notification/reminder modules, not measured activity spans.
+
+5. DASH controls
+   - Test whether `All data` is enough or whether it needs more filters.
+   - Possible future controls: selected PINs, selected cell types, span-only/point-only, density limit, text on/off, strip style.
+
+6. Future timeline review
+   - After table expansion works, design a richer timeline review surface with lanes, zoom, filters, and corrections.
+
 ### Parallel v2 Planning Re-Anchor
 
 - Decision: keep the current root app stable for daily use instead of forcing every future idea through the existing 3x3/PIN interface.
@@ -277,3 +331,17 @@
 - Decision: segments are derived from neighboring boundaries (`start -> checkpoint -> checkpoint -> stop`) instead of stored as separate records in MVP.
 - Media direction: optional camera snapshots or `128x128` thumbnails are a later, privacy-sensitive attachment layer. They should be opt-in and local-first by default.
 - Documentation rule: do not record real routes, place names, private event sequences, faces, rooms, screens, or raw media in repo docs.
+
+### v1.33.21-v1.33.22 Timeline Correction + Mobile Usability
+
+- Added `CORRECT` in HISTORY for manual repair of duration-style sessions when the user forgets to start or stop tracking at the right moment.
+- Added a `CORRECT TIME` modal for current-PIN duration modules: choose a Sleep/Duration cell, edit saved session start/end times, delete mistaken sessions, or add a missed session.
+- Correction writes through the real v1 data model instead of only changing display totals: `durationSessions`, `durationStates.accumulated`, `weekData`, History, timeline overlays, math refresh, and cloud dirty state are updated together.
+- Added handling for affected week buckets when a corrected session moves between weeks, so old and new weekly totals stay aligned.
+- Added landscape HISTORY timeline mode for phones: when the phone is rotated, the history screen hides secondary dashboard controls and makes the day/week timeline strips much larger.
+- Added timeline scrub interaction: tapping or dragging on day/week strips shows a white marker and inspector time for the selected point.
+- Added HISTORY week navigation with `PREV` / `NEXT`, plus selectable weekly rows in the History table. The landscape timeline can now inspect previous weeks, not only the current week.
+- For selected past weeks, history timeline strips use full-week/full-day display and hide the current-time marker to avoid implying that "now" belongs to an old week.
+- Bumped app/cache/export visible version to `1.33.21` for the timeline navigation work.
+- Added a simple mobile modal usability fix in `1.33.22`: large bottom spacing for scrollable modal content so Safari/PWA bottom bars do not hide `SAVE` and other final controls.
+- Published both feature sets to `main` for GitHub Pages at `https://comp1mov.github.io/TRCKNG-SSTM/`, after first landing them on the working branch `codex/v125-stabilization`.
