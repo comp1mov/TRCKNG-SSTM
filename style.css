@@ -1226,6 +1226,23 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       border-bottom: 1px solid var(--stroke-strong, rgba(80,80,80,1));
       color: var(--app-text, #fff);
     }
+    .history-correct-btn {
+      margin-top: 5px;
+      padding: 5px 9px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.04);
+      color: var(--app-text, #fff);
+      font-family: inherit;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .history-correct-btn:hover,
+    .history-correct-btn:focus-visible {
+      background: rgba(255,255,255,0.12);
+      outline: none;
+    }
     .history-timeline-stack {
       width: min(100%, var(--field-max-width));
       margin: 0 auto 8px;
@@ -1813,6 +1830,74 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
     .cell-edit-input:focus {
       outline: none;
       border-color: #35f2a3;
+    }
+
+    .correction-modal-content {
+      max-width: 620px;
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+
+    .correction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 42px;
+    }
+
+    .correction-empty {
+      padding: 14px 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.48);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .correction-session {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      align-items: end;
+      padding: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .correction-session-meta {
+      grid-column: 1 / -1;
+      color: rgba(255,255,255,0.68);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-align: center;
+      text-transform: uppercase;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .correction-session-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .correction-action-btn,
+    .correction-add-btn {
+      min-height: 42px;
+    }
+
+    .correction-action-btn.danger {
+      color: #ff6b6b;
+    }
+
+    @media (max-width: 560px) {
+      .correction-session {
+        grid-template-columns: 1fr;
+      }
+
+      .correction-session-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
     .type-selector {

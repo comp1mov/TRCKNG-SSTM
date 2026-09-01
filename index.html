@@ -94,7 +94,10 @@
 
     <div class="view-panel" id="historyView" hidden>
       <div class="history-toolbar">
-        <div class="history-title" id="historyTitle">PIN 01</div>
+        <div>
+          <div class="history-title" id="historyTitle">PIN 01</div>
+          <button class="history-correct-btn" id="btnHistoryCorrect" type="button">CORRECT</button>
+        </div>
         <div class="history-meta" id="historyMeta">0 weeks</div>
       </div>
       <div class="history-timeline-stack">
@@ -706,6 +709,35 @@
         <button class="modal-btn" id="currencyModalReset">RESET</button>
         <button class="modal-btn" id="currencyModalCancel">CANCEL</button>
         <button class="modal-btn" id="currencyModalSave">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DURATION CORRECTION MODAL -->
+  <div class="modal" id="durationCorrectionModal">
+    <div class="modal-content correction-modal-content">
+      <div class="modal-title">CORRECT TIME</div>
+      <div class="cell-edit-field">
+        <div class="cell-edit-label">Cell</div>
+        <select class="cell-edit-input" id="correctionHabitSelect"></select>
+      </div>
+      <div class="correction-list" id="correctionSessionList"></div>
+      <div class="cell-edit-section">
+        <div class="cell-edit-label" style="margin-bottom: 8px;">Add missed session</div>
+        <div class="cell-edit-grid-2">
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">Start</div>
+            <input type="datetime-local" class="cell-edit-input" id="correctionAddStart" autocomplete="off">
+          </div>
+          <div class="cell-edit-field">
+            <div class="cell-edit-label">End</div>
+            <input type="datetime-local" class="cell-edit-input" id="correctionAddEnd" autocomplete="off">
+          </div>
+        </div>
+        <button class="modal-btn correction-add-btn" id="correctionAddSession" type="button">ADD SESSION</button>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn" id="correctionClose" type="button">DONE</button>
       </div>
     </div>
   </div>

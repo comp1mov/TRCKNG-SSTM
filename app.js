@@ -147,6 +147,7 @@
     let previousWeekPreviewTimer = null;
     let suppressNextHistoryClick = false;
     let resetCellConfirmTimer = null;
+    let correctionHabit = null;
 
     let weekData = {};
     let habitLabels = {};
@@ -3010,6 +3011,269 @@ function applyTheme() {
       }
       
       return { main, breakdown };
+    }
+
+    function toDateTimeLocalValue(timestamp) {
+      const date = new Date(Number(timestamp) || Date.now());
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 16);
+    }
+
+    function parseDateTimeLocalValue(value) {
+      if (!value) return null;
+      const timestamp = new Date(value).getTime();
+      return Number.isFinite(timestamp) ? timestamp : null;
+    }
+
+    function getCorrectableDurationHabits() {
+      return HABITS.filter(habit => {
+        const label = habitLabels[habit]?.trim();
+        return label && isSpanDurationType(habitTypes[habit]);
+      });
+    }
+
+    function getCurrentWeekDurationSessions(habit) {
+      return normalizeDurationSessions(durationSessions)
+        .filter(session => session.habit === habit && session.week === currentWeekKey);
+    }
+
+    function recalculateDurationHabit(habit) {
+      const type = habitTypes[habit];
+      const completed = getCurrentWeekDurationSessions(habit);
+      const completedSeconds = completed.reduce((sum, session) => {
+        return sum + Math.max(0, Math.floor((Number(session.endTime) - Number(session.startTime)) / 1000));
+      }, 0);
+      const latestCompleted = completed
+        .slice()
+        .sort((a, b) => Number(b.endTime) - Number(a.endTime))[0];
+      const previousState = durationStates[habit] || {};
+      const lastSession = latestCompleted
+        ? Math.max(0, Math.floor((Number(latestCompleted.endTime) - Number(latestCompleted.startTime)) / 1000))
+        : Number(previousState.lastSession) || 0;
+
+      if (previousState.isRunning && previousState.startTime) {
+        durationStates[habit] = {
+          startTime: Number(previousState.startTime),
+          isRunning: true,
+          accumulated: completedSeconds,
+          lastSession
+        };
+      } else {
+        durationStates[habit] = {
+          startTime: null,
+          isRunning: false,
+          accumulated: completedSeconds,
+          lastSession
+        };
+      }
+
+      ensureWeekExists();
+      weekData[currentWeekKey][habit] = spanTypeStoresMinutes(type)
+        ? Math.floor(completedSeconds / 60)
+        : completedSeconds;
+    }
+
+    function getDurationSessionSecondsForWeek(habit, weekKey) {
+      return normalizeDurationSessions(durationSessions)
+        .filter(session => session.habit === habit && session.week === weekKey)
+        .reduce((sum, session) => {
+          return sum + Math.max(0, Math.floor((Number(session.endTime) - Number(session.startTime)) / 1000));
+        }, 0);
+    }
+
+    function recalculateDurationWeekData(habit, affectedWeeks = [currentWeekKey]) {
+      const type = habitTypes[habit];
+      Array.from(new Set(affectedWeeks.filter(Boolean))).forEach(weekKey => {
+        if (weekKey === currentWeekKey) return;
+        if (!weekData[weekKey] || typeof weekData[weekKey] !== 'object') weekData[weekKey] = {};
+        const totalSeconds = getDurationSessionSecondsForWeek(habit, weekKey);
+        weekData[weekKey][habit] = spanTypeStoresMinutes(type)
+          ? Math.floor(totalSeconds / 60)
+          : totalSeconds;
+      });
+    }
+
+    function persistDurationCorrection(habit, affectedWeeks = [currentWeekKey]) {
+      durationSessions = normalizeDurationSessions(durationSessions);
+      recalculateDurationHabit(habit);
+      recalculateDurationWeekData(habit, affectedWeeks);
+      saveDurationSessions();
+      saveDurationStates();
+      saveWeekData();
+      renderHabits();
+      updateStats();
+      scheduleMathRefresh();
+    }
+
+    function renderCorrectionHabitSelect() {
+      const select = document.getElementById('correctionHabitSelect');
+      if (!select) return;
+      const habits = getCorrectableDurationHabits();
+      if (!habits.includes(correctionHabit)) correctionHabit = habits[0] || null;
+
+      select.innerHTML = habits.map(habit => {
+        const label = habitLabels[habit] || habit;
+        const selected = habit === correctionHabit ? ' selected' : '';
+        return `<option value="${escapeHtml(habit)}"${selected}>${escapeHtml(label)}</option>`;
+      }).join('');
+      select.disabled = habits.length === 0;
+    }
+
+    function renderDurationCorrectionModal() {
+      renderCorrectionHabitSelect();
+      const list = document.getElementById('correctionSessionList');
+      if (!list) return;
+
+      if (!correctionHabit) {
+        list.innerHTML = '<div class="correction-empty">No sleep or duration cells on this PIN</div>';
+        return;
+      }
+
+      const sessions = getCurrentWeekDurationSessions(correctionHabit)
+        .slice()
+        .sort((a, b) => Number(b.startTime) - Number(a.startTime));
+      const state = durationStates[correctionHabit] || {};
+      const runningRow = state.isRunning && state.startTime ? [{
+        id: '__running__',
+        startTime: Number(state.startTime),
+        endTime: Date.now(),
+        running: true
+      }] : [];
+
+      const rows = runningRow.concat(sessions);
+      if (!rows.length) {
+        list.innerHTML = '<div class="correction-empty">No sessions this week</div>';
+        return;
+      }
+
+      list.innerHTML = rows.map(session => {
+        const startTime = Number(session.startTime) || Date.now();
+        const endTime = Math.max(startTime, Number(session.endTime) || Date.now());
+        const seconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
+        const duration = formatDurationSec(seconds).main;
+        const status = session.running ? 'running' : 'saved';
+        const deleteBtn = session.running
+          ? ''
+          : `<button class="modal-btn correction-action-btn danger" data-correction-action="delete" data-session-id="${escapeHtml(session.id)}" type="button">DELETE</button>`;
+
+        return `
+          <div class="correction-session" data-session-id="${escapeHtml(session.id)}">
+            <div class="correction-session-meta">${escapeHtml(status)} · ${escapeHtml(duration)}</div>
+            <div class="cell-edit-field">
+              <div class="cell-edit-label">Start</div>
+              <input type="datetime-local" class="cell-edit-input" data-correction-field="start" value="${toDateTimeLocalValue(startTime)}" autocomplete="off">
+            </div>
+            <div class="cell-edit-field">
+              <div class="cell-edit-label">End</div>
+              <input type="datetime-local" class="cell-edit-input" data-correction-field="end" value="${toDateTimeLocalValue(endTime)}" autocomplete="off">
+            </div>
+            <div class="correction-session-actions">
+              <button class="modal-btn correction-action-btn" data-correction-action="save" data-session-id="${escapeHtml(session.id)}" type="button">SAVE</button>
+              ${deleteBtn}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setCorrectionAddDefaults() {
+      const end = new Date();
+      end.setSeconds(0, 0);
+      const start = new Date(end);
+      start.setHours(start.getHours() - 1);
+      const startInput = document.getElementById('correctionAddStart');
+      const endInput = document.getElementById('correctionAddEnd');
+      if (startInput) startInput.value = toDateTimeLocalValue(start.getTime());
+      if (endInput) endInput.value = toDateTimeLocalValue(end.getTime());
+    }
+
+    function openDurationCorrectionModal() {
+      correctionHabit = correctionHabit || getCorrectableDurationHabits()[0] || null;
+      setCorrectionAddDefaults();
+      renderDurationCorrectionModal();
+      document.getElementById('durationCorrectionModal')?.classList.add('visible');
+    }
+
+    function closeDurationCorrectionModal() {
+      document.getElementById('durationCorrectionModal')?.classList.remove('visible');
+    }
+
+    function saveCorrectionSession(sessionId) {
+      if (!correctionHabit || !sessionId) return;
+      const row = Array.from(document.querySelectorAll('#correctionSessionList [data-session-id]'))
+        .find(el => el.dataset.sessionId === sessionId);
+      if (!row) return;
+      const start = parseDateTimeLocalValue(row.querySelector('[data-correction-field="start"]')?.value);
+      const end = parseDateTimeLocalValue(row.querySelector('[data-correction-field="end"]')?.value);
+      if (!start || !end || end <= start) {
+        alert('End must be after start');
+        return;
+      }
+
+      if (sessionId === '__running__') {
+        const affectedWeeks = [currentWeekKey, getWeekKey(new Date(start))];
+        durationStates[correctionHabit] = {
+          startTime: start,
+          isRunning: true,
+          accumulated: Number(durationStates[correctionHabit]?.accumulated) || 0,
+          lastSession: Number(durationStates[correctionHabit]?.lastSession) || 0
+        };
+        recordDurationSession(correctionHabit, start, end, getSpanSessionSource(habitTypes[correctionHabit]));
+        durationStates[correctionHabit] = {
+          startTime: null,
+          isRunning: false,
+          accumulated: Number(durationStates[correctionHabit]?.accumulated) || 0,
+          lastSession: Math.floor((end - start) / 1000)
+        };
+        persistDurationCorrection(correctionHabit, affectedWeeks);
+      } else {
+        const previousSession = normalizeDurationSessions(durationSessions)
+          .find(session => session.id === sessionId);
+        const affectedWeeks = [
+          currentWeekKey,
+          previousSession?.week,
+          getWeekKey(new Date(start))
+        ];
+        durationSessions = normalizeDurationSessions(durationSessions).map(session => {
+          if (session.id !== sessionId) return session;
+          return {
+            ...session,
+            label: habitLabels[correctionHabit] || session.label || '',
+            color: resolveHabitColor(correctionHabit, null, session.color),
+            startTime: start,
+            endTime: end,
+            week: getWeekKey(new Date(start)),
+            source: getSpanSessionSource(habitTypes[correctionHabit])
+          };
+        });
+        persistDurationCorrection(correctionHabit, affectedWeeks);
+      }
+
+      renderDurationCorrectionModal();
+    }
+
+    function deleteCorrectionSession(sessionId) {
+      if (!correctionHabit || !sessionId || sessionId === '__running__') return;
+      const previousSession = normalizeDurationSessions(durationSessions)
+        .find(session => session.id === sessionId);
+      durationSessions = normalizeDurationSessions(durationSessions).filter(session => session.id !== sessionId);
+      persistDurationCorrection(correctionHabit, [currentWeekKey, previousSession?.week]);
+      renderDurationCorrectionModal();
+    }
+
+    function addCorrectionSession() {
+      if (!correctionHabit) return;
+      const start = parseDateTimeLocalValue(document.getElementById('correctionAddStart')?.value);
+      const end = parseDateTimeLocalValue(document.getElementById('correctionAddEnd')?.value);
+      if (!start || !end || end <= start) {
+        alert('End must be after start');
+        return;
+      }
+
+      recordDurationSession(correctionHabit, start, end, getSpanSessionSource(habitTypes[correctionHabit]));
+      persistDurationCorrection(correctionHabit, [currentWeekKey, getWeekKey(new Date(start))]);
+      setCorrectionAddDefaults();
+      renderDurationCorrectionModal();
     }
 
     function formatSleepStoredMinutes(totalMinutes) {
@@ -6502,6 +6766,8 @@ function openInfoModal() {
       if (layoutNotifyBtn) layoutNotifyBtn.addEventListener('click', requestNotificationPermission);
       const layoutInfoBtn = document.getElementById('btnLayoutInfo');
       if (layoutInfoBtn) layoutInfoBtn.addEventListener('click', openInfoModal);
+      const historyCorrectBtn = document.getElementById('btnHistoryCorrect');
+      if (historyCorrectBtn) historyCorrectBtn.addEventListener('click', openDurationCorrectionModal);
       const cellEditHelpBtn = document.getElementById('btnCellEditHelp');
       if (cellEditHelpBtn) {
         cellEditHelpBtn.addEventListener('click', () => togglePanelVisibility('cellEditHelpPanel'));
@@ -6557,6 +6823,19 @@ function openInfoModal() {
       saveCurrencySettings();
       renderHabits();
       closeCurrencyModal();
+    });
+
+    document.getElementById('correctionClose').addEventListener('click', closeDurationCorrectionModal);
+    document.getElementById('correctionHabitSelect').addEventListener('change', event => {
+      correctionHabit = event.target.value || null;
+      renderDurationCorrectionModal();
+    });
+    document.getElementById('correctionAddSession').addEventListener('click', addCorrectionSession);
+    document.getElementById('correctionSessionList').addEventListener('click', event => {
+      const action = event.target?.dataset?.correctionAction;
+      const sessionId = event.target?.dataset?.sessionId;
+      if (action === 'save') saveCorrectionSession(sessionId);
+      if (action === 'delete') deleteCorrectionSession(sessionId);
     });
 
     document.getElementById('themeCancel').addEventListener('click', closeThemeModal);
