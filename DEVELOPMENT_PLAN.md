@@ -105,18 +105,23 @@ Deferred:
 
 ## Next Phases
 
+Strategy update, 2026-08-09:
+
+The current root app should remain stable for daily use, but the future interface should not be forced through the existing 3x3 surface. The next major implementation track is a parallel `/v2/` interface where PIN Fields + Grid + Views are the starting model.
+
 1. Done: Phase 4A Supabase manual account/snapshot flow.
 2. Done: Phase 4B account hardening with hidden config and secret sign-up gesture.
 3. Done: Phase 5A safe autosync with dirty-state debounce and cloud update checks.
 4. Done: Phase 5B sync recovery for fresh-device cloud bootstrap, wake checks, main-screen sync button, and conflict pause.
 5. Deferred: Phase 5C conflict review UI with choose / merge / preserve-both flows.
-6. Next: Phase 2D Responsive Field Shell.
-7. Phase 2C LAYOUT cleanup and same-field edit mode.
-8. Phase 2E Cell Cycle Architecture for daily/weekly/monthly/never reset.
-9. Phase 2F Header / Week / PIN visual polish.
-10. Phase 2G drag reorder and resize handles.
-11. Phase 5D mobile install/update polish for phone use.
-12. Phase 3: weekly cycle review and Goal Time.
+6. Stable-track: keep v1 root usable, with only safe fixes and small UI corrections.
+7. Next major track: create `/v2/` static interface with its own PIN Fields + Grid + Views data model.
+8. Add v2 world store: pins, modules, views, links, presets, settings.
+9. Add v2 10x10 grid renderer per PIN and view switcher inside the active PIN.
+10. Add v1 one-way import into v2 after the v2 model can be inspected safely.
+11. Import old 3x3 cells into the larger field while preserving legacy refs and current module behavior.
+12. Add v2 Event Layer and Timeline once module ids exist.
+13. Add presets, direct manipulation, cycles, Goal Time, and sync after the v2 surface is usable.
 
 ## Phase 2C: Layout Editor UX
 
@@ -153,13 +158,15 @@ Scope:
 - Keep PINs and utility controls visually secondary to the field on desktop.
 - Do not add desktop/mobile-specific saved layouts until the single field model feels solid.
 
-Next locked order:
+Previous locked order:
 
 1. LAYOUT cleanup: hidden/empty cells, visibility controls, and no duplicated EDIT surface.
 2. Cell Cycle Architecture: daily, weekly, monthly, and never-reset behavior.
 3. Header / Week / PIN visual polish only after layout behavior is stable.
 4. Drag reorder and resize handles.
 5. Goal Time and richer time-based cells.
+
+This order is now superseded for major work by the parallel `/v2/` Grid + Views interface plan. Keep this section as v1 context, not as the main future interface plan.
 
 ## Phase 5C: Conflict Review UI
 
@@ -172,3 +179,53 @@ Planned flow:
 - Merge only non-overlapping changes automatically, such as different weeks or different cells.
 - Preserve both versions when the same cell/week differs, then let the user choose later.
 - Keep a JSON export fallback before destructive conflict resolution.
+
+## v1.34: History Matrix
+
+Status: next focused v1 History track.
+
+Goal: make `HISTORY` explain tracked data across time, not only list weekly totals.
+
+Why:
+
+- The user needs to understand what happened by day, week, and later month.
+- The current weekly table is too dense once counters, duration sessions, corrections, renamed cells, and timeline events all exist.
+- The landscape phone timeline already gives a strong time-first view; the matrix should become the structured companion to that timeline.
+
+Core idea:
+
+- Horizontal axis is time.
+- Vertical axis is tracked cells/modules.
+- The selected history range controls both the timeline strip and the matrix.
+- The matrix is a projection of existing data, not a new storage system.
+
+MVP order:
+
+1. Add a `HISTORY` display switch for `TABLE` / `MATRIX`, or introduce Matrix as the default expanded table mode if the UI stays simpler.
+2. Build the week matrix first: columns `MON` through `SUN` plus `TOTAL`; rows are History-visible cells from the selected PIN/week.
+3. Use `historyTimelineWeekKey` as the selected week source so `PREV` / `NEXT`, weekly rows, landscape timeline, and matrix stay synchronized.
+4. Duration-like cells (`MM:SS`, `MIN`, `SEC`, `SLEEP`) show per-day duration from `durationSessions`, with corrected sessions reflected automatically.
+5. Counter/value/money-style cells show per-day event buckets from `counterChangeLog` where available.
+6. Old weekly-only data must not be faked into daily values. Show it as a weekly fallback/total when day-level event data does not exist.
+7. Tapping a matrix cell filters or focuses the timeline inspector for that cell/day.
+8. Tapping a duration matrix cell should open the same correction path used by `CORRECT TIME`, scoped to that cell/day when possible.
+9. Add basic filters: `ALL`, `TIME`, `COUNTS`, and `ACTIVE`.
+10. Keep the original table reachable until Matrix proves it covers the important review cases.
+
+Later:
+
+- Add month mode where columns become weeks or days, depending on zoom.
+- Add day mode where columns become hours or time blocks.
+- Add row grouping by PIN, type, or active/archived state.
+- Add richer totals: selected day, selected week, selected month, and visible-filter total.
+- Add expandable cell details for event lists, corrections, and label-change context.
+- Move to a generic Event Layer only after these projections prove what queries the UI really needs.
+
+Design constraints:
+
+- Do not create separate Matrix storage.
+- Preserve v1 slot identity: `cell01` ... `cell09` remain the durable ids.
+- Preserve historical labels from stored event/session snapshots when available.
+- Keep phone portrait usable with horizontal matrix scroll.
+- In phone landscape, prioritize the large timeline first and make the matrix compact below or beside it.
+- Avoid making the matrix feel like a spreadsheet editor; it is a review/control surface for time.

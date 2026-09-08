@@ -73,7 +73,135 @@ Open questions:
 - Should timeline start invisible as a debug panel first?
 - What event types are required for v1?
 
-## 2. Shadow Event Log
+### Current v1 Direction After v1.33.20
+
+Recent implementation changed the order of work:
+
+```text
+Orientation strips first -> table-integrated event details -> generic Event Layer -> full timeline review.
+```
+
+Decisions:
+
+- The top day/week strips are an orientation layer, not the full history UI.
+- The top strips use per-cell `Timeline` by default.
+- DASH `All data` can temporarily show all `History`-visible events on the top strips.
+- HISTORY strips show `History`-visible events regardless of the per-cell `Timeline` flag.
+- The separate standalone event list is not the right primary UI yet.
+- Event details should be integrated into the weekly History table through expandable rows/cells.
+
+Next MVP:
+
+- Add expandable History rows or cells.
+- Keep weekly totals visible.
+- On expand, show event details for that week/cell.
+- Include Unit/Counter changes, undo status, Value/Money changes, and Span/Sleep sessions.
+- Keep current `weekData` table authoritative until event projections are proven.
+- Use existing `counterChangeLog` and `durationSessions` as the first event sources.
+
+Later:
+
+- Add filters for event type, PIN, cell, and date range.
+- Add event-derived summaries beside legacy weekly values.
+- Add correction/editing tools.
+- Move to a generic Event Layer once projection logic is trustworthy.
+
+## 1A. Orientation Strips / Mini Timeline
+
+Status: design and architecture layer for v2, building on the current day/week progress strips.
+
+Problem:
+
+The full timeline is useful for review, but the user also needs fast orientation while actively tracking. The current top strips already show day/week progress, time, and sunrise/sunset. They can become much more informative without becoming a heavy dashboard.
+
+Concept:
+
+Upgrade the top day/week strips into a compact live orientation layer.
+
+```text
+Full timeline = deep review.
+Orientation strips = compressed live signal.
+```
+
+MVP:
+
+- Keep day and week strips visible and simple.
+- Preserve current time/day/week percent.
+- Preserve or improve sunrise/sunset/day-phase markers.
+- Add a data model hook so strips can receive timeline/event projections.
+- Add a per-module setting: show/hide this module in orientation strips.
+- Use the module's color as the default strip color.
+- Show selected timers, sleep/work/session spans, or Event Stopwatch spans as subtle colored marks.
+- Show checkpoint/event ticks only when they remain readable.
+- Start with the week strip as the most useful planning/analysis band.
+- Keep strips visually aligned with the field width.
+
+Later:
+
+- Expand/collapse into a richer mini-dashboard.
+- Dedicated orientation dashboard settings.
+- PIN filters inside the strips.
+- Per-module strip display style: span, point, density, deadline marker.
+- Per-module strip color/contrast override.
+- Deadline pressure markers.
+- Sleep/work/session mini bands.
+- Activity density / heat hints.
+- Artistic waveform-like or sequencer-like rendering.
+- More detailed hover/tap inspection.
+
+Data impact:
+
+- Orientation strips should read derived timeline/event projections, not invent separate storage.
+- Need lightweight daily/weekly projection helpers.
+- Need module flag such as `showInOrientationStrips`.
+- Need module strip display metadata later: `stripStyle`, `stripPriority`, `stripColorOverride`.
+- Need a clear priority system so too many events do not make the strips unreadable.
+- Collapsed and expanded modes can use the same data with different density thresholds.
+
+UI impact:
+
+- The strips become useful instrumentation, not decoration.
+- Collapsed state stays thin.
+- Collapsed state shows only essential colored marks.
+- Expanded state can become a mini dashboard with more labels, bands, and settings.
+- The dashboard should state its date/range and active source/filter, such as active PINs or selected modules.
+- Must not compete with the main tracking field.
+
+Risks:
+
+- Too much information can become visual noise.
+- If strip data is inaccurate, it damages trust.
+- Over-polishing strips before event data exists can waste time.
+
+Open questions:
+
+- Which first signal belongs in the strip: sleep/work spans, active timers, Event Stopwatch, or deadlines?
+- Should strip marks be per active PIN only or all selected PINs?
+- Should expanded mini-dashboard open from day strip, week strip, or a separate button?
+- Should the first implementation draw only the week strip, then later the day strip?
+- Which module types render as spans vs points by default?
+- How artistic can the strip become while staying readable?
+
+### Current v1 Orientation Strip State
+
+Implemented:
+
+- Day and week strips render progress, dividers, current-time marker, sun markers, span blocks, and counter/unit markers.
+- Hover/tap/focus updates the row inspector.
+- Inspector uses a colored source dot plus white text.
+- Per-cell `Timeline` controls top-strip visibility.
+- DASH `All pins` controls PIN scope.
+- DASH `All data` makes the top strips use `History` visibility instead of `Timeline` visibility.
+- HISTORY strips use `History` visibility by default.
+
+Next polish:
+
+- Test density on phone with `All data` enabled.
+- Decide whether inspector should stick after touch.
+- Add clearer visual state when `All data` is enabled.
+- Consider density limiting if all events make the strips too noisy.
+
+## 2. Event Layer
 
 Status: prerequisite for Timeline History.
 
@@ -87,15 +215,17 @@ Start recording events behind the scenes while keeping all current behavior and 
 
 MVP:
 
-- Record `counter.increment`, `counter.decrement`.
-- Record `timer.start`, `timer.pause`, `timer.reset`.
-- Record `value.set`.
-- Record `cell.edit`.
+- Add a generic `eventLog` storage layer while keeping current state authoritative.
+- Double-write existing Unit/Counter, Money, and Value changes from `recordCounterChange()`.
+- Record undo as a compensating event instead of deleting or hiding the original event.
+- Add debug projection to compare event-derived current-week values with legacy `weekData`.
 - Include event export/import.
-- Add a small debug validator that compares derived totals to current weekly values.
+- Keep the visual UI unchanged until the event records are trustworthy.
 
 Later:
 
+- Record `timer.start`, `timer.pause`, `timer.reset`.
+- Record `duration.start`, `duration.stop`.
 - Record all layout changes.
 - Record sync/import/reset events.
 - Record formula recalculations.
@@ -122,24 +252,118 @@ Open questions:
 - Should events use wall-clock time only, or also monotonic session time?
 - How much metadata is useful before it becomes noisy?
 
-## 3. Saved Views Instead Of PINs
+## 2A. Event Stopwatch Module
+
+Status: important v2-native module after the Event Layer shape is clear.
+
+Problem:
+
+Counters and timers track quantities, but the user also needs a general way to start an event, name it, let time run, and add marks inside that event.
+
+Concept:
+
+Add an `Event Stopwatch` module.
+
+It should feel simple:
+
+```text
+press -> optional name/default -> stopwatch runs -> add marks/checkpoints -> stop
+```
+
+Timeline rendering is a projection of that data, not the primary interaction.
+
+MVP:
+
+- Create an Event Stopwatch module type in v2 schema.
+- On start, optionally ask for an event name with a fast default option.
+- Allow the event name to be edited later.
+- Show elapsed time inside the module while the event is active.
+- Add checkpoint marks while the event is active.
+- Store checkpoint time since event start.
+- Store checkpoint delta from previous checkpoint.
+- Derive segments from start/checkpoint/checkpoint/stop boundaries.
+- Allow segment/checkpoint labels to be edited later.
+- Allow optional checkpoint label/category later.
+- Render finished event as a colored span on timeline.
+- Render checkpoints as ticks/callouts on timeline.
+- Later render internal segments between checkpoints.
+- Show simple event archive/detail from the module.
+- Keep it usable from the normal TRACK field so the user does not constantly switch modes.
+
+Later:
+
+- Separate Event mode or global quick-capture overlay.
+- Reusable event category sets.
+- Route/process templates.
+- Media attachments.
+- Low-resolution camera snapshots around `128x128`.
+- Front/back/both-camera capture when supported.
+- Pixel-grid thumbnail rendering inside timeline or module archive.
+
+Data impact:
+
+- Add event types for session start/end and checkpoint add.
+- Store `sessionId` or `groupId` so checkpoint events attach to the parent session.
+- Store event name, start time, end time, elapsed duration, checkpoint elapsed time, checkpoint delta time, category, label, note, color, and source.
+- Derive segment ranges from ordered checkpoints instead of requiring separate segment records in MVP.
+- Media should be stored as attachment refs, not large inline event blobs.
+- Media storage likely belongs in IndexedDB before sync is considered.
+
+UI impact:
+
+- Module tile needs active/inactive states.
+- Active session should show elapsed time and current title.
+- A secondary action should add a checkpoint without stopping the session.
+- The timeline needs a parent span plus checkpoint ticks; later it can show segment coloring/names between ticks.
+- Phone UI must avoid accidental stop/start while moving through the field.
+
+Risks:
+
+- Too much typing can make quick capture useless.
+- Event labels and snapshots are privacy-sensitive.
+- Camera permissions and browser support may be uneven.
+- Media sync can become heavy and risky.
+- Interaction can conflict with normal counters if modes are unclear.
+
+Open questions:
+
+- What is the fastest name-entry flow when starting an event?
+- Should unnamed events auto-use a timestamp/default name?
+- Where should the checkpoint button live inside an active module?
+- Should checkpoint labels be optional, quick categories, free text, or all three?
+- Should segment names be edited only after the event, or also during the event?
+- Should a session auto-stop when another event session starts?
+- Should Event Stopwatch be per-PIN, global, or allowed to appear in multiple PIN timelines?
+- Should snapshots be local-only by default even when normal events sync?
+- Should separate Event mode exist later, or is the grid module enough for v2 beta?
+
+## 3. Saved Views Inside PIN Fields
 
 Status: medium-term architecture.
 
 Problem:
 
-PINs are currently separate pages/workspaces. That is simple, but it limits the future infinite grid model and duplicates data boundaries.
+PINs are currently separate pages/workspaces. That is simple and useful, but each PIN is trapped in a small fixed cell surface.
 
 Concept:
 
-PINs become saved views over a shared world. Each view decides what modules are visible and how the grid/timeline is framed.
+PINs remain fields/workspaces in the first v2 model. Views become saved perspectives inside those PIN fields.
+
+Each view can decide:
+
+- camera/zoom/field position;
+- visible module subset;
+- timeline filters;
+- maybe view-specific layout overrides later.
+
+A single shared world can be reconsidered later, but it should not replace the PIN mental model before v2 is usable.
 
 MVP:
 
 - Keep current 3 PIN buttons.
 - Internally add `views`.
-- Map each PIN to one view.
-- Save view name, color, visible module ids, and layout scope.
+- Give each PIN field at least one default view.
+- Save view name, color, visible module ids, camera/zoom placeholder, and timeline filter scope.
 
 Later:
 
@@ -152,11 +376,13 @@ Later:
 Data model impact:
 
 - Add `views` collection.
-- Decouple modules from PIN-specific storage.
+- Add `pinId` to modules and views.
+- Decouple rendering from fixed `cell01..cell09` slots without forcing all PINs into one shared field.
 
 UI impact:
 
-- PIN switcher may become a view switcher.
+- PIN switcher remains field/workspace navigation.
+- View switcher appears inside or near the active PIN field.
 - LAYOUT edits must clarify whether they affect view layout or module itself.
 
 Risks:
@@ -168,10 +394,11 @@ Open questions:
 
 - Can the same module appear in multiple views with different size/position?
 - Should view layout override module position, or should position be global?
+- When should a shared cross-PIN world be reconsidered?
 
-## 4. Infinite Modular Grid
+## 4. Modular Field / Grid
 
-Status: future architecture after saved views.
+Status: active primary direction, with full infinite canvas deferred.
 
 Problem:
 
@@ -179,18 +406,22 @@ The current 3-column field cannot support large modular dashboards, node-like wo
 
 Concept:
 
-Create a large grid/canvas where modules can be positioned freely, zoomed, panned, grouped, connected, and viewed through saved windows.
+Create a modular field where modules can be positioned, resized, grouped, connected, and viewed through saved windows. The near-term implementation can stay CSS Grid based; full pan/zoom infinite canvas comes later.
 
 MVP:
 
-- Expand current CSS grid model to support more rows.
+- Start v2 as a 10x10 modular field per PIN.
+- Import old v1 3x3 cells into a familiar area inside that larger field.
+- Keep current size presets first: `1x1`, `2x1`, `1x2`, `2x2`.
 - Add drag reorder and resize handles.
 - Add hidden/visible modules.
 - Add view-specific filters.
+- Keep tracking actions separate from edit/navigation gestures.
 
 Later:
 
 - Real pan/zoom canvas.
+- Field expansion beyond 10x10.
 - Minimap.
 - Group frames.
 - Connection lines.
@@ -644,3 +875,85 @@ Open questions:
 
 - Should empty cells count as modules or slots?
 - Should hidden modules still appear in timeline?
+
+## 14. History Matrix
+
+Status: next v1 History feature after timeline correction and week navigation.
+
+Problem:
+
+HISTORY now has useful raw ingredients: weekly totals, duration sessions, counter change events, correction tools, selected-week navigation, and landscape timeline strips. But the user still needs a clear way to compare many tracked cells across time without reading a long table or a disconnected event log.
+
+Concept:
+
+Create a time-first matrix inside `HISTORY`.
+
+```text
+columns = time
+rows = tracked cells
+cells = what happened in that time bucket
+timeline = visual detail for the same selected range
+```
+
+The matrix should answer simple review questions quickly:
+
+- What happened this week?
+- Which days have missing or suspicious data?
+- Which timers/sleep sessions need correction?
+- Which counters moved on which day?
+- What is the total for this visible range?
+
+MVP:
+
+- Start with week view.
+- Columns: `MON`, `TUE`, `WED`, `THU`, `FRI`, `SAT`, `SUN`, `TOTAL`.
+- Rows: current PIN cells that are enabled for `History`.
+- Duration rows: daily duration derived from `durationSessions`.
+- Sleep rows: daily sleep duration, using the same duration-session model.
+- Counter/unit rows: daily event buckets from `counterChangeLog`.
+- Value/money rows: daily changes when event data exists; otherwise weekly fallback only.
+- Use `historyTimelineWeekKey` so matrix, weekly table selection, and timeline navigation share one selected week.
+- Tap/hover a matrix cell to focus that cell/day in the timeline inspector.
+- Tap a duration cell to enter correction for that day/cell.
+- Add simple filters: `ALL`, `TIME`, `COUNTS`, `ACTIVE`.
+- Keep legacy weekly table available as a fallback while Matrix is being proven.
+
+Data rules:
+
+- Matrix is a projection, not a new source of truth.
+- Do not invent day-level data from old weekly-only totals.
+- If old data lacks event/session detail, show it as a weekly total/fallback state.
+- Preserve historical label snapshots where available.
+- Renaming a button keeps the same slot identity; Matrix should still understand old events as belonging to the same slot.
+
+UI direction:
+
+- Portrait phone: horizontal scroll is acceptable; rows must stay readable.
+- Landscape phone: timeline remains large; matrix becomes the structured drilldown underneath or alongside it.
+- Desktop: matrix can be denser, with row totals and quick filters visible.
+- Matrix cells should be compact and tappable, not text-heavy.
+- Use color from the source cell/module, but do not rely on color alone.
+
+Later:
+
+- Add month view with columns as weeks first, then optional day-level zoom.
+- Add day view with columns as hours/time blocks.
+- Add visible-range totals for day/week/month.
+- Add row grouping by cell type, active status, or PIN.
+- Add expandable cell/day detail panels.
+- Add event corrections for counter/value changes after duration correction is stable.
+- Add saved History views after filters become useful.
+
+Risks:
+
+- Old data may not have enough detail for accurate daily cells.
+- Too many rows can make phone review cramped.
+- A matrix can become spreadsheet-like if it tries to edit every kind of data directly.
+- Event projection bugs would damage trust, so projection helpers should be tested before adding richer UI.
+
+Open questions:
+
+- Should the first matrix replace the table visually, or live behind a `MATRIX` switch?
+- Should totals show raw value, delta, duration, or all depending on module type?
+- Should inactive/empty/hidden cells be filterable from the start or later?
+- Should month mode group by calendar month or rolling 4/5-week range?

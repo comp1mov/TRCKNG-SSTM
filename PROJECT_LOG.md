@@ -354,3 +354,13 @@ Important product decision:
 - Changed timeline rendering to prefer stored event/session labels before current cell labels. This preserves old visible names on historical timeline events after a rename, while new events use the new name.
 - Existing older counter events that do not have a stored label still fall back to the current cell label, which keeps old exports/imports compatible.
 - Bumped app/cache visible version to `1.33.23`.
+
+### History Matrix Development Plan
+
+- Decision: the next History direction is `History Matrix`: a time-first review surface where time runs horizontally and tracked cells/modules run vertically.
+- Product goal: make it obvious what happened by day/week/month, where data looks suspicious, and which duration sessions or counter events need correction.
+- Planning update: added `v1.34: History Matrix` to `DEVELOPMENT_PLAN.md` and a full `History Matrix` feature section to `FEATURE_PLANS.md`.
+- MVP direction: start with week view, columns `MON` through `SUN` plus `TOTAL`, rows from History-visible cells, and synchronize selection with `historyTimelineWeekKey`.
+- Data rule: Matrix is only a projection of existing sources (`durationSessions`, `counterChangeLog`, and legacy `weekData` fallback), not a new storage layer.
+- Accuracy rule: old weekly-only data must not be faked into daily buckets; show it as weekly fallback/total when event-level history is missing.
+- UX direction: tap/hover matrix cells should focus the timeline inspector, and duration cells should connect back to the existing correction workflow where possible.
