@@ -345,3 +345,12 @@ Important product decision:
 - Bumped app/cache/export visible version to `1.33.21` for the timeline navigation work.
 - Added a simple mobile modal usability fix in `1.33.22`: large bottom spacing for scrollable modal content so Safari/PWA bottom bars do not hide `SAVE` and other final controls.
 - Published both feature sets to `main` for GitHub Pages at `https://comp1mov.github.io/TRCKNG-SSTM/`, after first landing them on the working branch `codex/v125-stabilization`.
+
+### v1.33.23 Cell Rename Identity Clarification
+
+- Confirmed current v1 identity model: a module's durable key is the cell slot (`cell01` ... `cell09`), not the visible label. Renaming a cell does not create a new module by itself.
+- Product decision: renaming is treated as changing the current label of the same slot. If the user wants a genuinely new tracker in that slot, `RESET CELL` is the safer explicit action.
+- Added label snapshots to new `counterChangeLog` entries so future unit/counter/value/money events remember the label visible when the event was recorded.
+- Changed timeline rendering to prefer stored event/session labels before current cell labels. This preserves old visible names on historical timeline events after a rename, while new events use the new name.
+- Existing older counter events that do not have a stored label still fall back to the current cell label, which keeps old exports/imports compatible.
+- Bumped app/cache visible version to `1.33.23`.

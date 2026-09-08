@@ -1,7 +1,7 @@
 'use strict';
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.33.22';
+    const APP_VERSION = '1.33.23';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -2570,6 +2570,7 @@ function applyTheme() {
           at: Number(entry.at) || Date.now(),
           week: String(entry.week),
           habit: String(entry.habit),
+          label: String(entry.label || ''),
           previousValue: Number(entry.previousValue) || 0,
           nextValue: Number(entry.nextValue) || 0,
           previousLastUpdate: entry.previousLastUpdate ? Number(entry.previousLastUpdate) : null,
@@ -2607,6 +2608,7 @@ function applyTheme() {
         at: Date.now(),
         week: currentWeekKey,
         habit,
+        label: habitLabels[habit] || '',
         previousValue: before,
         nextValue: after,
         previousLastUpdate: previousLastUpdate || null,
@@ -5385,7 +5387,7 @@ function scheduleMathRefresh() {
           .map(session => ({
             ...session,
             pin: snapshot.pin,
-            label: snapshot.labels[session.habit] || session.label || '',
+            label: session.label || snapshot.labels[session.habit] || '',
             color: getTimelineCellColor(snapshot, session.habit) || session.color || '#ff8c42'
           }));
       });
@@ -5441,7 +5443,7 @@ function scheduleMathRefresh() {
             pin: snapshot.pin,
             left: ((entry.at - startMs) / length) * 100,
             color: getTimelineCellColor(snapshot, entry.habit) || '#ffffff',
-            label: snapshot.labels[entry.habit] || entry.habit
+            label: entry.label || snapshot.labels[entry.habit] || entry.habit
           }));
       });
     }
