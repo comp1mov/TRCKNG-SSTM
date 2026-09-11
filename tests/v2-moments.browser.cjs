@@ -7,7 +7,7 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-v2-moments-check'); 
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 }, serviceWorkers: 'block' });
   const external = []; await context.route('**/*', r => { if (new URL(r.request().url()).hostname === '127.0.0.1') return r.continue(); external.push(r.request().url()); return r.abort(); });
   const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo'); await page.locator('#historyMoments').waitFor({ state: 'attached' });
+  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru'); await page.locator('#historyMoments').waitFor({ state: 'attached' });
   const j = () => page.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')));
   const close = id => page.locator(`#${id} .surface-panel-head button`).last().click();
   const initial = await j(); await page.locator('#pin1').click();

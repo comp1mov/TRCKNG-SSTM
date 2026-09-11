@@ -9,7 +9,7 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-intervals-check'); f
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, timezoneId: 'UTC', serviceWorkers: 'block' });
   await context.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
   const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo'); await page.locator('#cycleCapture').waitFor();
+  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru'); await page.locator('#cycleCapture').waitFor();
   const start = Math.floor((Date.now() - 2 * 3600000) / 1000) * 1000;
   const iso = t => new Date(t).toISOString().replace('.000Z', '');
   const seed = await page.evaluate(start => {

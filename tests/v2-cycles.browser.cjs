@@ -10,7 +10,7 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-v2-cycles-check'); f
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: 'block' });
   await context.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
   const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo'); await page.locator('#cycleCapture').waitFor();
+  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru'); await page.locator('#cycleCapture').waitFor();
   assert.equal(await page.locator('#cycleElapsed').innerText(), '00:00:00');
   await page.locator('#cycleCapture').click(); await page.locator('#cycleOpen').click();
   assert.equal(await page.locator('#cycleRows input:visible').count(), 0, 'History opens as a timeline, not a form');

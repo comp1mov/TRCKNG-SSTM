@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const output = path.join(require('node:os').tmpdir(), 'sstm-v2-field-check');
 fs.mkdirSync(output, { recursive: true });
-const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo';
+const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru';
 
 (async () => {
   const browser = await chromium.launch({ headless: true, channel: 'msedge' });

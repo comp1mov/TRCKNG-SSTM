@@ -8,7 +8,7 @@
   const clock = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
   const currencyLabel = currency => currency === '¤' ? 'ед.' : currency;
   const cash = (value, currency, decimals = 2) => `${value.toFixed(decimals)} ${currencyLabel(currency)}`;
-  const stamp = value => new Date(value).toLocaleString('ru-RU');
+  const stamp = value => new Date(value).toLocaleString(window.SstmI18n?.locale || 'ru-RU');
   let editor = null, selectedTrack = null, sourceRate = null, sourceHourlyInput = '';
   function persist(j) { M.validate(j); store.setItem('sstm_v2_modules', JSON.stringify(j)); window.markCloudDirty('modular timer'); refresh(); renderHistory(); }
   function act(binding, revision) {
@@ -84,7 +84,7 @@
     if (!$('cellEditModal').classList.contains('visible')) { $('surfaceHint').textContent = 'Нет свободного места для новой кнопки.'; return; }
     // Programmatic type selection runs before the modal's observer can update its PIN.
     $('cellEditModal').dataset.sourcePin = String(pin());
-    $('cellEditInput').value = recipe[4]; $('cellEditColor').value = '#d1f55a';
+    $('cellEditInput').value = window.SstmI18n?.text(recipe[4]) || recipe[4]; $('cellEditColor').value = '#d1f55a';
     document.querySelector(`#cellEditModal .type-btn[data-type="${recipe[3]}"]`).click();
     const draftId = $('cellEditModal').dataset.subjectId;
     if (recipe[3] === 'modular' && window.fieldSlotAvailable(draftId, { ...window.getCellLayout(draftId), colSpan: 2, rowSpan: 1 })) document.querySelector('#cellEditModal [data-layout-size="2x1"]').click();

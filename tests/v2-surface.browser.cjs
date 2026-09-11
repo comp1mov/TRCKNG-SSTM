@@ -5,7 +5,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const output = path.join(require('node:os').tmpdir(), 'sstm-v2-surface-check');
 fs.mkdirSync(output, { recursive: true });
-const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=account';
+const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=account&lang=ru';
 const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'duration_sec_count', 'timer', 'countdown', 'money_income', 'money_budget', 'math', 'led_pulse', 'currency'];
 
 (async () => {
@@ -74,10 +74,11 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator('#accountSignIn').click();
     await page.locator('#migrationGate').waitFor();
     await page.locator('#surfaceAccount').click();
-    assert.equal(await page.locator('#accountBackToField').innerText(), '← К ПЕРЕНОСУ');
+    assert.equal(await page.locator('#accountBackToField').innerText(), '← СОЗДАТЬ ПОЛЕ');
     await page.locator('#accountBackToField').click();
     assert.equal(await page.locator('#migrationGate').isVisible(), true);
     assert.equal(writes.length, 0, 'Login does not create or upload default v2 data');
+    await page.locator('#migrationAdvanced summary').click();
     await page.locator('#migrationPreview').click(); await page.locator('#migrationApply').waitFor();
     assert.equal(writes.length, 0, 'Preview does not write anything');
     await page.locator('#migrationApply').click();
@@ -100,7 +101,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(await page.locator('#btn-cell03').evaluate(el => el.classList.contains('running')), true);
     await page.locator('#surfaceAccount').click(); await page.locator('#accountModal').getByRole('button', { name: 'Свернуть окно', exact: true }).click();
     assert.equal(await page.locator('#btn-cell03').evaluate(el => el.classList.contains('running')), true, 'Minimizing leaves a duration running');
-    await page.locator('#surfaceDock button').click(); await page.locator('#accountModalClose').click();
+    await page.locator('#surfaceDock button').click(); await page.locator('#accountBackToField').click();
     assert.equal(await page.locator('#trackView').isVisible(), true);
     assert.equal(await page.evaluate(() => Boolean(TRCKNG_ACCOUNT.ready)), true, 'Returning to the field does not sign out');
     await page.locator('#btn-cell03').click();
@@ -202,7 +203,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await phone.waitForFunction(() => !document.querySelector('#accountSignIn').disabled);
     await phone.locator('#accountEmail').fill(user.email); await phone.locator('#accountPassword').fill('fixture-password'); await phone.locator('#accountSignIn').tap();
     await phone.waitForFunction(() => document.querySelector('#pin0')?.textContent === 'FIELD A');
-    if (await phone.locator('#accountModal').isVisible()) await phone.locator('#accountModalClose').tap();
+    if (await phone.locator('#accountModal').isVisible()) await phone.locator('#accountBackToField').tap();
     await phone.locator('#pin2').tap(); await phone.locator(`#btn-${workId}`).tap();
     assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).stateOptions[0].label), 'Fixture flow');
     assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).moments.length), 2);
@@ -273,6 +274,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
       return { path: destination, value: JSON.parse(fs.readFileSync(destination, 'utf8')) };
     };
     await page.locator('#surfaceAccount').click();
+    if (!(await page.locator('#accountAdvanced').evaluate(el => el.open))) await page.locator('#accountAdvanced summary').click();
     const originalCopy = await downloadJson(() => page.locator('#v2SourceBackup').click(), 'source-fixture.json');
     assert.deepEqual(originalCopy.value, JSON.parse(sourceBaseline).app_state, 'Source backup remains the original despite subsequent v1 edits');
     await page.locator('#accountBackToField').click();
@@ -296,11 +298,11 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator('#accountBackToField').click();
     await page.evaluate(() => TRCKNG_ACCOUNT.sync());
     const savedBeforeLogout = await page.evaluate(() => localStorage.getItem('trckng_sstm_data_pin0'));
-    await page.goto(url.replace('?mode=account', '')); await page.locator('#btnViewTrack').waitFor(); await page.locator('#btnViewTrack').click(); await page.locator('#btn-cell01').waitFor();
+    await page.goto(url.replace('?mode=account&lang=ru', '')); await page.locator('#btnViewTrack').waitFor(); await page.locator('#btnViewTrack').click(); await page.locator('#btn-cell01').waitFor();
     assert.equal(await page.locator('body').getAttribute('data-mode'), 'account', 'A returning signed-in visitor resumes their own account');
     await page.locator('#surfaceAccount').click(); await page.locator('#accountSignOut').click();
     await page.waitForURL('**mode=demo'); await page.locator('#btn-cell01').waitFor();
-    assert.equal(await page.locator('#pin0').innerText(), 'ПРИМЕРЫ');
+    assert.equal(await page.locator('#pin0').innerText(), 'EXAMPLES', 'A bare URL uses English by default');
     assert.equal(await page.evaluate(() => localStorage.getItem('trckng_sstm_data_pin0')), savedBeforeLogout, 'Logout/demo preserves private records');
     assert.deepEqual(errors, []);
     await context.close();
@@ -312,7 +314,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await local.waitForFunction(() => !document.querySelector('#accountSignIn').disabled);
     await local.locator('#accountEmail').fill(user.email); await local.locator('#accountPassword').fill('fixture-password'); await local.locator('#accountSignIn').click();
     await local.waitForFunction(() => document.querySelector('#pin0')?.textContent === 'FIELD A');
-    if (await local.locator('#accountModal').isVisible()) await local.locator('#accountModalClose').click();
+    if (await local.locator('#accountModal').isVisible()) await local.locator('#accountBackToField').click();
     await local.locator('#pin0').click();
     await local.waitForFunction(() => navigator.serviceWorker.controller?.scriptURL.includes('/v2/'), null, { timeout: 5000 }).catch(async error => {
       console.log(await local.evaluate(async () => ({ loadError: document.querySelector('#surfaceLoadError')?.textContent, workers: (await navigator.serviceWorker.getRegistrations()).map(r => ({ scope: r.scope, active: r.active?.state, installing: r.installing?.state })) })));

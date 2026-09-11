@@ -4,7 +4,7 @@
     const trckngStorage = window.TRCKNG_STORAGE || window.localStorage;
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.34.5';
+    const APP_VERSION = '1.34.6';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -2106,6 +2106,7 @@
     }
 
     function setupSignupUnlockGesture() {
+      if (window.TRCKNG_SURFACE === 'v2') return;
       const label = document.getElementById('accountEmailLabel');
       if (!label) return;
 
@@ -2182,13 +2183,13 @@
         quickSync.disabled = cloudBusy;
       }
       const signUpButton = document.getElementById('accountSignUp');
-      if (signUpButton) signUpButton.hidden = !signupUnlocked;
+      if (signUpButton) signUpButton.hidden = window.TRCKNG_SURFACE === 'v2' ? signedIn : !signupUnlocked;
       const authActions = document.getElementById('accountAuthActions');
       if (authActions) authActions.dataset.signupUnlocked = String(signupUnlocked);
       const emailLabel = document.getElementById('accountEmailLabel');
       if (emailLabel) {
         emailLabel.dataset.unlocked = String(signupUnlocked);
-        emailLabel.textContent = signupUnlocked ? 'Email / Sign Up Unlocked' : 'Email';
+        emailLabel.textContent = signupUnlocked && window.TRCKNG_SURFACE !== 'v2' ? 'Email / Sign Up Unlocked' : 'Email';
       }
 
       const needsConfig = !configured || !sdkLoaded;

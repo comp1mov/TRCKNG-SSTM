@@ -9,6 +9,7 @@
     return `${y}W${String(1 + Math.floor((date - firstMonday(y)) / 604800000)).padStart(2, '0')}`;
   }
   function createStorage(now = Date.now()) {
+    const t = value => root.SstmI18n?.text(value) || value;
     const values = new Map();
     const storage = { getItem: key => values.get(String(key)) ?? null,
       setItem: (key, value) => values.set(String(key), String(value)),
@@ -22,12 +23,12 @@
       slots.map(() => ['', 'unit'])
     ];
     const palette = ['#d1f55a', '#65bdc6', '#c898ef', '#e9bb81', '#b5bbce', '#d1f55a', '#e9bb81', '#65bdc6', '#c898ef'];
-    put('trckng_sstm_pin_names', { 0: 'ПРИМЕРЫ', 1: 'ПОКАЗАТЕЛИ', 2: 'ЧИСТЫЙ PIN' });
+    put('trckng_sstm_pin_names', { 0: t('ПРИМЕРЫ'), 1: t('ПОКАЗАТЕЛИ'), 2: t('ЧИСТЫЙ PIN') });
     put('trckng_sstm_pin_colors', { 0: '#d1f55a', 1: '#65bdc6', 2: '#c898ef' });
     put('trckng_sstm_currency_cache', { USD_EUR: { rate: 0.9, timestamp: now }, EUR_USD: { rate: 1 / 0.9, timestamp: now } });
     storage.setItem('trckng_has_seen_info', 'true'); storage.setItem('trckng_last_week_key', weekKey(now));
     for (let pin = 0; pin < 3; pin++) {
-      const rows = catalog[pin];
+      const rows = catalog[pin].map(([label, type]) => [t(label), type]);
       const fields = { labels: {}, types: {}, colors: {}, descriptions: {}, data: { [weekKey(now)]: {} },
         duration: {}, duration_sessions: [], counter_change_log: [], counter_last_update: {},
         unit_settings: {}, value_formats: {}, timer_settings: {}, timer_states: {}, money_settings: {},
@@ -45,7 +46,7 @@
           if (at >= now) continue;
           const previous = fields.data[week].cell01 || 0, next = previous + 1 + day % 3;
           fields.data[week].cell01 = next;
-          fields.counter_change_log.push({ id: `demo-count-${day}`, habit: 'cell01', label: 'СЧЁТЧИК', at, week, previousValue: previous, nextValue: next, source: 'unit' });
+          fields.counter_change_log.push({ id: `demo-count-${day}`, habit: 'cell01', label: t('СЧЁТЧИК'), at, week, previousValue: previous, nextValue: next, source: 'unit' });
           fields.counter_last_update.cell01 = at;
           const durations = [['cell02', 42 + day % 4 * 13, 10], ['cell04', 18 + day % 3 * 7, 15], ['cell05', 420 + day % 4 * 15, 0]];
           for (const [slot, minutes, hour] of durations) {

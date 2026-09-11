@@ -26,7 +26,7 @@ const base = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/';
       window.geolocationReads = 0;
       navigator.geolocation.getCurrentPosition = function (...args) { window.geolocationReads++; return original.apply(this, args); };
     });
-    await page.goto(`${base}?mode=demo`); await page.locator('#btn-cell01').waitFor();
+    await page.goto(`${base}?mode=demo&lang=ru`); await page.locator('#btn-cell01').waitFor();
     const baseline = await page.evaluate(() => JSON.stringify(Object.fromEntries(Object.keys(localStorage).sort().map(key => [key, localStorage.getItem(key)]))));
     assert.equal(baseline, await page.evaluate(() => window.privateBaseline), 'Demo initialization must not touch personal storage');
     assert.equal(await page.locator('body').getAttribute('data-mode'), 'demo');

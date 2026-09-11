@@ -12,7 +12,7 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-v2-clock-check'); fs
    window.Date = class extends RealDate { constructor(...args) { super(...(args.length ? args : [window.fixtureNow])); } static now() { return window.fixtureNow; } };
   });
   const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo'); await page.locator('.countdown-dial').waitFor();
+  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru'); await page.locator('.countdown-dial').waitFor();
   await page.evaluate(() => {
    habitTypes.cell09 = 'countdown'; habitLabels.cell09 = 'Позже'; timerSettings.cell09 = { targetDate: '2030-01-01', targetTime: '12:00', volume: 0 };
    saveTypes(); saveLabels(); saveTimerSettings(); renderHabits();

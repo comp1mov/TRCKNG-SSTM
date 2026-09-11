@@ -34,7 +34,7 @@
   function restore() {
     const view = document.querySelector('.view-panel:not([hidden])');
     const c = cameras[cameraId()] || {};
-    const size = [96, 128, 160, 192].includes(c.size) ? c.size : innerWidth < 600 ? 96 : 128;
+    const size = [96, 128, 160, 192].includes(c.size) ? c.size : innerWidth < 600 ? 128 : 160;
     document.body.dataset.cellSize = String(size);
     document.body.style.setProperty('--module-size', `${size}px`);
     view?.scrollTo(c.x || 0, c.y || 0);
@@ -53,12 +53,12 @@
     document.body.classList.toggle('account-locked', !next.signedIn || next.ready === false);
     $('#surfaceWelcome').hidden = next.signedIn;
     $('#surfaceAccount').textContent = next.signedIn ? 'АККАУНТ' : 'ВОЙТИ';
-    const backLabel = !next.signedIn ? '← К ПРИМЕРАМ' : next.ready === false ? '← К ПЕРЕНОСУ' : '← НА ПОЛЕ';
+    const backLabel = !next.signedIn ? '← К ПРИМЕРАМ' : next.ready === false ? '← СОЗДАТЬ ПОЛЕ' : '← НА ПОЛЕ';
     textButton('accountBackToField', backLabel); textButton('accountModalClose', backLabel);
     $('#surfaceStatus').textContent = !next.online ? 'ОФЛАЙН · ИЗМЕНЕНИЯ НА УСТРОЙСТВЕ' :
       next.busy ? 'СИНХРОНИЗАЦИЯ…' : next.conflict ? 'НУЖНО ВЫБРАТЬ КОПИЮ В АККАУНТЕ' :
       next.dirty ? next.signedIn ? 'ИЗМЕНЕНИЯ ОЖИДАЮТ СИНХРОНИЗАЦИИ' : 'ЛОКАЛЬНО · ВОЙДИ ДЛЯ СИНХРОНИЗАЦИИ' :
-      next.signedIn ? next.ready === false ? 'ПОДГОТОВЬ СВОЮ КОПИЮ V2' : 'V2 СОХРАНЕНА · V1 ОТДЕЛЬНО' : 'ВОЙДИ, ЧТОБЫ ЗАГРУЗИТЬ СВОИ PIN';
+      next.signedIn ? next.ready === false ? 'СОЗДАЙ СВОЁ ПОЛЕ' : 'ВСЁ СОХРАНЕНО' : 'ВОЙДИ, ЧТОБЫ СОХРАНЯТЬ';
     $('#surfaceStatus').dataset.warning = String(Boolean(next.conflict || next.dirty));
     $('#accountAuthActions').parentElement.classList.toggle('signed-in', next.signedIn);
   }
@@ -155,7 +155,7 @@
   function setupUI() {
     const container = $('.container'), header = $('.header');
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.5.1</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false">МЕНЮ</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.6.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false">МЕНЮ</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -164,9 +164,10 @@
     });
     const menu = document.createElement('div'); menu.id = 'surfaceMenu'; menu.hidden = true;
     menu.append($('.controls'));
-    menu.insertAdjacentHTML('beforeend', '<button id="surfaceCalendar" type="button" aria-pressed="false">ПРОЦЕНТЫ НА ШКАЛЕ</button><a href="points-lab.html">ТОЧКИ · ЛОКАЛЬНЫЙ ЭКСПЕРИМЕНТ ↗</a><p>Кнопки, записи и расположение сохраняются через твой аккаунт. Новые модули добавляются в режиме «Расставить».</p>');
+    menu.insertAdjacentHTML('beforeend', '<label class="surface-language">Язык / Language<select id="surfaceLanguage" aria-label="Interface language"><option value="en">English</option><option value="ru">Русский</option></select></label><button id="surfaceCalendar" type="button" aria-pressed="false">ПРОЦЕНТЫ НА ШКАЛЕ</button><p>Добавляй кнопки в режиме «Расставить».</p>');
     const exampleLink = document.createElement('a'); exampleLink.href = demoUrl(); exampleLink.id = 'surfaceDemoLink'; exampleLink.textContent = 'ОТКРЫТЬ ДЕМО С ПРИМЕРАМИ ↗'; menu.prepend(exampleLink);
-    const v1Link = document.createElement('a'); v1Link.href = '../'; v1Link.textContent = 'ОТКРЫТЬ V1 ↗'; menu.append(v1Link);
+    menu.querySelector('#surfaceLanguage').value = window.SstmI18n.language;
+    menu.querySelector('#surfaceLanguage').onchange = event => window.SstmI18n.setLanguage(event.target.value);
     header.append(menu);
     const bar = document.createElement('div'); bar.className = 'surface-tools'; bar.append($('.pins'), $('.view-tabs')); header.append(bar);
     const actions = $('.controls-edit');
@@ -179,13 +180,13 @@
     zoom.innerHTML = '<button id="surfaceHome" type="button">К КНОПКАМ</button><button id="surfaceZoomOut" aria-label="Уменьшить масштаб" type="button">−</button><output id="surfaceZoom">100%</output><button id="surfaceZoomIn" aria-label="Увеличить масштаб" type="button">+</button>';
     actions.append(zoom); header.append(actions);
     const welcome = document.createElement('div'); welcome.id = 'surfaceWelcome';
-    welcome.innerHTML = '<div><strong>ТВОИ PIN — В ТВОЁМ АККАУНТЕ</strong><p>Войди с прежними почтой и паролем. В первый раз создадим отдельную копию v2; затем она будет загружаться автоматически.</p></div><button id="surfaceSignIn" type="button">ВОЙТИ И ЗАГРУЗИТЬ</button>';
+    welcome.innerHTML = '<div><strong>ТВОЁ ПОЛЕ</strong><p>Войди или создай аккаунт, чтобы сохранять записи.</p></div><button id="surfaceSignIn" type="button">ВОЙТИ / СОЗДАТЬ АККАУНТ</button>';
     if (demo) {
       document.body.classList.add('surface-demo');
       $('.surface-brand').href = demoUrl();
-      $('.surface-time').textContent = 'ДЕМО / ТЕСТОВЫЕ ДАННЫЕ';
+      $('.surface-time').textContent = 'ГОСТЬ / ДЕМО';
       welcome.innerHTML = '<div><strong>ПОПРОБУЙ НА ПРИМЕРАХ</strong><p>Кнопки, настройки и история работают. Данные вымышленные; после обновления начнём заново.</p></div><button id="surfaceSignIn" type="button" hidden>МОЙ АККАУНТ</button><button id="surfaceDemoReset" type="button">СБРОСИТЬ ДЕМО</button>';
-      menu.querySelector('p').textContent = 'В этом демо все изменения временные. Три PIN, разные типы кнопок и две недели примеров истории. Чтобы вести свои записи, открой «Мой аккаунт».';
+      menu.querySelector('p').textContent = 'Демо сбрасывается при обновлении. Войди, чтобы сохранять своё поле.';
       $('#btnCloudSync').hidden = true; $('#btnImport').hidden = true; $('#btnLayoutNotify').hidden = true;
     }
     header.append(welcome);
@@ -347,6 +348,8 @@
     }
     await loadScript('./field.js');
     await loadScript('./clocks.js');
+    await loadScript('./readability.js');
+    window.SstmI18n.start();
     restore();
     if (!demo && !status.signedIn) openAccount();
     // Account changes/sign-out are navigated once by account.js.

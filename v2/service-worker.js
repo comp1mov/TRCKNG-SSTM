@@ -1,6 +1,7 @@
 'use strict';
-const CACHE = 'trckng-sstm-v2-alpha-0.5.1';
+const CACHE = 'trckng-sstm-v2-alpha-0.6.0';
 const assets = ['./', './index.html', './surface.css', './surface.js', './field.js', './clocks.js', './data.js', './modules.js', './moments.js', './tag-input.js', './marks.js', './scenarios.js', './account.js', './cycles.js', './demo-data.js', './vendor/supabase-2.116.0.js',
+  './translations.js', './i18n.js', './readability.js', './fonts/JetBrainsMono-Regular.woff2',
   './points-lab.html', './style.css', './model.js', './store.js', './app.js',
   '../index.html', '../style.css', '../app-config.js', '../app.js', '../history-matrix.js'];
 const localAssets = new Set(assets.map(path => new URL(path, self.registration.scope).href));

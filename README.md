@@ -1,4 +1,4 @@
-# TRCKNG SSTM — v1.34.5 / v2 beta 0.5.1
+# TRCKNG SSTM — v1.34.6 / v2 beta 0.6.0
 
 A modular tracking field for habits, time, words, states and personal metrics.
 
@@ -8,11 +8,13 @@ A modular tracking field for habits, time, words, states and personal metrics.
 
 ## Start using v2
 
-Sign in with the same email account. Existing v2 records load automatically. On first use, **ПОДГОТОВИТЬ КОПИЮ V1** previews a one-time copy of all three cloud PINs; **СОЗДАТЬ МОЮ V2** confirms it. Sync your latest v1 records before copying. V1 and v2 then keep independent datasets; edits in one version do not modify the other.
+Sign in or create an email account. New accounts can create an empty field; returning accounts load their records automatically. An optional **Import from v1** section previews a one-time copy of all three cloud PINs. Sync v1 before copying. V1 and v2 keep independent datasets.
 
-Return from Account with **← НА ПОЛЕ**. Press **НАЧАТЬ** to start a recording, and **+ ТОЧКА** to mark the next boundary. Names are optional and can be added in **ОТРЕЗКИ**. Midnight and 24 hours do not end a recording. Elapsed time is derived from saved timestamps, so closing the tab does not stop it. Check that the status says **V2 СОХРАНЕНА · V1 ОТДЕЛЬНО** before moving to another device.
+Return from Account with **← BACK TO FIELD**. Press **START** to start a recording, and **+ POINT** to mark the next boundary. Names are optional and can be added in **INTERVALS**. Midnight and 24 hours do not end a recording. Elapsed time is derived from saved timestamps, so closing the tab does not stop it. Check that the status says **ALL SAVED** before moving to another device.
 
 The explicit demo uses invented examples and resets on reload. Use your account for records you want to keep.
+
+English is the default interface language. **Menu → Language** switches to Russian without reloading or changing personal labels, notes or records. Large figures fit each module, with a shared Latin/Cyrillic font and colored module faces.
 
 ## Included in this beta
 

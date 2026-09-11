@@ -9,7 +9,7 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-v2-inline-check', en
   const external = [], errors = [];
   await context.route('**/*', r => { if (new URL(r.request().url()).hostname === '127.0.0.1') return r.continue(); external.push(r.request().url()); return r.abort(); });
   const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo'); await page.locator('#historyMoments').waitFor({ state: 'attached' });
+  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru'); await page.locator('#historyMoments').waitFor({ state: 'attached' });
   const journal = () => page.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')));
   const open = async () => { await page.locator('#pin1').click(); await page.locator('#btn-cell08 .tag-trigger').click(); };
   await open(); assert.equal(await page.locator('#momentModal').isVisible(), false);

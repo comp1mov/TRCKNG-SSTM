@@ -7,8 +7,8 @@
     const seconds = Math.max(0, Math.floor(ms / 1000));
     return `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
   };
-  const wallTime = at => new Date(at).toLocaleTimeString('ru-RU', { hour12: false });
-  const calendar = at => new Date(at).toLocaleString('ru-RU');
+  const wallTime = at => new Date(at).toLocaleTimeString(window.SstmI18n?.locale || 'ru-RU', { hour12: false });
+  const calendar = at => new Date(at).toLocaleString(window.SstmI18n?.locale || 'ru-RU');
   const localInput = at => {
     const d = new Date(at), pad = (n, size = 2) => String(n).padStart(size, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
@@ -125,6 +125,7 @@
     const inputs = {};
     for (const [field, label, value] of fields) {
       const input = make('input'); input.value = value; input.maxLength = field === 'tags' ? 500 : 160; input.setAttribute('aria-label', label); input.hidden = field !== kind;
+      input.dataset.draftField = field;
       input.placeholder = field === 'tags' ? '#работа #проект' : 'Необязательно'; inputs[field] = input;
       input.oninput = () => { drafts[key] = { original, originalTags, point: inputs.point.value, interval: inputs.interval.value, tags: inputs.tags.value }; saveDrafts(); };
       form.append(input);
@@ -155,7 +156,7 @@
   function timeEditor(row, cycle, point, index) {
     const key = `${cycle.id}/${point.id}/time`, baseline = drafts[key]?.original || JSON.stringify(cycle);
     const form = make('form', 'cycle-inline-editor'), label = make('label', 'cycle-explanation', `Время точки ${index + 1} · местное время устройства`);
-    const input = make('input'); input.type = 'datetime-local'; input.step = '.001'; input.value = drafts[key]?.value || localInput(point.at); input.setAttribute('aria-label', `Время точки ${index + 1}`);
+    const input = make('input'); input.type = 'datetime-local'; input.dataset.draftField = 'time'; input.step = '.001'; input.value = drafts[key]?.value || localInput(point.at); input.setAttribute('aria-label', `Время точки ${index + 1}`);
     const preview = make('div', 'cycle-time-preview'), error = make('p', 'cycle-edit-error'); error.setAttribute('role', 'alert');
     const save = button('ПРИМЕНИТЬ ВРЕМЯ', apply);
     function proposed() {
@@ -206,7 +207,7 @@
     }
   }
   function renderHistory() {
-    const focus = $('cycleRows').contains(document.activeElement) ? document.activeElement.getAttribute('aria-label') : null;
+    const focus = $('cycleRows').contains(document.activeElement) ? { record: document.activeElement.closest('.cycle-record')?.id, field: document.activeElement.dataset.draftField } : null;
     const selection = focus && document.activeElement.type === 'text' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
     const journal = read();
     if (!journal.cycles.some(c => c.id === selected)) selected = journal.active || journal.cycles.at(-1)?.id;
@@ -241,7 +242,11 @@
         const marks = (journal.moments || []).filter(m => !m.deletedAt && m.at >= point.at && m.at < end);
         if (marks.length) {
           const words = make('div', 'cycle-moments');
-          for (const mark of marks) words.append(make('p', '', `${wallTime(mark.at)} · ${mark.state?.label || mark.tags.map(t => `#${t}`).join(' ')}`));
+          for (const mark of marks) {
+            const line = make('p', '', `${wallTime(mark.at)} · `), name = make('span', '', mark.state?.label || mark.tags.map(t => `#${t}`).join(' '));
+            if (window.SstmMoments.defaults.some(o => o.id === mark.state?.id && o.label === mark.state.label)) name.dataset.uiState = '';
+            line.append(name); words.append(line);
+          }
           interval.append(words);
         }
         row.append(interval);
@@ -253,7 +258,7 @@
       rows.append(row);
     }
     repairs(journal, cycle); searchRecords();
-    if (focus) { const input = [...rows.querySelectorAll('input')].find(el => !el.hidden && el.getAttribute('aria-label') === focus); input?.focus({ preventScroll: true }); if (input && selection) input.setSelectionRange(...selection); }
+    if (focus?.field) { const input = [...rows.querySelectorAll('input')].find(el => !el.hidden && el.closest('.cycle-record')?.id === focus.record && el.dataset.draftField === focus.field); input?.focus({ preventScroll: true }); if (input && selection) input.setSelectionRange(...selection); }
   }
   window.TRCKNG_MODULES = {
     render(cell, grid) {

@@ -6,7 +6,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 }, serviceWorkers: 'block' });
   await context.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
   const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo'); await page.locator('#surfaceScenarios').waitFor({ state: 'attached' });
+  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru'); await page.locator('#surfaceScenarios').waitFor({ state: 'attached' });
   const click = id => page.locator(`#btn-${id}`).click();
   const edit = async id => { await page.locator('#btnViewLayout').click(); await page.locator(`#layout-${id} .layout-action`).nth(1).click(); };
   const save = async () => { await page.locator('#cellEditSave').click(); await page.locator('#btnViewTrack').click(); };

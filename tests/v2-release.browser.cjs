@@ -57,17 +57,17 @@ const server = http.createServer((req, res) => {
     published = true;
     // Open v2 while the old root worker is still controlling the origin.
     const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
-    await page.goto(base + 'v2/?mode=demo'); await page.locator('#btn-cell01').waitFor();
+    await page.goto(base + 'v2/?mode=demo&lang=ru'); await page.locator('#btn-cell01').waitFor();
     await page.waitForFunction(() => navigator.serviceWorker.controller?.scriptURL.includes('/v2/'));
     await page.locator('#cycleCapture').click();
     assert.equal(await page.locator('#cycleCapture').innerText(), '+ ТОЧКА');
     const oldKeys = await page.evaluate(() => caches.keys());
-    assert.ok(oldKeys.includes('trckng-sstm-v2-alpha-0.5.1'));
+    assert.ok(oldKeys.includes('trckng-sstm-v2-alpha-0.6.0'));
     await old.evaluate(async () => (await navigator.serviceWorker.getRegistration('./')).update());
-    await until(() => old.evaluate(async () => (await caches.keys()).includes('trckng-sstm-v1.34.5') && !(await caches.keys()).includes('trckng-sstm-v1.33.23')));
-    assert.ok((await page.evaluate(() => caches.keys())).includes('trckng-sstm-v2-alpha-0.5.1'), 'Root update preserves v2 cache');
+    await until(() => old.evaluate(async () => (await caches.keys()).includes('trckng-sstm-v1.34.6') && !(await caches.keys()).includes('trckng-sstm-v1.33.23')));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('trckng-sstm-v2-alpha-0.6.0'), 'Root update preserves v2 cache');
     await old.evaluate(async () => {
-      const cache = await caches.open('trckng-sstm-v1.34.5');
+      const cache = await caches.open('trckng-sstm-v1.34.6');
       for (const asset of ['app.js', 'style.css', 'history-matrix.js', 'icons/icon-192.png', 'icons/icon-512.png']) {
         if (!(await cache.match('/TRCKNG-SSTM/' + asset))) throw new Error('Missing precached asset: ' + asset + '; cached: ' + (await cache.keys()).map(r => r.url).join(', '));
       }

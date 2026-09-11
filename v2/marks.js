@@ -4,10 +4,11 @@
   const $ = id => document.getElementById(id), read = () => JSON.parse(store.getItem('sstm_v2_cycles') || 'null') || D.emptyJournal();
   const el = (tag, text, cls) => { const n = document.createElement(tag); if (text != null) n.textContent = text; if (cls) n.className = cls; return n; };
   const button = (text, action, cls) => { const n = el('button', text, cls); n.type = 'button'; n.onclick = action; return n; };
-  const clock = at => new Date(at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const date = at => new Date(at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  const clock = at => new Date(at).toLocaleTimeString(window.SstmI18n?.locale || 'ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const date = at => new Date(at).toLocaleDateString(window.SstmI18n?.locale || 'ru-RU', { day: 'numeric', month: 'short' });
   let draft = null, wordDraft = null, inlineNode = null, suggestions = [], suggestionIndex = -1, composing = false, wheelPage = 0, weekAt = Date.now(), filter = '', lastSaved = null;
   const ready = () => !window.TRCKNG_ACCOUNT || window.TRCKNG_ACCOUNT.ready;
+  const builtInState = state => state && M.defaults.some(o => o.id === state.id && o.label === state.label);
   const draftKey = d => `${d.source.pin}/${d.source.cellId}`;
   function wordDrafts() {
     const values = JSON.parse(store.getItem('sstm_v2_tag_drafts') || '{}'), old = JSON.parse(store.getItem('sstm_v2_moment_draft') || 'null');
@@ -138,6 +139,7 @@
     const choices = all.slice(wheelPage * 8, wheelPage * 8 + 8);
     $('stateOptions').replaceChildren(...choices.map((o, i) => {
       const a = (-90 + i * 45) * Math.PI / 180, b = button(o.label, () => capture(o.id), 'state-option'); b.dataset.state = o.id;
+      if (!M.defaults.some(item => item.id === o.id)) b.dataset.noI18n = '';
       b.style.left = `${50 + Math.cos(a) * 37}%`; b.style.top = `${50 + Math.sin(a) * 37}%`; return b;
     }));
     $('statePages').hidden = pages < 2; $('statePageLabel').textContent = `${wheelPage + 1} / ${pages}`;
@@ -165,15 +167,17 @@
   });
   wheel.addEventListener('pointercancel', () => { pointer = null; highlight(null); });
   function renderWeek() {
-    const week = M.week(read(), weekAt); $('momentWeekLabel').textContent = `${date(week.start)} — ${date(week.end - 1)}`;
-    const all = button('ВСЕ', () => { filter = ''; renderWeek(); }); all.setAttribute('aria-pressed', String(!filter));
+    const journal = read(), week = M.week(journal, weekAt), observations = new Map((journal.moments || []).map(m => [m.id, m])); $('momentWeekLabel').textContent = `${date(week.start)} — ${date(week.end - 1)}`;
+    const all = button('ВСЕ', () => { filter = ''; renderWeek(); }); all.dataset.uiState = ''; all.setAttribute('aria-pressed', String(!filter));
     $('momentWeekTags').replaceChildren(all, ...week.tags.map(([tag, count]) => { const b = button(`#${tag} · ${count}`, () => { filter = filter === tag ? '' : tag; renderWeek(); }); b.dataset.tag = tag; b.setAttribute('aria-pressed', String(filter === tag)); return b; }));
     const rows = $('momentWeekRows'); rows.replaceChildren(); let day = '';
     for (const m of week.entries.filter(e => !filter || e.tags.includes(filter))) {
       const label = date(m.at); if (label !== day) { rows.append(el('h3', label, 'moment-day')); day = label; }
       const row = el('article', null, 'moment-row'); row.dataset.momentId = m.id; row.dataset.kind = m.kind;
       const time = el('time', clock(m.at)); time.dateTime = new Date(m.at).toISOString();
-      row.append(time, el('strong', m.label));
+      const name = el('strong', m.label);
+      if (builtInState(observations.get(m.id)?.state)) name.dataset.uiState = '';
+      row.append(time, name);
       row.append(el('small', m.kind === 'interval' ? `${clock(m.at)} → ${date(m.until)} ${clock(m.until)} · ${m.tags.map(t => `#${t}`).join(' ')}` : `${m.kind === 'state' ? 'Состояние' : 'Слово'} · PIN ${m.source.pin + 1}${m.interval ? ` · ${m.interval.name}` : ''}`));
       rows.append(row);
     }
@@ -188,8 +192,9 @@
     for (const n of document.querySelectorAll('.btn-habit.moment-control')) {
       const kind = n.dataset.type, last = (j.moments || []).filter(m => !m.deletedAt && m.kind === kind && m.source.pin === Number(n.dataset.sourcePin) && m.source.cellId === n.dataset.cellId).at(-1);
       n.querySelector('.moment-last').textContent = last ? last.state?.label || last.tags.map(t => `#${t}`).join(' ') : kind === 'tag' ? 'ЗАПОМНИТЬ СЛОВО' : 'КАК ТЫ СЕЙЧАС';
+      n.querySelector('.moment-last').toggleAttribute('data-no-i18n', Boolean(last && !builtInState(last.state)));
       n.querySelector('.moment-time').textContent = last ? clock(last.at) : 'НАЖМИ И ВЫБЕРИ';
-      if (kind === 'tag' && drafts[`${n.dataset.sourcePin}/${n.dataset.cellId}`]) { n.querySelector('.moment-last').textContent = drafts[`${n.dataset.sourcePin}/${n.dataset.cellId}`].text || '#…'; n.querySelector('.moment-time').textContent = 'ЧЕРНОВИК'; }
+      if (kind === 'tag' && drafts[`${n.dataset.sourcePin}/${n.dataset.cellId}`]) { n.querySelector('.moment-last').textContent = drafts[`${n.dataset.sourcePin}/${n.dataset.cellId}`].text || '#…'; n.querySelector('.moment-last').setAttribute('data-no-i18n', ''); n.querySelector('.moment-time').textContent = 'ЧЕРНОВИК'; }
     }
   }
   for (const [kind, label] of [['tag', '# ХЕШТЕГ'], ['state', 'СОСТОЯНИЕ']]) {

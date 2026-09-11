@@ -8,7 +8,7 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-v2-modules-check'); 
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 }, serviceWorkers: 'block' });
   await context.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
   const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo'); await page.locator('#surfaceScenarios').waitFor({ state: 'attached' });
+  await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru'); await page.locator('#surfaceScenarios').waitFor({ state: 'attached' });
   const journal = () => page.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_modules')));
   const close = id => page.locator(`#${id} .surface-panel-head button`).last().click();
   const scenario = async () => { await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceScenarios').click(); };
