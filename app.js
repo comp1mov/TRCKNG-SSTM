@@ -1,7 +1,10 @@
 'use strict';
 
+    // A demo can supply an isolated in-memory store before this engine loads.
+    const trckngStorage = window.TRCKNG_STORAGE || window.localStorage;
+
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.33.23';
+    const APP_VERSION = '1.34.5';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -90,7 +93,23 @@
       '1x2': { colSpan: 1, rowSpan: 2 },
       '2x2': { colSpan: 2, rowSpan: 2 }
     };
-    const HABITS = ['cell01', 'cell02', 'cell03', 'cell04', 'cell05', 'cell06', 'cell07', 'cell08', 'cell09'];
+    const LEGACY_HABITS = ['cell01', 'cell02', 'cell03', 'cell04', 'cell05', 'cell06', 'cell07', 'cell08', 'cell09'];
+    let HABITS = [...LEGACY_HABITS];
+    const FIELD_LIMIT = 200;
+    let pendingNewCell = null;
+
+    // Identity lives in the existing per-PIN maps, so full snapshots and exports
+    // carry new modules through the same storage path as the original nine.
+    function collectCellIds(...maps) {
+      return [...new Set([...LEGACY_HABITS, ...maps.flatMap(map => Object.keys(map || {}))])]
+        .filter(id => /^cell(?:\d+|-[a-z0-9-]+)$/i.test(id));
+    }
+
+    function loadCellIds() {
+      const maps = PER_PIN_SYNC_FIELDS.map(field => readStoredJson(`${field.key}_pin${currentPin}`, {}));
+      const weeks = readStoredJson(`${STORAGE_KEYS.DATA}_pin${currentPin}`, {});
+      HABITS = collectCellIds(...maps, ...Object.values(weeks || {}));
+    }
     const PER_PIN_SYNC_FIELDS = [
       { key: STORAGE_KEYS.DATA, prop: 'weekData' },
       { key: STORAGE_KEYS.LABELS, prop: 'habitLabels' },
@@ -149,6 +168,11 @@
     let resetCellConfirmTimer = null;
     let correctionHabit = null;
     let historyTimelineWeekKey = currentWeekKey;
+    let historyDisplay = 'matrix';
+    let historyFilter = 'all';
+    let historyFocus = null; // Current PIN slot + weekday; shared with both history strips.
+    let correctionBounds = null;
+    let historyProjection = null;
 
     let weekData = {};
     let habitLabels = {};
@@ -482,8 +506,9 @@
 
     // ===== STORAGE =====
     function loadWeekData() {
+      loadCellIds();
       const key = `${STORAGE_KEYS.DATA}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       weekData = stored ? JSON.parse(stored) : {};
       
       Object.keys(weekData).forEach(week => {
@@ -499,14 +524,14 @@
       if (keys.length > WEEKS_TO_KEEP) {
         keys.slice(WEEKS_TO_KEEP).forEach(k => delete weekData[k]);
       }
-      localStorage.setItem(key, JSON.stringify(weekData));
+      trckngStorage.setItem(key, JSON.stringify(weekData));
       markCloudDirty('week data');
     }
 
     function loadLabels() {
       habitLabels = { ...DEFAULT_LABELS[currentPin] };
       const key = `${STORAGE_KEYS.LABELS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { Object.assign(habitLabels, JSON.parse(stored)); } catch(e) {}
       }
@@ -514,14 +539,14 @@
 
     function saveLabels() {
       const key = `${STORAGE_KEYS.LABELS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(habitLabels));
+      trckngStorage.setItem(key, JSON.stringify(habitLabels));
       markCloudDirty('labels');
     }
 
     function loadTypes() {
       habitTypes = { ...DEFAULT_TYPES[currentPin] };
       const key = `${STORAGE_KEYS.TYPES}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { Object.assign(habitTypes, JSON.parse(stored)); } catch(e) {}
       }
@@ -529,14 +554,14 @@
 
     function saveTypes() {
       const key = `${STORAGE_KEYS.TYPES}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(habitTypes));
+      trckngStorage.setItem(key, JSON.stringify(habitTypes));
       markCloudDirty('types');
     }
 
     function loadColors() {
       habitColors = { ...DEFAULT_COLORS[currentPin] };
       const key = `${STORAGE_KEYS.COLORS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { Object.assign(habitColors, JSON.parse(stored)); } catch(e) {}
       }
@@ -544,14 +569,14 @@
 
     function saveColors() {
       const key = `${STORAGE_KEYS.COLORS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(habitColors));
+      trckngStorage.setItem(key, JSON.stringify(habitColors));
       markCloudDirty('colors');
     }
 
     function loadDescriptions() {
       habitDescriptions = {};
       const key = `${STORAGE_KEYS.DESCRIPTIONS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { Object.assign(habitDescriptions, JSON.parse(stored)); } catch(e) {}
       }
@@ -559,14 +584,14 @@
 
     function saveDescriptions() {
       const key = `${STORAGE_KEYS.DESCRIPTIONS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(habitDescriptions));
+      trckngStorage.setItem(key, JSON.stringify(habitDescriptions));
       markCloudDirty('descriptions');
     }
 
     function loadDurationStates() {
       durationStates = {};
       const key = `${STORAGE_KEYS.DURATION}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { durationStates = JSON.parse(stored); } catch(e) {}
       }
@@ -574,14 +599,14 @@
 
     function saveDurationStates() {
       const key = `${STORAGE_KEYS.DURATION}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(durationStates));
+      trckngStorage.setItem(key, JSON.stringify(durationStates));
       markCloudDirty('duration states');
     }
 
     function loadTimerSettings() {
       timerSettings = {};
       const key = `${STORAGE_KEYS.TIMER_SETTINGS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { timerSettings = JSON.parse(stored); } catch(e) {}
       }
@@ -633,14 +658,14 @@
 
     function saveTimerSettings() {
       const key = `${STORAGE_KEYS.TIMER_SETTINGS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(timerSettings));
+      trckngStorage.setItem(key, JSON.stringify(timerSettings));
       markCloudDirty('timer settings');
     }
 
     function loadTimerStates() {
       timerStates = {};
       const key = `${STORAGE_KEYS.TIMER_STATES}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { timerStates = JSON.parse(stored); } catch(e) {}
       }
@@ -648,7 +673,7 @@
 
     function saveTimerStates() {
       const key = `${STORAGE_KEYS.TIMER_STATES}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(timerStates));
+      trckngStorage.setItem(key, JSON.stringify(timerStates));
       markCloudDirty('timer states');
     }
 
@@ -678,7 +703,7 @@
     function loadDurationSessions() {
       durationSessions = [];
       const key = `${STORAGE_KEYS.DURATION_SESSIONS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { durationSessions = normalizeDurationSessions(JSON.parse(stored)); } catch(e) {}
       }
@@ -687,7 +712,7 @@
     function saveDurationSessions() {
       durationSessions = normalizeDurationSessions(durationSessions);
       const key = `${STORAGE_KEYS.DURATION_SESSIONS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(durationSessions));
+      trckngStorage.setItem(key, JSON.stringify(durationSessions));
       markCloudDirty('duration sessions');
     }
 
@@ -696,7 +721,7 @@
       const endedAt = Number(endTime) || Date.now();
       if (!startedAt || endedAt <= startedAt) return;
 
-      durationSessions.push({
+      const session = {
         id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${habit}`,
         habit,
         label: habitLabels[habit] || '',
@@ -705,17 +730,19 @@
         endTime: endedAt,
         week: getWeekKey(new Date(startedAt)),
         source
-      });
+      };
+      durationSessions.push(session);
 
       if (durationSessions.length > DURATION_SESSION_LOG_LIMIT) {
         durationSessions = durationSessions.slice(-DURATION_SESSION_LOG_LIMIT);
       }
+      return session;
     }
 
     function loadMoneySettings() {
       moneySettings = {};
       const key = `${STORAGE_KEYS.MONEY_SETTINGS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { moneySettings = JSON.parse(stored); } catch(e) {}
       }
@@ -723,46 +750,46 @@
 
     function saveMoneySettings() {
       const key = `${STORAGE_KEYS.MONEY_SETTINGS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(moneySettings));
+      trckngStorage.setItem(key, JSON.stringify(moneySettings));
       markCloudDirty('money settings');
     }
 
     function loadUnitSettings() {
       const key = `${STORAGE_KEYS.UNIT_SETTINGS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       unitSettings = stored ? JSON.parse(stored) : {};
     }
     function saveUnitSettings() {
       const key = `${STORAGE_KEYS.UNIT_SETTINGS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(unitSettings));
+      trckngStorage.setItem(key, JSON.stringify(unitSettings));
       markCloudDirty('unit settings');
     }
 
     function loadValueFormats() {
       const key = `${STORAGE_KEYS.VALUE_FORMATS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       valueFormats = stored ? JSON.parse(stored) : {};
     }
     function saveValueFormats() {
       const key = `${STORAGE_KEYS.VALUE_FORMATS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(valueFormats));
+      trckngStorage.setItem(key, JSON.stringify(valueFormats));
       markCloudDirty('value formats');
     }
 
     function loadMathSettings() {
       const key = `${STORAGE_KEYS.MATH_SETTINGS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       mathSettings = stored ? JSON.parse(stored) : {};
     }
     function saveMathSettings() {
       const key = `${STORAGE_KEYS.MATH_SETTINGS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(mathSettings));
+      trckngStorage.setItem(key, JSON.stringify(mathSettings));
       markCloudDirty('math settings');
     }
 
     function normalizeCellFlags(rawFlags) {
       const normalized = {};
-      HABITS.forEach(habit => {
+      collectCellIds(rawFlags).forEach(habit => {
         const incoming = rawFlags && typeof rawFlags === 'object' ? rawFlags[habit] : null;
         normalized[habit] = {
           ...DEFAULT_CELL_FLAGS,
@@ -774,7 +801,7 @@
 
     function loadCellFlags() {
       const key = `${STORAGE_KEYS.CELL_FLAGS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (!stored) {
         cellFlags = normalizeCellFlags({});
         return;
@@ -789,11 +816,12 @@
 
     function saveCellFlags() {
       const key = `${STORAGE_KEYS.CELL_FLAGS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(normalizeCellFlags(cellFlags)));
+      trckngStorage.setItem(key, JSON.stringify(normalizeCellFlags(cellFlags)));
       markCloudDirty('cell flags');
     }
 
     function getCellFlags(habit) {
+      if (pendingNewCell?.id === habit) return { ...DEFAULT_CELL_FLAGS };
       if (!cellFlags[habit]) {
         cellFlags[habit] = { ...DEFAULT_CELL_FLAGS };
       }
@@ -838,15 +866,15 @@
       const normalized = {};
       const source = rawLayout && typeof rawLayout === 'object' ? rawLayout : {};
 
-      HABITS.forEach((habit, index) => {
+      collectCellIds(source).forEach((habit, index) => {
         const fallback = getDefaultCellLayout(index);
         const incoming = source[habit] && typeof source[habit] === 'object' ? source[habit] : {};
         const rowSpan = normalizeInt(incoming.rowSpan, fallback.rowSpan, 1, 4);
         const colSpan = normalizeInt(incoming.colSpan, fallback.colSpan, 1, GRID_COLUMNS);
-        const maxCol = Math.max(1, GRID_COLUMNS - colSpan + 1);
+        const maxCol = FIELD_LIMIT - colSpan + 1;
 
         normalized[habit] = {
-          row: normalizeInt(incoming.row, fallback.row, 1),
+          row: normalizeInt(incoming.row, fallback.row, 1, FIELD_LIMIT - rowSpan + 1),
           col: normalizeInt(incoming.col, fallback.col, 1, maxCol),
           rowSpan,
           colSpan,
@@ -922,7 +950,7 @@
 
     function loadCellLayout() {
       const key = `${STORAGE_KEYS.CELL_LAYOUT}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (!stored) {
         cellLayout = normalizeCellLayout({});
         saveCellLayout();
@@ -940,19 +968,24 @@
     function saveCellLayout() {
       const key = `${STORAGE_KEYS.CELL_LAYOUT}_pin${currentPin}`;
       cellLayout = normalizeCellLayout(cellLayout);
-      localStorage.setItem(key, JSON.stringify(cellLayout));
+      trckngStorage.setItem(key, JSON.stringify(cellLayout));
       markCloudDirty('cell layout');
     }
 
     function setCellLayoutSize(habit, sizeId) {
       const preset = getLayoutSizePreset(sizeId);
       const current = getCellLayout(habit);
+      if (current.colSpan === preset.colSpan && current.rowSpan === preset.rowSpan) {
+        saveCellLayout();
+        return;
+      }
       cellLayout[habit] = {
         ...current,
         colSpan: preset.colSpan,
         rowSpan: preset.rowSpan
       };
-      cellLayout = packCellLayoutByOrder(cellLayout);
+      // The editor validates room before saving; resizing one module must not
+      // silently repack the positions of every other module.
       saveCellLayout();
     }
 
@@ -995,11 +1028,61 @@
     }
 
     function getCellLayout(habit) {
+      if (pendingNewCell?.id === habit) return { ...pendingNewCell.layout };
       if (!cellLayout[habit]) {
         const index = HABITS.indexOf(habit);
         cellLayout[habit] = getDefaultCellLayout(index >= 0 ? index : 0);
       }
       return cellLayout[habit];
+    }
+
+    function fieldSlotAvailable(habit, layout, ignored = []) {
+      if (layout.row < 1 || layout.col < 1 || layout.row + layout.rowSpan - 1 > FIELD_LIMIT || layout.col + layout.colSpan - 1 > FIELD_LIMIT) return false;
+      return HABITS.every(id => {
+        if (id === habit || ignored.includes(id)) return true;
+        const other = getCellLayout(id);
+        return other.visible === false || layout.row >= other.row + other.rowSpan ||
+          layout.row + layout.rowSpan <= other.row || layout.col >= other.col + other.colSpan || layout.col + layout.colSpan <= other.col;
+      });
+    }
+
+    function getCellMove(habit, row, col) {
+      if (!HABITS.includes(habit) || !Number.isInteger(row) || !Number.isInteger(col)) return null;
+      const from = getCellLayout(habit), target = { ...from, row, col };
+      if (fieldSlotAvailable(habit, target)) return { [habit]: target };
+      // An exact drop on an equally sized module swaps their positions atomically.
+      const other = HABITS.find(id => id !== habit && getCellLayout(id).visible !== false &&
+        getCellLayout(id).row === row && getCellLayout(id).col === col &&
+        getCellLayout(id).rowSpan === from.rowSpan && getCellLayout(id).colSpan === from.colSpan);
+      if (!other) return null;
+      const swapped = { ...getCellLayout(other), row: from.row, col: from.col };
+      return fieldSlotAvailable(habit, target, [other]) && fieldSlotAvailable(other, swapped, [habit])
+        ? { [habit]: target, [other]: swapped } : null;
+    }
+
+    function moveCellTo(habit, row, col) {
+      const changes = getCellMove(habit, row, col);
+      if (!changes) return false;
+      Object.assign(cellLayout, changes);
+      saveCellLayout(); renderHabits(); renderLayoutEditor();
+      return true;
+    }
+
+    function openNewCellModal(row, col) {
+      // A parked editor is resumed by the v2 adapter; never overwrite its draft.
+      if (window.TRCKNG_RESUME_CELL_EDITOR?.()) return;
+      if (!Number.isInteger(row) || !Number.isInteger(col)) {
+        const columns = Math.max(5, getLayoutColumnCount(getRenderableCells()));
+        outer: for (let r = 1; r <= FIELD_LIMIT; r++) {
+          for (let c = 1; c <= columns; c++) {
+            if (fieldSlotAvailable('', { row: r, col: c, rowSpan: 1, colSpan: 1 })) { row = r; col = c; break outer; }
+          }
+        }
+      }
+      const layout = { row, col, rowSpan: 1, colSpan: 1, order: HABITS.length, visible: true };
+      if (!Number.isInteger(row) || !Number.isInteger(col) || !fieldSlotAvailable('', layout)) return;
+      pendingNewCell = { id: `cell-${crypto.randomUUID()}`, pin: currentPin, layout };
+      window.openCellEditModal(pendingNewCell.id, HABITS.length);
     }
 
     function getCellSettingsSnapshot(habit) {
@@ -1083,6 +1166,7 @@
 
     function applyCellsSnapshot(importedCells) {
       if (!Array.isArray(importedCells)) return;
+      HABITS = collectCellIds(Object.fromEntries(HABITS.map(id => [id, true])), Object.fromEntries(importedCells.filter(cell => cell?.id).map(cell => [cell.id, true])));
 
       importedCells.forEach(cell => {
         if (!cell || typeof cell !== 'object' || !HABITS.includes(cell.id)) return;
@@ -1128,46 +1212,47 @@
 
     function loadLedSettings() {
       const key = `${STORAGE_KEYS.LED_SETTINGS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       ledSettings = stored ? JSON.parse(stored) : {};
     }
     function saveLedSettings() {
-      localStorage.setItem(`${STORAGE_KEYS.LED_SETTINGS}_pin${currentPin}`, JSON.stringify(ledSettings));
+      trckngStorage.setItem(`${STORAGE_KEYS.LED_SETTINGS}_pin${currentPin}`, JSON.stringify(ledSettings));
       markCloudDirty('led settings');
     }
 
     function loadLedStates() {
       const key = `${STORAGE_KEYS.LED_STATES}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       ledStates = stored ? JSON.parse(stored) : {};
     }
     function saveLedStates() {
-      localStorage.setItem(`${STORAGE_KEYS.LED_STATES}_pin${currentPin}`, JSON.stringify(ledStates));
+      trckngStorage.setItem(`${STORAGE_KEYS.LED_STATES}_pin${currentPin}`, JSON.stringify(ledStates));
       markCloudDirty('led states');
     }
 
     function loadCurrencySettings() {
       const key = `${STORAGE_KEYS.CURRENCY_SETTINGS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       currencySettings = stored ? JSON.parse(stored) : {};
     }
     function saveCurrencySettings() {
-      localStorage.setItem(`${STORAGE_KEYS.CURRENCY_SETTINGS}_pin${currentPin}`, JSON.stringify(currencySettings));
+      trckngStorage.setItem(`${STORAGE_KEYS.CURRENCY_SETTINGS}_pin${currentPin}`, JSON.stringify(currencySettings));
       markCloudDirty('currency settings');
     }
     
     function loadCurrencyCache() {
-      const stored = localStorage.getItem(STORAGE_KEYS.CURRENCY_CACHE);
+      const stored = trckngStorage.getItem(STORAGE_KEYS.CURRENCY_CACHE);
       currencyCache = stored ? JSON.parse(stored) : {};
     }
     function saveCurrencyCache() {
-      localStorage.setItem(STORAGE_KEYS.CURRENCY_CACHE, JSON.stringify(currencyCache));
+      trckngStorage.setItem(STORAGE_KEYS.CURRENCY_CACHE, JSON.stringify(currencyCache));
       markCloudDirty('currency cache');
     }
 
     // Fetch exchange rate from free API
     async function fetchExchangeRate(from, to) {
       const pair = `${from}_${to}`.toUpperCase();
+      if (window.TRCKNG_DEMO) return currencyCache[pair]?.rate || (from === to ? 1 : null);
       const now = Date.now();
       
       // Check cache (valid for 1 hour)
@@ -1203,12 +1288,12 @@
 
     function loadThemeSettings() {
       const key = `${STORAGE_KEYS.THEME}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       themeSettings = stored ? JSON.parse(stored) : defaultThemeSettings();
     }
     function saveThemeSettings() {
       const key = `${STORAGE_KEYS.THEME}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(themeSettings));
+      trckngStorage.setItem(key, JSON.stringify(themeSettings));
       markCloudDirty('theme settings');
     }
 
@@ -1240,7 +1325,7 @@
 
     function loadDashboardSettings() {
       const key = `${STORAGE_KEYS.DASHBOARD_SETTINGS}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       try {
         dashboardSettings = normalizeDashboardSettings(stored ? JSON.parse(stored) : null);
       } catch (e) {
@@ -1250,26 +1335,26 @@
 
     function saveDashboardSettings() {
       const key = `${STORAGE_KEYS.DASHBOARD_SETTINGS}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(normalizeDashboardSettings(dashboardSettings)));
+      trckngStorage.setItem(key, JSON.stringify(normalizeDashboardSettings(dashboardSettings)));
       markCloudDirty('dashboard settings');
     }
 
     function loadViewMode() {
-      const stored = localStorage.getItem(STORAGE_KEYS.VIEW_MODE);
+      const stored = trckngStorage.getItem(STORAGE_KEYS.VIEW_MODE);
       currentView = Object.values(VIEW_MODES).includes(stored) ? stored : VIEW_MODES.TRACK;
     }
 
     function saveViewMode() {
-      localStorage.setItem(STORAGE_KEYS.VIEW_MODE, currentView);
+      trckngStorage.setItem(STORAGE_KEYS.VIEW_MODE, currentView);
     }
 
     function loadCloudSyncState() {
-      cloudDirty = localStorage.getItem(STORAGE_KEYS.CLOUD_DIRTY) === 'true';
-      cloudDirtyAt = Number(localStorage.getItem(STORAGE_KEYS.CLOUD_DIRTY_AT)) || 0;
+      cloudDirty = trckngStorage.getItem(STORAGE_KEYS.CLOUD_DIRTY) === 'true';
+      cloudDirtyAt = Number(trckngStorage.getItem(STORAGE_KEYS.CLOUD_DIRTY_AT)) || 0;
     }
 
     function getCloudLastSyncMs() {
-      const stored = localStorage.getItem(STORAGE_KEYS.CLOUD_LAST_SYNC_AT);
+      const stored = trckngStorage.getItem(STORAGE_KEYS.CLOUD_LAST_SYNC_AT);
       if (!stored) return 0;
       const parsed = Date.parse(stored);
       return Number.isFinite(parsed) ? parsed : 0;
@@ -1277,7 +1362,7 @@
 
     function setCloudLastSyncAt(value) {
       const iso = value || new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.CLOUD_LAST_SYNC_AT, iso);
+      trckngStorage.setItem(STORAGE_KEYS.CLOUD_LAST_SYNC_AT, iso);
     }
 
     function runWithoutCloudDirty(fn) {
@@ -1293,15 +1378,15 @@
       cloudDirty = Boolean(isDirty);
       if (cloudDirty) {
         cloudDirtyAt = Date.now();
-        localStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY, 'true');
-        localStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY_AT, String(cloudDirtyAt));
+        trckngStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY, 'true');
+        trckngStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY_AT, String(cloudDirtyAt));
         accountStatusOverride = null;
         scheduleCloudAutosync(reason);
       } else {
         cloudDirtyAt = 0;
         cloudConflictPending = false;
-        localStorage.removeItem(STORAGE_KEYS.CLOUD_DIRTY);
-        localStorage.removeItem(STORAGE_KEYS.CLOUD_DIRTY_AT);
+        trckngStorage.removeItem(STORAGE_KEYS.CLOUD_DIRTY);
+        trckngStorage.removeItem(STORAGE_KEYS.CLOUD_DIRTY_AT);
         if (cloudSyncTimer) {
           clearTimeout(cloudSyncTimer);
           cloudSyncTimer = null;
@@ -1312,6 +1397,7 @@
 
     function markCloudDirty(reason = 'local change') {
       if (suppressCloudDirty > 0) return;
+      window.TRCKNG_ACCOUNT?.changed();
       setCloudDirty(true, reason);
     }
 
@@ -1377,6 +1463,7 @@
     }
 
     async function checkCloudForUpdates(options = {}) {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.sync();
       const silent = options.silent !== false;
       const force = options.force === true;
       const now = Date.now();
@@ -1445,6 +1532,7 @@
     }
 
     async function triggerCloudSync(reason = 'sync', options = {}) {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.sync();
       const manual = options.manual === true;
       const immediateUpload = options.immediateUpload === true;
       const force = options.force === true;
@@ -1520,7 +1608,7 @@
     }
 
     function readStoredJson(key, fallback = {}) {
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (!stored) return cloneData(fallback);
       try {
         return JSON.parse(stored);
@@ -1530,7 +1618,7 @@
     }
 
     function writeStoredJson(key, value) {
-      localStorage.setItem(key, JSON.stringify(value || {}));
+      trckngStorage.setItem(key, JSON.stringify(value || {}));
     }
 
     function cloneData(value) {
@@ -1753,7 +1841,8 @@
     }
 
     function buildCloudSnapshot() {
-      runWithoutCloudDirty(() => persistCurrentPinState());
+      const persist = () => runWithoutCloudDirty(() => persistCurrentPinState());
+      if (trckngStorage.transaction) trckngStorage.transaction(persist); else persist();
 
       return {
         version: APP_VERSION,
@@ -1763,6 +1852,7 @@
         currentPin,
         currentView,
         pinCount: PIN_COUNT,
+        ...(window.TRCKNG_SNAPSHOT?.export() || {}),
         deviceId: getSupabaseDeviceId(),
         pinNames: cloneData(pinNames || {}),
         pinColors: cloneData(pinColors || {}),
@@ -1773,8 +1863,10 @@
 
     function applyCurrentPinSnapshot(imported, options = {}) {
       if (!imported || typeof imported !== 'object') return false;
+      if (!window.TRCKNG_SNAPSHOT && imported.dataset === 'sstm-v2') throw new Error('Open this backup in v2. V1 data was not changed.');
 
       return runWithoutCloudDirty(() => {
+        HABITS = collectCellIds(Object.fromEntries(HABITS.map(id => [id, true])), imported.habitLabels, imported.habitTypes, imported.cellLayout);
         if (imported.weekData) weekData = imported.weekData;
         if (imported.habitLabels) habitLabels = { ...habitLabels, ...imported.habitLabels };
 
@@ -1791,6 +1883,7 @@
 
         if (imported.durationStates) durationStates = { ...durationStates, ...imported.durationStates };
         if (imported.timerSettings) timerSettings = { ...timerSettings, ...imported.timerSettings };
+        if (imported.timerStates) timerStates = { ...timerStates, ...imported.timerStates };
         if (imported.durationSessions) durationSessions = normalizeDurationSessions(imported.durationSessions);
         if (imported.moneySettings) moneySettings = { ...moneySettings, ...imported.moneySettings };
 
@@ -1818,6 +1911,8 @@
     }
 
     function applyCloudSnapshot(snapshot, options = {}) {
+      if (!window.TRCKNG_SNAPSHOT && snapshot?.dataset === 'sstm-v2') throw new Error('Open this backup in v2. V1 data was not changed.');
+      if (window.TRCKNG_SNAPSHOT) window.TRCKNG_SNAPSHOT.validate(snapshot);
       if (!snapshot || snapshot.snapshotType !== 'fullApp' || !Array.isArray(snapshot.pinData)) {
         return false;
       }
@@ -1826,7 +1921,7 @@
         snapshot.pinData.forEach(pinSnapshot => {
           const pin = normalizeInt(pinSnapshot.pin, 0, 0, PIN_COUNT - 1);
           PER_PIN_SYNC_FIELDS.forEach(field => {
-            localStorage.removeItem(`${field.key}_pin${pin}`);
+            trckngStorage.removeItem(`${field.key}_pin${pin}`);
             if (pinSnapshot[field.prop] !== undefined) {
               let value = pinSnapshot[field.prop];
               if (field.prop === 'habitTypes') {
@@ -1873,17 +1968,19 @@
         const layoutGrid = document.getElementById('layoutGrid');
         if (layoutGrid) layoutGrid.setAttribute('data-pin', currentPin);
 
+        window.TRCKNG_SNAPSHOT?.apply(snapshot);
         reloadCurrentPinState();
         return true;
       });
     }
 
     function getSupabaseConfig() {
+      if (window.TRCKNG_DEMO) return { url: '', anonKey: '', table: SUPABASE_DEFAULT_TABLE };
       const baseConfig = window.TRCKNG_CONFIG || {};
       return {
-        url: (localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || baseConfig.supabaseUrl || '').trim(),
-        anonKey: (localStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || baseConfig.supabaseAnonKey || '').trim(),
-        table: (baseConfig.supabaseTable || SUPABASE_DEFAULT_TABLE).trim()
+        url: (trckngStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || baseConfig.supabaseUrl || '').trim(),
+        anonKey: (trckngStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || baseConfig.supabaseAnonKey || '').trim(),
+        table: (window.TRCKNG_CLOUD_TABLE || baseConfig.supabaseTable || SUPABASE_DEFAULT_TABLE).trim()
       };
     }
 
@@ -1893,12 +1990,12 @@
     }
 
     function getSupabaseDeviceId() {
-      let deviceId = localStorage.getItem(STORAGE_KEYS.SUPABASE_DEVICE_ID);
+      let deviceId = trckngStorage.getItem(STORAGE_KEYS.SUPABASE_DEVICE_ID);
       if (!deviceId) {
         deviceId = window.crypto && crypto.randomUUID
           ? crypto.randomUUID()
           : `device-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        localStorage.setItem(STORAGE_KEYS.SUPABASE_DEVICE_ID, deviceId);
+        trckngStorage.setItem(STORAGE_KEYS.SUPABASE_DEVICE_ID, deviceId);
       }
       return deviceId;
     }
@@ -1923,7 +2020,8 @@
         return true;
       }
 
-      supabaseClient = window.supabase.createClient(config.url, config.anonKey, {
+      const prepared = window.TRCKNG_PREPARED_CLIENT;
+      supabaseClient = prepared?.signature === signature ? prepared.client : window.supabase.createClient(config.url, config.anonKey, {
         auth: {
           autoRefreshToken: true,
           persistSession: true,
@@ -2139,6 +2237,11 @@
         accountStatusOverride?.message || statusMessage,
         accountStatusOverride?.tone || statusTone
       );
+      window.dispatchEvent(new CustomEvent('trckng-account-state', { detail: {
+        signedIn, busy: cloudBusy, conflict: cloudConflictPending, dirty: cloudDirty,
+        hasCloud: Boolean(cloudSnapshotMeta), online: navigator.onLine,
+        ready: window.TRCKNG_ACCOUNT ? window.TRCKNG_ACCOUNT.ready : signedIn
+      } }));
     }
 
     function openAccountModal() {
@@ -2153,7 +2256,26 @@
       document.getElementById('accountModal').classList.remove('visible');
     }
 
+    function returnFromAccount() {
+      if (window.TRCKNG_NAVIGATION) return window.TRCKNG_NAVIGATION.fromAccount();
+      closeAccountModal();
+      setView(VIEW_MODES.TRACK);
+      document.getElementById('btnViewTrack')?.focus();
+    }
+
+    function managedAccountState(next) {
+      if ('client' in next) supabaseClient = next.client;
+      if ('session' in next) accountSession = next.session;
+      if ('busy' in next) cloudBusy = next.busy;
+      if ('meta' in next) cloudSnapshotMeta = next.meta;
+      if ('conflict' in next) cloudConflictPending = next.conflict;
+      if (next.message) setAccountStatus(next.message, next.tone || 'idle');
+      renderAccountPanel();
+    }
+    function managedAccountDirty() { return cloudDirty; }
+
     function setupSupabaseAccount(force = false) {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.setup();
       if (supabaseAuthSubscription && typeof supabaseAuthSubscription.unsubscribe === 'function') {
         supabaseAuthSubscription.unsubscribe();
         supabaseAuthSubscription = null;
@@ -2188,6 +2310,7 @@
     }
 
     async function refreshAccountSession() {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.session();
       if (!ensureSupabaseClient()) {
         renderAccountPanel();
         return null;
@@ -2217,11 +2340,11 @@
       const url = (document.getElementById('accountConfigUrl')?.value || '').trim();
       const anonKey = (document.getElementById('accountConfigAnon')?.value || '').trim();
 
-      if (url) localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
-      else localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
+      if (url) trckngStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
+      else trckngStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
 
-      if (anonKey) localStorage.setItem(STORAGE_KEYS.SUPABASE_ANON_KEY, anonKey);
-      else localStorage.removeItem(STORAGE_KEYS.SUPABASE_ANON_KEY);
+      if (anonKey) trckngStorage.setItem(STORAGE_KEYS.SUPABASE_ANON_KEY, anonKey);
+      else trckngStorage.removeItem(STORAGE_KEYS.SUPABASE_ANON_KEY);
 
       accountSession = null;
       cloudSnapshotMeta = null;
@@ -2231,6 +2354,7 @@
     }
 
     async function signInAccount() {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.signIn();
       if (!ensureSupabaseClient()) {
         renderAccountPanel();
         return;
@@ -2270,6 +2394,7 @@
     }
 
     async function signUpAccount() {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.signUp();
       if (!signupUnlocked) {
         setAccountStatus('HOLD EMAIL 3 SEC TO UNLOCK SIGN UP', 'warn');
         return;
@@ -2325,6 +2450,7 @@
     }
 
     async function signOutAccount() {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.signOut();
       if (!ensureSupabaseClient()) return;
       cloudBusy = true;
       renderAccountPanel();
@@ -2346,6 +2472,7 @@
     }
 
     async function fetchCloudSnapshotRow() {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.fetch();
       const session = await refreshAccountSession();
       if (!session || !session.user) {
         setAccountStatus('SIGN IN REQUIRED', 'warn');
@@ -2363,6 +2490,7 @@
     }
 
     async function refreshCloudSnapshotMeta() {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.sync();
       if (!supabaseClient || !accountSession || !accountSession.user) return;
 
       try {
@@ -2387,6 +2515,7 @@
     }
 
     async function uploadCloudSnapshot(options = {}) {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.sync();
       const automatic = Boolean(options.automatic);
       const skipPreflight = options.skipPreflight === true;
       if (!ensureSupabaseClient()) {
@@ -2456,8 +2585,8 @@
         if (automatic) {
           cloudDirty = true;
           cloudDirtyAt = Date.now();
-          localStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY, 'true');
-          localStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY_AT, String(cloudDirtyAt));
+          trckngStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY, 'true');
+          trckngStorage.setItem(STORAGE_KEYS.CLOUD_DIRTY_AT, String(cloudDirtyAt));
           setAccountStatus(`AUTO SYNC ERROR: ${error.message}`, 'error');
         } else {
           setAccountStatus(`UPLOAD ERROR: ${error.message}`, 'error');
@@ -2470,6 +2599,7 @@
     }
 
     async function loadCloudSnapshot() {
+      if (window.TRCKNG_ACCOUNT) return window.TRCKNG_ACCOUNT.load();
       if (!ensureSupabaseClient()) {
         renderAccountPanel();
         return;
@@ -2548,7 +2678,7 @@ function applyTheme() {
     function loadCounterLastUpdate() {
       counterLastUpdate = {};
       const key = `${STORAGE_KEYS.COUNTER_LAST_UPDATE}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { counterLastUpdate = JSON.parse(stored); } catch (e) {}
       }
@@ -2556,7 +2686,7 @@ function applyTheme() {
 
     function saveCounterLastUpdate() {
       const key = `${STORAGE_KEYS.COUNTER_LAST_UPDATE}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(counterLastUpdate));
+      trckngStorage.setItem(key, JSON.stringify(counterLastUpdate));
       markCloudDirty('counter last update');
     }
 
@@ -2585,7 +2715,7 @@ function applyTheme() {
     function loadCounterChangeLog() {
       counterChangeLog = [];
       const key = `${STORAGE_KEYS.COUNTER_CHANGE_LOG}_pin${currentPin}`;
-      const stored = localStorage.getItem(key);
+      const stored = trckngStorage.getItem(key);
       if (stored) {
         try { counterChangeLog = normalizeCounterChangeLog(JSON.parse(stored)); } catch (e) {}
       }
@@ -2594,7 +2724,7 @@ function applyTheme() {
     function saveCounterChangeLog() {
       counterChangeLog = normalizeCounterChangeLog(counterChangeLog);
       const key = `${STORAGE_KEYS.COUNTER_CHANGE_LOG}_pin${currentPin}`;
-      localStorage.setItem(key, JSON.stringify(counterChangeLog));
+      trckngStorage.setItem(key, JSON.stringify(counterChangeLog));
       markCloudDirty('counter change log');
     }
 
@@ -2659,14 +2789,14 @@ function applyTheme() {
 
     function loadPinNames() {
       pinNames = {};
-      const stored = localStorage.getItem(STORAGE_KEYS.PIN_NAMES);
+      const stored = trckngStorage.getItem(STORAGE_KEYS.PIN_NAMES);
       if (stored) {
         try { pinNames = JSON.parse(stored) || {}; } catch (e) { pinNames = {}; }
       }
     }
 
     function savePinNames() {
-      localStorage.setItem(STORAGE_KEYS.PIN_NAMES, JSON.stringify(pinNames));
+      trckngStorage.setItem(STORAGE_KEYS.PIN_NAMES, JSON.stringify(pinNames));
       markCloudDirty('pin names');
     }
 
@@ -2678,14 +2808,14 @@ function applyTheme() {
 
     function loadPinColors() {
       pinColors = {};
-      const stored = localStorage.getItem(STORAGE_KEYS.PIN_COLORS);
+      const stored = trckngStorage.getItem(STORAGE_KEYS.PIN_COLORS);
       if (stored) {
         try { pinColors = JSON.parse(stored) || {}; } catch (e) { pinColors = {}; }
       }
     }
 
     function savePinColors() {
-      localStorage.setItem(STORAGE_KEYS.PIN_COLORS, JSON.stringify(pinColors));
+      trckngStorage.setItem(STORAGE_KEYS.PIN_COLORS, JSON.stringify(pinColors));
       markCloudDirty('pin colors');
     }
 
@@ -2785,8 +2915,20 @@ function applyTheme() {
     }
 
     function getHistoryWeekKeys() {
-      return Array.from(new Set([currentWeekKey].concat(Object.keys(weekData || {}))))
-        .filter(Boolean)
+      const keys = new Set([currentWeekKey, ...Object.keys(weekData || {})]);
+      counterChangeLog.forEach(entry => keys.add(entry.week));
+      durationSessions.forEach(session => {
+        keys.add(session.week);
+        const cursor = new Date(session.startTime);
+        // Include weeks touched by a cross-boundary session, without unbounded expansion.
+        for (let i = 0; i < WEEKS_TO_KEEP && +cursor < session.endTime; i++) {
+          keys.add(getWeekKey(cursor));
+          cursor.setDate(cursor.getDate() + 7);
+        }
+        keys.add(getWeekKey(new Date(session.endTime - 1)));
+      });
+      return Array.from(keys)
+        .filter(key => /^\d{4}W\d{2}$/.test(key))
         .sort()
         .reverse();
     }
@@ -2794,8 +2936,8 @@ function applyTheme() {
     function setHistoryTimelineWeek(weekKey) {
       if (!weekKey) return;
       historyTimelineWeekKey = weekKey;
-      updateHeader();
       updateStats();
+      updateHeader();
     }
 
     function shiftHistoryTimelineWeek(direction) {
@@ -3132,10 +3274,27 @@ function applyTheme() {
       });
     }
 
-    function persistDurationCorrection(habit, affectedWeeks = [currentWeekKey]) {
+    function persistDurationCorrection(habit, before = [], after = []) {
+      const factor = spanTypeStoresMinutes(habitTypes[habit]) ? 60 : 1;
+      const affectedWeeks = new Set(before.concat(after).map(session => session.week));
+      affectedWeeks.forEach(week => {
+        const delta = HistoryMatrix.correctionDelta(before, after, habit, week);
+        if (!weekData[week] || typeof weekData[week] !== 'object') weekData[week] = {};
+        const archivedSeconds = (Number(weekData[week][habit]) || 0) * factor;
+        let seconds = archivedSeconds;
+        if (week === currentWeekKey) {
+          const state = durationStates[habit] || {};
+          seconds = Math.max(seconds, Number(state.accumulated) || 0);
+          const latest = durationSessions.filter(s => s.habit === habit && s.week === week)
+            .sort((a, b) => b.endTime - a.endTime)[0];
+          durationStates[habit] = { ...state,
+            accumulated: Math.max(0, seconds + delta),
+            lastSession: latest ? Math.max(0, Math.floor((latest.endTime - latest.startTime) / 1000)) : 0
+          };
+        }
+        weekData[week][habit] = Math.max(0, Math.floor((seconds + delta) / factor));
+      });
       durationSessions = normalizeDurationSessions(durationSessions);
-      recalculateDurationHabit(habit);
-      recalculateDurationWeekData(habit, affectedWeeks);
       saveDurationSessions();
       saveDurationStates();
       saveWeekData();
@@ -3168,11 +3327,13 @@ function applyTheme() {
         return;
       }
 
-      const sessions = getCurrentWeekDurationSessions(correctionHabit)
+      const bounds = correctionBounds || getWeekBoundsMs(currentWeekKey);
+      const sessions = normalizeDurationSessions(durationSessions)
+        .filter(session => session.habit === correctionHabit && session.endTime > bounds.startMs && session.startTime < bounds.endMs)
         .slice()
         .sort((a, b) => Number(b.startTime) - Number(a.startTime));
       const state = durationStates[correctionHabit] || {};
-      const runningRow = state.isRunning && state.startTime ? [{
+      const runningRow = state.isRunning && state.startTime && Date.now() > bounds.startMs && state.startTime < bounds.endMs ? [{
         id: '__running__',
         startTime: Number(state.startTime),
         endTime: Date.now(),
@@ -3181,7 +3342,7 @@ function applyTheme() {
 
       const rows = runningRow.concat(sessions);
       if (!rows.length) {
-        list.innerHTML = '<div class="correction-empty">No sessions this week</div>';
+        list.innerHTML = '<div class="correction-empty">No retained sessions in this range</div>';
         return;
       }
 
@@ -3190,7 +3351,7 @@ function applyTheme() {
         const endTime = Math.max(startTime, Number(session.endTime) || Date.now());
         const seconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
         const duration = formatDurationSec(seconds).main;
-        const status = session.running ? 'running' : 'saved';
+        const status = `${session.running ? 'running' : 'saved'} · ${session.label || habitLabels[correctionHabit] || correctionHabit}`;
         const deleteBtn = session.running
           ? ''
           : `<button class="modal-btn correction-action-btn danger" data-correction-action="delete" data-session-id="${escapeHtml(session.id)}" type="button">DELETE</button>`;
@@ -3216,7 +3377,7 @@ function applyTheme() {
     }
 
     function setCorrectionAddDefaults() {
-      const end = new Date();
+      const end = new Date(correctionBounds ? Math.min(Date.now(), correctionBounds.endMs - 60000) : Date.now());
       end.setSeconds(0, 0);
       const start = new Date(end);
       start.setHours(start.getHours() - 1);
@@ -3226,8 +3387,13 @@ function applyTheme() {
       if (endInput) endInput.value = toDateTimeLocalValue(end.getTime());
     }
 
-    function openDurationCorrectionModal() {
+    function openDurationCorrectionModal(options = {}) {
+      if (options.habit && getCorrectableDurationHabits().includes(options.habit)) correctionHabit = options.habit;
+      correctionBounds = options.bounds || (currentView === VIEW_MODES.HISTORY
+        ? getWeekBoundsMs(historyTimelineWeekKey) : getWeekBoundsMs(currentWeekKey));
       correctionHabit = correctionHabit || getCorrectableDurationHabits()[0] || null;
+      const rangeLabel = document.getElementById('correctionRangeLabel');
+      if (rangeLabel) rangeLabel.textContent = `${formatTimelinePoint(correctionBounds.startMs)} — ${formatTimelinePoint(correctionBounds.endMs - 1)} · ${getCurrentPinName()}`;
       setCorrectionAddDefaults();
       renderDurationCorrectionModal();
       document.getElementById('durationCorrectionModal')?.classList.add('visible');
@@ -3250,34 +3416,29 @@ function applyTheme() {
       }
 
       if (sessionId === '__running__') {
-        const affectedWeeks = [currentWeekKey, getWeekKey(new Date(start))];
         durationStates[correctionHabit] = {
           startTime: start,
           isRunning: true,
           accumulated: Number(durationStates[correctionHabit]?.accumulated) || 0,
           lastSession: Number(durationStates[correctionHabit]?.lastSession) || 0
         };
-        recordDurationSession(correctionHabit, start, end, getSpanSessionSource(habitTypes[correctionHabit]));
+        const added = recordDurationSession(correctionHabit, start, end, getSpanSessionSource(habitTypes[correctionHabit]));
         durationStates[correctionHabit] = {
           startTime: null,
           isRunning: false,
           accumulated: Number(durationStates[correctionHabit]?.accumulated) || 0,
           lastSession: Math.floor((end - start) / 1000)
         };
-        persistDurationCorrection(correctionHabit, affectedWeeks);
+        persistDurationCorrection(correctionHabit, [], [added]);
       } else {
         const previousSession = normalizeDurationSessions(durationSessions)
-          .find(session => session.id === sessionId);
-        const affectedWeeks = [
-          currentWeekKey,
-          previousSession?.week,
-          getWeekKey(new Date(start))
-        ];
+          .find(session => session.id === sessionId && session.habit === correctionHabit);
+        if (!previousSession) return;
         durationSessions = normalizeDurationSessions(durationSessions).map(session => {
           if (session.id !== sessionId) return session;
           return {
             ...session,
-            label: habitLabels[correctionHabit] || session.label || '',
+            label: session.label || habitLabels[correctionHabit] || '',
             color: resolveHabitColor(correctionHabit, null, session.color),
             startTime: start,
             endTime: end,
@@ -3285,7 +3446,7 @@ function applyTheme() {
             source: getSpanSessionSource(habitTypes[correctionHabit])
           };
         });
-        persistDurationCorrection(correctionHabit, affectedWeeks);
+        persistDurationCorrection(correctionHabit, [previousSession], [durationSessions.find(s => s.id === sessionId)]);
       }
 
       renderDurationCorrectionModal();
@@ -3294,9 +3455,10 @@ function applyTheme() {
     function deleteCorrectionSession(sessionId) {
       if (!correctionHabit || !sessionId || sessionId === '__running__') return;
       const previousSession = normalizeDurationSessions(durationSessions)
-        .find(session => session.id === sessionId);
+        .find(session => session.id === sessionId && session.habit === correctionHabit);
+      if (!previousSession) return;
       durationSessions = normalizeDurationSessions(durationSessions).filter(session => session.id !== sessionId);
-      persistDurationCorrection(correctionHabit, [currentWeekKey, previousSession?.week]);
+      persistDurationCorrection(correctionHabit, [previousSession], []);
       renderDurationCorrectionModal();
     }
 
@@ -3309,8 +3471,8 @@ function applyTheme() {
         return;
       }
 
-      recordDurationSession(correctionHabit, start, end, getSpanSessionSource(habitTypes[correctionHabit]));
-      persistDurationCorrection(correctionHabit, [currentWeekKey, getWeekKey(new Date(start))]);
+      const added = recordDurationSession(correctionHabit, start, end, getSpanSessionSource(habitTypes[correctionHabit]));
+      persistDurationCorrection(correctionHabit, [], [added]);
       setCorrectionAddDefaults();
       renderDurationCorrectionModal();
     }
@@ -3492,7 +3654,7 @@ function applyTheme() {
       const settings = currencySettings[habit] || { from: 'USD', to: 'RUB', amount: 1 };
       const from = (settings.from || 'USD').toUpperCase();
       const to = (settings.to || 'RUB').toUpperCase();
-      const amount = settings.amount || 1;
+      const amount = settings.amount ?? 1;
       const label = habitLabels[habit] || `${from}/${to}`;
       
       document.getElementById('currencyModalTitle').textContent = `CONVERT · ${label}`;
@@ -3879,8 +4041,8 @@ function applyTheme() {
       return (op === 'min' || op === 'max') ? `${symbol}(${aLabel}, ${bLabel})` : `${aLabel} ${symbol} ${bLabel}`;
     }
 
-    function wouldCreateMathCycle(targetHabit) {
-      const cfg = mathSettings[targetHabit] || {};
+    function wouldCreateMathCycle(targetHabit, proposed = mathSettings[targetHabit]) {
+      const cfg = proposed || {};
       const deps = [];
       if (cfg.a) deps.push(cfg.a);
       if (!(['pow2','cos','abs','round','floor','ceil'].includes(cfg.op)) && cfg.bMode !== 'number' && cfg.b) deps.push(cfg.b);
@@ -4104,7 +4266,7 @@ function handleDurationClick(habit, type) {
         timerStates[habit] = {
           isRunning: true,
           startTime: Date.now(),
-          remaining: state.remaining !== null ? state.remaining : durationMs,
+          remaining: state.remaining ?? durationMs,
           iterations: state.iterations || 0
         };
         startGlobalInterval();
@@ -4125,7 +4287,7 @@ function handleDurationClick(habit, type) {
     }
 
     function handleCountdownClick(habit) {
-      // If countdown expired and pulsing - stop pulsing and reset notification flag,
+      // Acknowledge this deadline once; do not retrigger its notification.
       // и в любом случае даём визуальный отклик на клик
       const settings = timerSettings[habit] || {};
       if (settings.targetDate) {
@@ -4138,9 +4300,8 @@ function handleDurationClick(habit, type) {
           const btn = document.getElementById(`btn-${habit}`);
           if (btn) btn.classList.remove('pulsing');
 
-          // Reset notification flag so it can be sent again if needed
           const state = timerStates[habit] || {};
-          timerStates[habit] = { ...state, notificationSent: false };
+          timerStates[habit] = { ...state, notificationSent: true, acknowledged: true };
           saveTimerStates();
         }
       }
@@ -4244,12 +4405,13 @@ function handleDurationClick(habit, type) {
 
     // Request notification permission
     function requestNotificationPermission() {
+      if (window.TRCKNG_DEMO) return;
       if (!('Notification' in window)) {
         alert('This browser does not support notifications');
         return;
       }
       
-      if (Notification.permission === 'granted') {
+      if ('Notification' in window && Notification.permission === 'granted') {
         alert('Notifications already enabled!');
         new Notification('TRCKNG SSTM', {
           body: 'Notifications are working!',
@@ -4277,6 +4439,7 @@ function handleDurationClick(habit, type) {
     }
 
     function sendTimerNotification(habit) {
+      if (window.TRCKNG_DEMO) return;
       const settings = timerSettings[habit] || {};
       const state = timerStates[habit] || {};
       const label = habitLabels[habit] || 'Timer';
@@ -4300,7 +4463,7 @@ function handleDurationClick(habit, type) {
       }
 
       // Browser notification
-      if (Notification.permission === 'granted') {
+      if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(`${label}`, {
           body: message,
           icon: '/TRCKNG-SSTM/icons/icon-192.png',
@@ -4310,6 +4473,7 @@ function handleDurationClick(habit, type) {
     }
 
     function sendCountdownNotification(habit) {
+      if (window.TRCKNG_DEMO) return;
       const settings = timerSettings[habit] || {};
       const label = habitLabels[habit] || 'Countdown';
       
@@ -4331,7 +4495,7 @@ function handleDurationClick(habit, type) {
       }
 
       // Browser notification
-      if (Notification.permission === 'granted') {
+      if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(`${label}`, {
           body: message,
           icon: '/TRCKNG-SSTM/icons/icon-192.png',
@@ -4530,7 +4694,7 @@ function scheduleMathRefresh() {
               // Expired - show pulsing 00:00
               if (valueEl) {
                 valueEl.textContent = '00:00';
-                valueEl.closest('.btn-habit')?.classList.add('pulsing');
+                valueEl.closest('.btn-habit')?.classList.toggle('pulsing', !state.acknowledged);
               }
               if (breakdownEl) breakdownEl.textContent = '0d 0h 0m';
               
@@ -4542,8 +4706,8 @@ function scheduleMathRefresh() {
               }
             } else {
               // Still counting down - reset notification flag if it was set
-              if (state.notificationSent) {
-                timerStates[habit] = { ...state, notificationSent: false };
+              if (state.notificationSent || state.acknowledged) {
+                timerStates[habit] = { ...state, notificationSent: false, acknowledged: false };
                 saveTimerStates();
               }
               
@@ -4684,6 +4848,7 @@ function scheduleMathRefresh() {
       grid.style.setProperty('--layout-columns', String(getLayoutColumnCount(renderCells)));
 
       renderCells.forEach(cell => {
+        if (window.TRCKNG_MODULES?.render(cell, grid)) return;
         const habit = cell.id;
         const label = cell.label;
         const isActive = label?.trim();
@@ -4851,7 +5016,7 @@ function scheduleMathRefresh() {
             if (diff <= 0) {
               displayValue = '00:00';
               breakdown = '0d 0h 0m 0s';
-              btn.classList.add('pulsing');
+              if (!timerStates[habit]?.acknowledged) btn.classList.add('pulsing');
             } else {
               const totalMinutes = Math.floor(diff / (1000 * 60));
               const totalSeconds = Math.floor(diff / 1000);
@@ -4906,7 +5071,7 @@ function scheduleMathRefresh() {
           const settings = currencySettings[habit] || { from: 'USD', to: 'RUB', amount: 1 };
           const from = (settings.from || 'USD').toUpperCase();
           const to = (settings.to || 'RUB').toUpperCase();
-          const amount = settings.amount || 1;
+          const amount = settings.amount ?? 1;
           
           btn.innerHTML = `
             <span class="btn-label">${label || to}</span>
@@ -5097,6 +5262,7 @@ function scheduleMathRefresh() {
     let sunData = null; // {sunrise: Date, sunset: Date}
     
     async function fetchSunData() {
+      if (window.TRCKNG_DEMO) return;
       // Try to get user's location
       if (!navigator.geolocation) return;
       
@@ -5279,6 +5445,9 @@ function scheduleMathRefresh() {
     }
 
     function getHistoryTimelineDayBounds() {
+      if (historyFocus?.day != null) {
+        return HistoryMatrix.weekDays(getWeekBoundsMs(historyTimelineWeekKey).startMs)[historyFocus.day];
+      }
       if ((historyTimelineWeekKey || currentWeekKey) === currentWeekKey) return getDayBoundsMs();
       const range = getWeekDateRange(historyTimelineWeekKey || currentWeekKey);
       return getDayBoundsMs(range.start);
@@ -5392,7 +5561,7 @@ function scheduleMathRefresh() {
           }));
       });
       const running = snapshots.flatMap(snapshot => {
-        return HABITS
+        return collectCellIds(snapshot.labels, snapshot.types, snapshot.durationStates)
           .filter(habit => {
             const type = snapshot.types[habit];
             return shouldShowTimelineHabit(snapshot, habit, flagName) &&
@@ -5434,7 +5603,8 @@ function scheduleMathRefresh() {
             const type = snapshot.types[entry.habit];
             return !entry.undoneAt &&
               shouldShowTimelineHabit(snapshot, entry.habit, flagName) &&
-              (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) &&
+              (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT ||
+                (flagName === 'showInHistory' && [CELL_TYPES.VALUE, CELL_TYPES.MONEY_INCOME, CELL_TYPES.MONEY_BUDGET].includes(type))) &&
               entry.at >= startMs &&
               entry.at < endMs;
           })
@@ -5460,7 +5630,7 @@ function scheduleMathRefresh() {
         strip.appendChild(layer);
       }
 
-      const segments = getDurationSegmentsForBounds(bounds, flagName);
+      const segments = scopeHistoryTimeline(getDurationSegmentsForBounds(bounds, flagName), stripId, bounds);
       layer.innerHTML = '';
       segments.forEach(segment => {
         const el = document.createElement('div');
@@ -5471,6 +5641,7 @@ function scheduleMathRefresh() {
         const description = describeTimelineSegment(segment);
         el.title = description;
         bindTimelineInfo(el, stripId, description, segment.color || '#ff8c42');
+        bindHistoryRecordFocus(el, stripId, segment.habit, bounds.startMs + segment.left / 100 * (bounds.endMs - bounds.startMs));
         layer.appendChild(el);
       });
     }
@@ -5487,7 +5658,7 @@ function scheduleMathRefresh() {
         strip.appendChild(layer);
       }
 
-      const events = getCounterEventsForBounds(bounds, flagName);
+      const events = scopeHistoryTimeline(getCounterEventsForBounds(bounds, flagName), stripId, bounds);
       layer.innerHTML = '';
       events.forEach(event => {
         const el = document.createElement('div');
@@ -5497,6 +5668,7 @@ function scheduleMathRefresh() {
         const description = describeTimelineEvent(event);
         el.title = description;
         bindTimelineInfo(el, stripId, description, event.color || '#ffffff');
+        bindHistoryRecordFocus(el, stripId, event.habit, event.at);
         layer.appendChild(el);
       });
     }
@@ -5545,6 +5717,9 @@ function scheduleMathRefresh() {
       if ((historyTimelineWeekKey || currentWeekKey) !== currentWeekKey) {
         document.getElementById('historyDayStrip')?.setAttribute('data-marker', 'off');
         document.getElementById('historyWeekStrip')?.setAttribute('data-marker', 'off');
+      }
+      if (getHistoryTimelineDayBounds().startMs !== getDayBoundsMs().startMs) {
+        document.getElementById('historyDayStrip')?.setAttribute('data-marker', 'off');
       }
       document.body.dataset.dashboardEvents = settings.events ? 'on' : 'off';
       document.body.dataset.dashboardSun = settings.sunMarkers ? 'on' : 'off';
@@ -5639,7 +5814,9 @@ function scheduleMathRefresh() {
       const historyDayStripFill = document.getElementById('historyDayStripFill');
       const historyWeekStripFill = document.getElementById('historyWeekStripFill');
       const selectedHistoryWeek = historyTimelineWeekKey || currentWeekKey;
-      const historyDayProgress = selectedHistoryWeek === currentWeekKey ? dayProgress : 100;
+      const selectedDayBounds = getHistoryTimelineDayBounds();
+      const historyDayProgress = Math.max(0, Math.min(100,
+        (Date.now() - selectedDayBounds.startMs) / (selectedDayBounds.endMs - selectedDayBounds.startMs) * 100));
       const historyWeekProgress = selectedHistoryWeek === currentWeekKey ? weekProgress : 100;
       
       if (dayStripFill) {
@@ -5669,10 +5846,135 @@ function scheduleMathRefresh() {
       renderTimelineOverlays();
     }
 
+    // ===== HISTORY MATRIX =====
+    function buildHistoryProjection() {
+      return HistoryMatrix.buildWeek({
+        startMs: getWeekBoundsMs(historyTimelineWeekKey).startMs,
+        weekKey: historyTimelineWeekKey,
+        habits: HABITS.filter(h => habitLabels[h]?.trim() && !['points', 'modular', 'tag', 'state'].includes(habitTypes[h]) && getCellFlag(h, 'showInHistory'))
+          .map(id => ({ id, label: habitLabels[id], type: habitTypes[id] || CELL_TYPES.UNIT })),
+        sessions: normalizeDurationSessions(durationSessions),
+        changes: normalizeCounterChangeLog(counterChangeLog),
+        totals: weekData[historyTimelineWeekKey] || {}, running: durationStates
+      });
+    }
+
+    function getFilteredHistoryRows() {
+      return (historyProjection || buildHistoryProjection()).rows.filter(row => HistoryMatrix.matchesFilter(row, historyFilter));
+    }
+
+    function formatMatrixValue(row, value, stored = false) {
+      if (value === null) return '—';
+      if (row.timed) {
+        const seconds = stored && spanTypeStoresMinutes(row.type) ? value * 60 : value;
+        return formatDurationSec(Math.max(0, Math.round(seconds))).main;
+      }
+      const formatted = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(value);
+      const symbol = [CELL_TYPES.MONEY_INCOME, CELL_TYPES.MONEY_BUDGET].includes(row.type) ? (moneySettings[row.id]?.symbol || '') : '';
+      return `${formatted}${symbol ? ` ${symbol}` : ''}`;
+    }
+
+    function selectHistoryMatrix(habit, day) {
+      historyFocus = { habit, day };
+      updateStats();
+      updateHeader();
+    }
+
+    function scopeHistoryTimeline(items, stripId, bounds) {
+      if (!stripId.startsWith('history')) return items;
+      const visible = new Set(getFilteredHistoryRows().map(row => row.id));
+      const focusDay = historyFocus?.day != null ? getHistoryTimelineDayBounds() : bounds;
+      return items.filter(item => item.pin === currentPin && visible.has(item.habit) &&
+          (!historyFocus || item.habit === historyFocus.habit))
+        .map(item => {
+          if (item.at != null) return item.at >= focusDay.startMs && item.at < focusDay.endMs ? item : null;
+          const start = Math.max(item.startTime, bounds.startMs, focusDay.startMs);
+          const end = Math.min(item.endTime, bounds.endMs, focusDay.endMs);
+          if (end <= start) return null;
+          return { ...item, left: (start - bounds.startMs) / (bounds.endMs - bounds.startMs) * 100,
+            width: Math.max(0.08, (end - start) / (bounds.endMs - bounds.startMs) * 100) };
+        }).filter(Boolean);
+    }
+
+    function bindHistoryRecordFocus(element, stripId, habit, timestamp) {
+      if (!stripId.startsWith('history')) return;
+      const select = () => {
+        const days = HistoryMatrix.weekDays(getWeekBoundsMs(historyTimelineWeekKey).startMs);
+        const day = days.findIndex(d => timestamp >= d.startMs && timestamp < d.endMs);
+        if (day >= 0) selectHistoryMatrix(habit, day);
+      };
+      element.setAttribute('role', 'button');
+      element.addEventListener('click', select);
+      element.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(); }
+      });
+    }
+
+    function renderHistoryMatrix() {
+      const host = document.getElementById('historyMatrix');
+      if (!host) return;
+      const rows = getFilteredHistoryRows();
+      if (historyFocus && !rows.some(row => row.id === historyFocus.habit)) historyFocus = null;
+      host.hidden = historyDisplay !== 'matrix';
+      document.getElementById('stats').hidden = historyDisplay !== 'table';
+      document.querySelectorAll('[data-history-display]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.historyDisplay === historyDisplay)));
+      document.querySelectorAll('[data-history-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.historyFilter === historyFilter)));
+      const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+      const days = historyProjection.days;
+      host.innerHTML = rows.length ? `<div class="history-matrix-scroll" role="region" aria-label="Weekly history matrix" tabindex="0">
+        <table class="history-matrix-table"><caption class="history-matrix-caption">${escapeHtml(getCurrentPinName())} · ${escapeHtml(historyTimelineWeekKey)} · recorded time / net changes</caption>
+        <thead><tr><th scope="col">MODULE</th>${days.map((day, i) => `<th scope="col">${dayNames[i]}<br>${new Date(day.startMs).getDate()}</th>`).join('')}<th scope="col">TOTAL<br>stored</th></tr></thead>
+        <tbody>${rows.map(row => `<tr><th scope="row">${escapeHtml(row.label)}<span class="matrix-row-type">${row.timed ? 'TIME · h:mm:ss' : row.counted ? 'NET CHANGE' : 'TOTAL ONLY'}</span></th>${row.buckets.map((bucket, day) => {
+          const selected = historyFocus?.habit === row.id && historyFocus.day === day;
+          const value = formatMatrixValue(row, bucket.value);
+          return `<td><button type="button" data-matrix-habit="${row.id}" data-matrix-day="${day}" aria-pressed="${selected}" aria-label="${escapeHtml(row.label)} · ${dayNames[day]} · ${bucket.value === null ? 'no retained detail' : escapeHtml(value)}${bucket.liveSeconds ? ' · running' : ''}">${escapeHtml(value)}${bucket.liveSeconds ? '<span class="matrix-live">LIVE</span>' : ''}</button></td>`;
+        }).join('')}<td><button type="button" data-matrix-habit="${row.id}" data-matrix-day="total" aria-pressed="${historyFocus?.habit === row.id && historyFocus.day === null}" aria-label="${escapeHtml(row.label)} · stored weekly total">${escapeHtml(formatMatrixValue(row, row.storedTotal, true))}</button></td></tr>`).join('')}</tbody></table></div>
+        <p class="matrix-note">Days show retained records; detail may be incomplete. — = no retained detail, 0 = recorded net zero. TOTAL keeps the stored weekly value. LIVE is excluded.</p>`
+        : '<p class="matrix-note">No modules match this filter.</p>';
+      host.querySelectorAll('[data-matrix-habit]').forEach(button => {
+        button.addEventListener('click', () => {
+          const scroll = host.querySelector('.history-matrix-scroll').scrollLeft;
+          selectHistoryMatrix(button.dataset.matrixHabit, button.dataset.matrixDay === 'total' ? null : Number(button.dataset.matrixDay));
+          host.querySelector('.history-matrix-scroll').scrollLeft = scroll;
+          host.querySelector(`[data-matrix-habit="${button.dataset.matrixHabit}"][data-matrix-day="${button.dataset.matrixDay}"]`)?.focus({ preventScroll: true });
+        });
+      });
+      renderHistoryMatrixDetail(rows);
+    }
+
+    function renderHistoryMatrixDetail(rows) {
+      const host = document.getElementById('historyMatrixDetail');
+      const row = rows.find(item => item.id === historyFocus?.habit);
+      if (!row) {
+        host.innerHTML = '<p class="matrix-note">Select a day or total to inspect its records.</p>';
+        return;
+      }
+      const buckets = historyFocus.day === null ? row.buckets : [row.buckets[historyFocus.day]];
+      const bounds = { startMs: buckets[0].startMs, endMs: buckets[buckets.length - 1].endMs };
+      const records = Array.from(new Map(buckets.flatMap(b => b.entries).map(e => [e.id, e])).values());
+      const value = buckets.some(b => b.entries.length) ? buckets.reduce((sum, b) => sum + (b.value || 0), 0) : null;
+      const label = historyFocus.day === null ? historyTimelineWeekKey : new Date(bounds.startMs).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+      host.innerHTML = `<div class="matrix-detail-header"><strong>${escapeHtml(row.label)} · ${escapeHtml(label)}</strong><button class="history-option" id="matrixClearFocus" type="button">CLEAR FOCUS</button></div>
+        <p class="matrix-note">Recorded: ${escapeHtml(formatMatrixValue(row, value))} · Stored week: ${escapeHtml(formatMatrixValue(row, row.storedTotal, true))}</p>
+        ${row.timed ? '<p class="matrix-note">Intervals are split at local midnight. Legacy weekly totals use their saved week and can differ from these day sums.</p><button class="history-option" id="matrixCorrect" type="button">CORRECT TIME</button>' : ''}
+        ${!row.timed && !row.counted ? '<p class="matrix-note">This module has no supported daily record source in v1.</p>' : ''}
+        ${buckets.some(b => b.liveSeconds) ? '<p class="matrix-note">A timer is running in this range. Its unfinished time is not part of the saved total.</p>' : ''}
+        <ul class="matrix-records">${records.map(entry => `<li>${escapeHtml(entry.label || row.label)}<br>${row.timed
+          ? `${formatTimelinePoint(entry.startTime)} → ${formatTimelinePoint(entry.endTime)} · ${formatMatrixValue(row, (Math.min(entry.endTime, bounds.endMs) - Math.max(entry.startTime, bounds.startMs)) / 1000)} in range`
+          : `${formatTimelinePoint(entry.at)} · ${escapeHtml(String(entry.previousValue))} → ${escapeHtml(String(entry.nextValue))}`}</li>`).join('')}</ul>
+        ${!records.length ? '<p class="matrix-note">No retained records in this range. A stored total does not provide missing daily detail.</p>' : ''}`;
+      document.getElementById('matrixClearFocus').onclick = () => { historyFocus = null; updateStats(); updateHeader(); };
+      document.getElementById('matrixCorrect')?.addEventListener('click', () => openDurationCorrectionModal({ habit: row.id, bounds }));
+    }
+
     // ===== STATS =====
     function updateStats() {
+      updateHistoryChrome();
+      historyProjection = buildHistoryProjection();
+      renderHistoryMatrix();
+      renderTimelineOverlays();
       const statsEl = document.getElementById('stats');
-      const historyHabits = HABITS.filter(h => habitLabels[h]?.trim() && getCellFlag(h, 'showInHistory'));
+      const historyHabits = getFilteredHistoryRows().map(row => row.id);
       const hasActive = historyHabits.length > 0;
 
       if (!hasActive) {
@@ -5691,7 +5993,7 @@ function scheduleMathRefresh() {
       let html = '<table class="stats-table"><thead><tr><th>Week</th>';
       historyHabits.forEach(h => {
         const idx = HABITS.indexOf(h);
-        html += `<th data-col="${idx}">${habitLabels[h]}</th>`;
+        html += `<th data-col="${idx}">${escapeHtml(habitLabels[h])}</th>`;
       });
       html += '</tr></thead><tbody>';
 
@@ -5906,6 +6208,7 @@ function scheduleMathRefresh() {
 
         durationStates,
         timerSettings,
+        timerStates,
         durationSessions: normalizeDurationSessions(durationSessions),
         moneySettings,
 
@@ -6013,7 +6316,7 @@ function importData() {
       ];
 
       perPinKeys.forEach(base => {
-        localStorage.removeItem(`${base}${suffix}`);
+        trckngStorage.removeItem(`${base}${suffix}`);
       });
 
       // Prepare a blank layout for this pin
@@ -6031,12 +6334,12 @@ function importData() {
         emptyColors[habit] = '#ffffff';
       });
 
-      localStorage.setItem(`${STORAGE_KEYS.LABELS}${suffix}`, JSON.stringify(emptyLabels));
-      localStorage.setItem(`${STORAGE_KEYS.DESCRIPTIONS}${suffix}`, JSON.stringify(emptyDescriptions));
-      localStorage.setItem(`${STORAGE_KEYS.TYPES}${suffix}`, JSON.stringify(emptyTypes));
-      localStorage.setItem(`${STORAGE_KEYS.COLORS}${suffix}`, JSON.stringify(emptyColors));
-      localStorage.setItem(`${STORAGE_KEYS.CELL_FLAGS}${suffix}`, JSON.stringify(emptyFlags));
-      localStorage.setItem(`${STORAGE_KEYS.CELL_LAYOUT}${suffix}`, JSON.stringify(emptyLayout));
+      trckngStorage.setItem(`${STORAGE_KEYS.LABELS}${suffix}`, JSON.stringify(emptyLabels));
+      trckngStorage.setItem(`${STORAGE_KEYS.DESCRIPTIONS}${suffix}`, JSON.stringify(emptyDescriptions));
+      trckngStorage.setItem(`${STORAGE_KEYS.TYPES}${suffix}`, JSON.stringify(emptyTypes));
+      trckngStorage.setItem(`${STORAGE_KEYS.COLORS}${suffix}`, JSON.stringify(emptyColors));
+      trckngStorage.setItem(`${STORAGE_KEYS.CELL_FLAGS}${suffix}`, JSON.stringify(emptyFlags));
+      trckngStorage.setItem(`${STORAGE_KEYS.CELL_LAYOUT}${suffix}`, JSON.stringify(emptyLayout));
 
       // Reload state for current pin
       loadWeekData();
@@ -6075,6 +6378,8 @@ function importData() {
 
     // ===== PIN SWITCH =====
       function switchPin(pinNum) {
+      historyFocus = null;
+      historyProjection = null;
       if (globalInterval) {
         clearInterval(globalInterval);
         globalInterval = null;
@@ -6163,7 +6468,9 @@ function importData() {
 
 
 function openCellEditModal(habit, index) {
+      if (pendingNewCell?.id !== habit) pendingNewCell = null;
       editingHabit = habit;
+      document.getElementById('cellEditModal').querySelector('.cell-layout-error')?.remove();
       resetCellConfirmState();
       const cellNum = String(index + 1).padStart(2, '0');
 
@@ -6206,14 +6513,14 @@ function openCellEditModal(habit, index) {
 
       document.getElementById('timerDuration').value = settings.duration || 20;
       document.getElementById('timerSound').value = settings.sound || 'soft_chime';
-      document.getElementById('timerVolume').value = settings.volume || 50;
-      document.getElementById('volumeValue').textContent = `${settings.volume || 50}%`;
+      document.getElementById('timerVolume').value = settings.volume ?? 50;
+      document.getElementById('volumeValue').textContent = `${settings.volume ?? 50}%`;
       document.getElementById('timerMessage').value = settings.message || '';
       document.getElementById('countdownDate').value = settings.targetDate || '';
       document.getElementById('countdownTime').value = settings.targetTime || '12:00';
       document.getElementById('countdownSound').value = settings.sound || 'soft_chime';
-      document.getElementById('countdownVolume').value = settings.volume || 50;
-      document.getElementById('countdownVolumeValue').textContent = `${settings.volume || 50}%`;
+      document.getElementById('countdownVolume').value = settings.volume ?? 50;
+      document.getElementById('countdownVolumeValue').textContent = `${settings.volume ?? 50}%`;
       document.getElementById('countdownMessage').value = settings.message || '';
 
       // Set format buttons
@@ -6322,6 +6629,8 @@ function openCellEditModal(habit, index) {
       // Show/hide appropriate fields
       updateTimerFieldsVisibility(type);
 
+      window.TRCKNG_MODULES?.openEditor?.({ habit, pin: currentPin, type });
+
       document.getElementById('cellEditModal').classList.add('visible');
       setTimeout(() => document.getElementById('cellEditInput').focus(), 100);
     }
@@ -6358,12 +6667,14 @@ function openCellEditModal(habit, index) {
 
       // Budget start amount only for Budget
       show(moneyStartField, t === CELL_TYPES.MONEY_BUDGET);
+      window.TRCKNG_MODULES?.showEditor?.(t);
     }
     
     function closeCellEditModal() {
       document.getElementById('cellEditModal').classList.remove('visible');
       resetCellConfirmState();
       editingHabit = null;
+      pendingNewCell = null;
     }
 
     function resetCellConfirmState() {
@@ -6433,6 +6744,8 @@ function openCellEditModal(habit, index) {
 
     function resetCurrentCell() {
       if (!editingHabit) return;
+      try { window.TRCKNG_MODULES?.beforeReset?.({ habit: editingHabit, pin: currentPin }); }
+      catch (error) { document.getElementById('surfaceHint').textContent = error.message; return; }
       const resetBtn = document.getElementById('cellEditReset');
       if (!resetBtn) return;
 
@@ -6452,7 +6765,46 @@ function openCellEditModal(habit, index) {
       renderLayoutEditor();
     }
 function saveCellEdit() {
+      // Keep the source journal and its control in the same account write.
+      if (trckngStorage.transaction) return trckngStorage.transaction(saveCellEditValues);
+      return saveCellEditValues();
+    }
+function saveCellEditValues() {
       if (!editingHabit) return;
+
+      const modal = document.getElementById('cellEditModal');
+      const sizeId = modal.querySelector('.type-btn.active[data-layout-size]')?.dataset.layoutSize || '1x1';
+      const nextLayout = { ...getCellLayout(editingHabit), ...getLayoutSizePreset(sizeId) };
+      const fail = message => {
+        let error = modal.querySelector('.cell-layout-error');
+        if (!error) { error = document.createElement('p'); error.className = 'cell-layout-error'; error.setAttribute('role', 'alert'); document.getElementById('cellEditInput').before(error); }
+        error.textContent = message;
+      };
+      if (pendingNewCell && (pendingNewCell.pin !== currentPin || !document.getElementById('cellEditInput').value.trim())) {
+        fail('Укажи название новой кнопки.'); return;
+      }
+      if (!fieldSlotAvailable(editingHabit, nextLayout)) {
+        fail('Для этого размера не хватает места. Сначала передвинь кнопку или её соседей.'); return;
+      }
+      const proposedType = modal.querySelector('.type-btn.active[data-type]')?.dataset.type || CELL_TYPES.UNIT;
+      if (proposedType === CELL_TYPES.MATH) {
+        const proposed = { a: document.getElementById('mathSourceA')?.value, op: document.getElementById('mathOp')?.value,
+          bMode: modal.querySelector('.type-btn.active[data-math-bmode]')?.dataset.mathBmode, b: document.getElementById('mathSourceB')?.value };
+        if (wouldCreateMathCycle(editingHabit, proposed)) { fail('Формула ссылается на себя. Выбери другой источник. Ничего не сохранено.'); return; }
+      }
+      if (proposedType === CELL_TYPES.TIMER) {
+        const minutes = Number(document.getElementById('timerDuration').value);
+        if (!Number.isFinite(minutes) || minutes <= 0 || minutes > 525600) { fail('Укажи длительность таймера от доли минуты до года.'); return; }
+        if (timerStates[editingHabit]?.isRunning && minutes !== timerSettings[editingHabit]?.duration) { fail('Останови таймер перед изменением длительности.'); return; }
+      }
+      let moduleEdit;
+      try { moduleEdit = window.TRCKNG_MODULES?.prepareEdit?.({ habit: editingHabit, pin: currentPin, type: proposedType, label: document.getElementById('cellEditInput').value.trim() }); }
+      catch (error) { fail(error.message); return; }
+      if (pendingNewCell) {
+        HABITS.push(pendingNewCell.id);
+        cellLayout[pendingNewCell.id] = nextLayout;
+        pendingNewCell = null;
+      }
 
       const newLabel = document.getElementById('cellEditInput').value.trim();
       const newColor = document.getElementById('cellEditColor').value;
@@ -6534,20 +6886,22 @@ function saveCellEdit() {
         const formatBtn = document.querySelector('[data-format].active');
         const vibrateBtn = document.querySelector('[data-vibrate].active');
         timerSettings[editingHabit] = {
-          duration: parseInt(document.getElementById('timerDuration').value, 10) || 20,
+          duration: Number(document.getElementById('timerDuration').value),
           format: formatBtn ? formatBtn.dataset.format : 'mm:ss',
           sound: document.getElementById('timerSound').value || 'soft_chime',
-          volume: parseInt(document.getElementById('timerVolume').value, 10) || 50,
+          volume: Math.max(0, Math.min(100, Number(document.getElementById('timerVolume').value))),
           vibrate: vibrateBtn ? vibrateBtn.dataset.vibrate === 'on' : true,
           message: document.getElementById('timerMessage').value.trim()
         };
+        if (!timerStates[editingHabit]?.isRunning) timerStates[editingHabit] = { ...(timerStates[editingHabit] || {}), isRunning: false, startTime: null, remaining: timerSettings[editingHabit].duration * 60000 };
       } else if (normalizedType === CELL_TYPES.COUNTDOWN) {
         const vibrateCdBtn = document.querySelector('[data-vibrate-cd].active');
+        if (timerSettings[editingHabit]?.targetDate !== document.getElementById('countdownDate').value || timerSettings[editingHabit]?.targetTime !== document.getElementById('countdownTime').value) timerStates[editingHabit] = { notificationSent: false, acknowledged: false };
         timerSettings[editingHabit] = {
           targetDate: document.getElementById('countdownDate').value,
           targetTime: document.getElementById('countdownTime').value || '12:00',
           sound: document.getElementById('countdownSound').value || 'soft_chime',
-          volume: parseInt(document.getElementById('countdownVolume').value, 10) || 50,
+          volume: Math.max(0, Math.min(100, Number(document.getElementById('countdownVolume').value))),
           vibrate: vibrateCdBtn ? vibrateCdBtn.dataset.vibrateCd === 'on' : true,
           message: document.getElementById('countdownMessage').value.trim()
         };
@@ -6645,15 +6999,9 @@ function saveCellEdit() {
           tapCycles
         };
 
-        if (wouldCreateMathCycle(editingHabit)) {
-          // Revert and warn, keep modal open
-          delete mathSettings[editingHabit];
-          document.getElementById('mathStatusLine').textContent = 'Cycle detected. Settings not saved.';
-          return;
-        } else {
-          document.getElementById('mathStatusLine').textContent = '';
-          saveMathSettings();
-        }
+        // Cycles are rejected before any labels, history or settings are changed.
+        document.getElementById('mathStatusLine').textContent = '';
+        saveMathSettings();
       } else {
         delete mathSettings[editingHabit];
         saveMathSettings();
@@ -6675,7 +7023,8 @@ function saveCellEdit() {
       if (normalizedType === CELL_TYPES.CURRENCY) {
         const from = (document.getElementById('currencyFrom')?.value || 'USD').toUpperCase().trim();
         const to = (document.getElementById('currencyTo')?.value || 'RUB').toUpperCase().trim();
-        currencySettings[editingHabit] = { from, to };
+        const previousCurrency = currencySettings[editingHabit];
+        currencySettings[editingHabit] = { from, to, ...(previousCurrency?.from === from && previousCurrency?.to === to && previousCurrency.amount != null ? { amount: previousCurrency.amount } : {}) };
         saveCurrencySettings();
       } else {
         delete currencySettings[editingHabit];
@@ -6685,6 +7034,8 @@ function saveCellEdit() {
       const activeLayoutBtn = document.querySelector('#cellEditModal .type-btn.active[data-layout-size]');
       setCellLayoutSize(editingHabit, activeLayoutBtn?.dataset.layoutSize || '1x1');
 
+      moduleEdit?.();
+
       closeCellEditModal();
       renderHabits();
       renderLayoutEditor();
@@ -6692,7 +7043,7 @@ function saveCellEdit() {
 
 
 function openInfoModal() {
-      localStorage.setItem(STORAGE_KEYS.SEEN_INFO, 'true');
+      trckngStorage.setItem(STORAGE_KEYS.SEEN_INFO, 'true');
       const quickInfoBtn = document.getElementById('btnQuickInfo');
       if (quickInfoBtn) quickInfoBtn.classList.remove('pulse');
       document.getElementById('infoModal').classList.add('visible');
@@ -6780,6 +7131,7 @@ function openInfoModal() {
     }
 
     function registerServiceWorker() {
+      if (window.TRCKNG_SURFACE === 'v2') return; // The v2 surface owns its offline shell.
       if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
 
       navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -6846,12 +7198,12 @@ function openInfoModal() {
       });
       
       // Check if week changed - reset duration states for new week
-      const lastWeekKey = localStorage.getItem('trckng_last_week_key');
+      const lastWeekKey = trckngStorage.getItem('trckng_last_week_key');
       if (lastWeekKey && lastWeekKey !== currentWeekKey) {
         console.log('New week detected! Rolling duration states forward.');
         rolloverDurationStatesForNewWeek(lastWeekKey, currentWeekKey);
       }
-      localStorage.setItem('trckng_last_week_key', currentWeekKey);
+      trckngStorage.setItem('trckng_last_week_key', currentWeekKey);
       historyTimelineWeekKey = currentWeekKey;
       
       runWithoutCloudDirty(() => ensureWeekExists());
@@ -6868,7 +7220,7 @@ function openInfoModal() {
       // Always start global interval for "X ago" updates
       startGlobalInterval();
 
-      if (!localStorage.getItem(STORAGE_KEYS.SEEN_INFO)) {
+      if (!trckngStorage.getItem(STORAGE_KEYS.SEEN_INFO)) {
         document.getElementById('btnQuickInfo').classList.add('pulse');
       }
 
@@ -6905,6 +7257,12 @@ function openInfoModal() {
       if (historyPrevWeekBtn) historyPrevWeekBtn.addEventListener('click', () => shiftHistoryTimelineWeek(1));
       const historyNextWeekBtn = document.getElementById('btnHistoryNextWeek');
       if (historyNextWeekBtn) historyNextWeekBtn.addEventListener('click', () => shiftHistoryTimelineWeek(-1));
+      document.querySelectorAll('[data-history-display]').forEach(button => {
+        button.addEventListener('click', () => { historyDisplay = button.dataset.historyDisplay; updateStats(); });
+      });
+      document.querySelectorAll('[data-history-filter]').forEach(button => {
+        button.addEventListener('click', () => { historyFilter = button.dataset.historyFilter; updateStats(); updateHeader(); });
+      });
       const cellEditHelpBtn = document.getElementById('btnCellEditHelp');
       if (cellEditHelpBtn) {
         cellEditHelpBtn.addEventListener('click', () => togglePanelVisibility('cellEditHelpPanel'));
@@ -6917,7 +7275,8 @@ function openInfoModal() {
       document.getElementById('btnQuickInfo').addEventListener('click', openInfoModal);
       document.getElementById('btnAccount').addEventListener('click', openAccountModal);
       document.getElementById('btnCloudSync').addEventListener('click', manualCloudSync);
-    document.getElementById('accountModalClose').addEventListener('click', closeAccountModal);
+    document.getElementById('accountModalClose').addEventListener('click', returnFromAccount);
+    document.getElementById('accountBackToField')?.addEventListener('click', returnFromAccount);
     document.getElementById('accountConfigToggle').addEventListener('click', toggleAccountConfig);
     document.getElementById('accountConfigSave').addEventListener('click', saveSupabaseConfigFromModal);
     document.getElementById('accountSignIn').addEventListener('click', signInAccount);
@@ -6953,7 +7312,9 @@ function openInfoModal() {
     document.getElementById('currencyModalInput').addEventListener('input', updateCurrencyModalResult);
     document.getElementById('currencyModalSave').addEventListener('click', () => {
       if (!editingCurrencyHabit) return closeCurrencyModal();
-      const amount = parseFloat(document.getElementById('currencyModalInput').value) || 1;
+      const parsedAmount = Number(document.getElementById('currencyModalInput').value);
+      if (!Number.isFinite(parsedAmount)) return;
+      const amount = parsedAmount;
       const settings = currencySettings[editingCurrencyHabit] || { from: 'USD', to: 'RUB' };
       settings.amount = amount;
       currencySettings[editingCurrencyHabit] = settings;
@@ -7107,7 +7468,7 @@ function openInfoModal() {
       const timerSoundTestBtn = document.getElementById('timerSoundTest');
       if (timerSoundSelect && timerSoundTestBtn) {
         timerSoundTestBtn.addEventListener('click', () => {
-          const volume = parseInt(document.getElementById('timerVolume').value) || 50;
+          const volume = Number(document.getElementById('timerVolume').value);
           const sound = timerSoundSelect.value || 'soft_chime';
           playNotificationSound(sound, volume);
         });
@@ -7117,7 +7478,7 @@ function openInfoModal() {
       const countdownSoundTestBtn = document.getElementById('countdownSoundTest');
       if (countdownSoundSelect && countdownSoundTestBtn) {
         countdownSoundTestBtn.addEventListener('click', () => {
-          const volume = parseInt(document.getElementById('countdownVolume').value) || 50;
+          const volume = Number(document.getElementById('countdownVolume').value);
           const sound = countdownSoundSelect.value || 'soft_chime';
           playNotificationSound(sound, volume);
         });

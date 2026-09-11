@@ -26,6 +26,7 @@ function resolveRequestPath(requestUrl) {
   }
 
   pathname = pathname.replace(/^\/TRCKNG-SSTM\//, '/');
+  if (pathname.endsWith('/')) pathname += 'index.html';
   const resolved = path.normalize(path.join(root, pathname));
 
   if (!resolved.startsWith(root)) {

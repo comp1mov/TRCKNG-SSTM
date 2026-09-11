@@ -1512,6 +1512,83 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       }
     }
 
+    /* Weekly matrix: preserve the shared grid and readable time columns. */
+    .history-display-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 4px 12px;
+      padding: 8px 0;
+    }
+    .history-display-controls > div { display: flex; flex-wrap: wrap; gap: 1px; }
+    .history-option {
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--stroke-strong, #444);
+      border-radius: 0;
+      background: var(--app-bg, #000);
+      color: var(--app-text, #fff);
+      font: 12px ui-monospace, Consolas, monospace;
+      cursor: pointer;
+    }
+    .history-option[aria-pressed="true"], .history-matrix-table button[aria-pressed="true"] {
+      color: var(--app-bg, #000);
+      background: var(--app-text, #fff);
+    }
+    .history-option:focus-visible, .history-matrix-table button:focus-visible {
+      outline: 2px solid var(--app-text, #fff);
+      outline-offset: -3px;
+    }
+    .history-matrix, .history-matrix-detail { min-width: 0; }
+    #historyView [hidden] { display: none !important; }
+    .history-matrix-scroll { overflow-x: auto; overscroll-behavior-x: contain; }
+    .history-matrix-table {
+      width: 100%;
+      min-width: 840px;
+      border-spacing: 0;
+      table-layout: fixed;
+      font: 12px/1.4 ui-monospace, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    .history-matrix-caption { text-align: left; padding: 8px 0; font-size: 12px; }
+    .history-matrix-table th, .history-matrix-table td {
+      padding: 0;
+      border-right: 1px solid var(--stroke-strong, #444);
+      border-bottom: 1px solid var(--stroke-strong, #444);
+    }
+    .history-matrix-table th { font-weight: 400; padding: 8px; text-align: left; }
+    .history-matrix-table th:first-child {
+      position: sticky; left: 0; z-index: 1;
+      width: 124px; background: var(--app-bg, #000); overflow-wrap: anywhere;
+      border-left: 1px solid var(--stroke-strong, #444);
+    }
+    .history-matrix-table th:last-child { width: 112px; }
+    .history-matrix-table thead th { border-top: 1px solid var(--stroke-strong, #444); }
+    .history-matrix-table button {
+      display: block; width: 100%; min-height: 52px; padding: 6px 2px;
+      color: inherit; background: transparent; border: 0; border-radius: 0;
+      font: inherit; cursor: pointer;
+    }
+    .matrix-row-type, .matrix-live { display: block; font-size: 10px; margin-top: 4px; }
+    .matrix-note { font: 12px/1.55 ui-monospace, Consolas, monospace; padding: 8px 0; margin: 0; }
+    .history-matrix-detail { margin-top: 8px; border-top: 1px solid var(--stroke-strong, #444); }
+    .matrix-detail-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; }
+    .matrix-detail-header strong { font: 13px ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+    .matrix-records { margin: 0; padding: 0; list-style: none; }
+    .matrix-records li { padding: 10px 0; border-bottom: 1px solid var(--stroke-soft, #333); font: 12px/1.6 ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+    @media (max-width: 440px) {
+      .history-toolbar { grid-template-columns: 1fr; gap: 8px; padding: 8px 0; }
+      .history-nav { justify-content: space-between; }
+      .history-nav-btn, .history-correct-btn { min-height: 44px; font-size: 11px; }
+      .history-meta, .history-title { font-size: 11px; }
+    }
+    @media (orientation: landscape) and (max-height: 560px) and (max-width: 980px) {
+      body[data-view="history"] .container { height: auto; }
+      body[data-view="history"] #historyView { display: block; }
+      body[data-view="history"] .history-timeline-stack { margin: 8px 0; min-height: 250px; }
+      body[data-view="history"] .stats:not([hidden]) { display: block; }
+    }
+
     /* ===== MODALS ===== */
     .modal {
       display: none;
@@ -1524,6 +1601,14 @@ button, .btn-habit, .pin, .pin-sync-btn, .btn-control, .color-picker, .modal-btn
       padding: 16px;
     }
     .modal.visible { display: flex; }
+
+    .account-navigation { display:flex; align-items:center; gap:12px; position:sticky; top:-20px; z-index:5; padding:8px 0; background:var(--app-bg,#000); }
+    .account-navigation .modal-title { margin:0; }
+    .account-navigation .modal-btn { flex:none; min-height:44px; font-size:11px; border:1px solid rgba(255,255,255,.6); }
+    @media (max-width:640px) {
+      #accountModal { padding:12px; }
+      #accountModal .account-modal-content { max-height:calc(100dvh - 24px); padding-bottom:20px; }
+    }
 
     .modal-content {
       background: var(--app-bg, #000);

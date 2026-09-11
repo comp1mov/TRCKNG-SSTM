@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#11120f">
+  <title>SSTM / v2</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="model.js" defer></script>
+  <script src="store.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+<main id="app" aria-label="Модульное поле SSTM" inert>
+  <header class="shell-head"><a class="brand" href="../" title="Открыть v1">SSTM<span>v2 / 0.1</span></a><div id="cycleClock" aria-label="Время цикла">ПОЛЕ</div><button id="menuButton" type="button">МЕНЮ</button></header>
+  <nav class="toolbar" aria-label="Поле"><div id="pins" class="pin-list"></div><div class="tools"><button id="addButton" type="button">+ КНОПКА</button><button id="arrangeButton" type="button" aria-pressed="false">РАССТАВИТЬ</button><button id="historyButton" type="button">ИСТОРИЯ</button></div></nav>
+  <div class="area-bar"><label>ОБЛАСТЬ <select id="areaSelect" aria-label="Область поля"><option value="home">НАЧАЛО</option></select></label><div class="zoom"><button id="zoomOut" type="button" aria-label="Уменьшить масштаб">−</button><output id="zoomValue">64</output><button id="zoomIn" type="button" aria-label="Увеличить масштаб">+</button></div></div>
+  <div class="work-area"><section id="fieldViewport" aria-label="Поле; прокрутка в любом направлении" tabindex="0"><div id="field"><div id="moduleLayer"></div><div id="dragGhost" hidden></div></div></section><aside id="panelHost" aria-label="Окно" hidden></aside></div>
+  <div class="field-navigation"><output id="coordinates">1:1 / 10×10</output><span id="modeHint"></span><div class="arrows"><button data-pan="-1,0" type="button" aria-label="Поле влево">←</button><button data-pan="0,-1" type="button" aria-label="Поле вверх">↑</button><button data-pan="0,1" type="button" aria-label="Поле вниз">↓</button><button data-pan="1,0" type="button" aria-label="Поле вправо">→</button></div></div>
+  <nav id="windowTabs" aria-label="Свёрнутые окна" hidden></nav>
+  <footer><span>ПРОБА · НА ЭТОМ УСТРОЙСТВЕ · БЕЗ СИНХРОНИЗАЦИИ</span><span id="saveState" role="status">ЗАГРУЗКА</span></footer>
+  <div id="notice" role="alert" hidden></div>
+</main>
+<noscript>Для работы поля нужен JavaScript.</noscript>
+</body>
+</html>

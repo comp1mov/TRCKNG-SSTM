@@ -104,6 +104,18 @@
           <button class="history-nav-btn" id="btnHistoryNextWeek" type="button">NEXT</button>
         </div>
       </div>
+      <div class="history-display-controls">
+        <div role="group" aria-label="History display">
+          <button class="history-option" data-history-display="matrix" aria-pressed="true" type="button">MATRIX</button>
+          <button class="history-option" data-history-display="table" aria-pressed="false" type="button">TABLE</button>
+        </div>
+        <div role="group" aria-label="History filter">
+          <button class="history-option" data-history-filter="all" aria-pressed="true" type="button">ALL</button>
+          <button class="history-option" data-history-filter="time" aria-pressed="false" type="button">TIME</button>
+          <button class="history-option" data-history-filter="counts" aria-pressed="false" type="button">COUNTS</button>
+          <button class="history-option" data-history-filter="active" aria-pressed="false" type="button">ACTIVE</button>
+        </div>
+      </div>
       <div class="history-timeline-stack">
         <div class="history-timeline-meta">
           <span>DAY</span>
@@ -122,6 +134,8 @@
         <div class="timeline-info history-timeline-info" id="historyTimelineInfo" data-active="false">TIMELINE</div>
       </div>
       <div class="stats" id="stats"></div>
+      <div id="historyMatrix" class="history-matrix"></div>
+      <div id="historyMatrixDetail" class="history-matrix-detail" aria-live="polite"></div>
     </div>
   </div>
 
@@ -486,7 +500,10 @@
   <!-- ACCOUNT MODAL -->
   <div class="modal" id="accountModal">
     <div class="modal-content account-modal-content">
-      <div class="modal-title">ACCOUNT</div>
+      <div class="account-navigation">
+        <button class="modal-btn" id="accountBackToField" type="button">← К КНОПКАМ</button>
+        <div class="modal-title">ACCOUNT</div>
+      </div>
 
       <div class="account-card">
         <div class="account-row">
@@ -534,7 +551,7 @@
       </div>
 
       <div class="modal-buttons">
-        <button class="modal-btn" id="accountModalClose" type="button">DONE</button>
+        <button class="modal-btn" id="accountModalClose" type="button">← К КНОПКАМ</button>
       </div>
     </div>
   </div>
@@ -544,7 +561,7 @@
     <div class="info-modal-content">
       <div class="info-header">
         <div class="info-logo">TRCKNG<br>SSTM</div>
-        <div class="info-version">V1.33.23</div>
+        <div class="info-version">V1.34.4</div>
         <div class="info-author">DEV BY <a href="https://grisha-tsvetkov.com/" target="_blank">GRISHA TSVETKOV</a></div>
       </div>
       
@@ -721,6 +738,7 @@
   <div class="modal" id="durationCorrectionModal">
     <div class="modal-content correction-modal-content">
       <div class="modal-title">CORRECT TIME</div>
+      <div class="matrix-note" id="correctionRangeLabel"></div>
       <div class="cell-edit-field">
         <div class="cell-edit-label">Cell</div>
         <select class="cell-edit-input" id="correctionHabitSelect"></select>
@@ -834,6 +852,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async onload="window.dispatchEvent(new Event('trckng-supabase-sdk-loaded'))"></script>
 <script src="app-config.js"></script>
+<script src="history-matrix.js" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>

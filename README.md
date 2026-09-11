@@ -1,133 +1,39 @@
-# TRCKNG SSTM v1.33.0
+# TRCKNG SSTM — v1.34.5 / v2 beta 0.5.1
 
-Local-first modular tracking field for weekly habits, timers, money, formulas, and small personal metrics.
+A modular tracking field for habits, time, words, states and personal metrics.
 
-The app is intentionally simple to deploy: static HTML/CSS/JS, data stored in `localStorage`, optional Supabase account sync, with PWA/offline support through `service-worker.js`.
+- **[Open v2 with your account](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account)**
+- [Try the interactive demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo)
+- [Open v1](https://comp1mov.github.io/TRCKNG-SSTM/)
 
-## Current Structure
+## Start using v2
 
-- `index.html` - app markup and modals
-- `app-config.js` - optional Supabase project config
-- `style.css` - visual system, responsive layout, mobile fixes
-- `app.js` - state, storage, rendering, timers, import/export
-- `manifest.json` - PWA metadata
-- `service-worker.js` - offline cache
-- `SUPABASE_SETUP.md` - SQL and first-sync checklist
-- `UI_CHANGE_NOTES.md` - running list for small UI corrections during testing
-- `GLOBAL_STRATEGY.md` - larger v2/v3 product and architecture direction
-- `FEATURE_PLANS.md` - feature bank with MVP/later/data/UX/risk notes
-- `TIME_GRID.md` - Now / Next / Later / Parked planning grid
+Sign in with the same email account. Existing v2 records load automatically. On first use, **ПОДГОТОВИТЬ КОПИЮ V1** previews a one-time copy of all three cloud PINs; **СОЗДАТЬ МОЮ V2** confirms it. Sync your latest v1 records before copying. V1 and v2 then keep independent datasets; edits in one version do not modify the other.
 
-## Features
+Return from Account with **← НА ПОЛЕ**. Press **НАЧАТЬ** to start a recording, and **+ ТОЧКА** to mark the next boundary. Names are optional and can be added in **ОТРЕЗКИ**. Midnight and 24 hours do not end a recording. Elapsed time is derived from saved timestamps, so closing the tab does not stop it. Check that the status says **V2 СОХРАНЕНА · V1 ОТДЕЛЬНО** before moving to another device.
 
-- 3 independent PIN pages
-- 9 configurable cells per PIN
-- Cell types: Unit, Value, Math, MM:SS, Min, Sec, Timer, Countdown, Income, Budget, LED Pulse, FX Rate
-- Weekly history with 52-week retention
-- Per-PIN numeric change log for recent counter/value changes
-- UNDO control for restoring the latest current-week numeric change
-- Per-PIN labels, descriptions, colors, themes, timer settings, money settings, math settings, LED settings, and currency settings
-- TRACK/HISTORY views
-- Internal v2 `cells` + `cellLayout` adapter for the upcoming modular grid editor
-- Cell size presets: 1x1, 2x1, 1x2, and 2x2
-- Dedicated LAYOUT view with UP/DOWN reorder controls and PACK reflow
-- Optional Supabase account panel with project config prefilled
-- Manual cloud snapshot upload / load across all PINs
-- Safe autosync with dirty-state debounce
-- Cloud update checks on sign-in, focus, and online recovery
-- Fresh-device cloud bootstrap after sign-in
-- Conflict pause when local unsaved data and cloud data differ
-- Main-screen SYNC button with pull-first cloud check
-- Automatic upload preflight before writing to cloud
-- Supabase project config hidden behind account advanced config
-- Sign-up hidden behind a 3-second hold on the Account email label
-- LAYOUT now owns cell editing, PIN rename, PIN fill color, Theme, Notify, and Info
-- Empty-name cells remain visible as create slots without wiping saved values
-- Empty field cells stay visible as quiet placeholders in TRACK
-- Empty cells are created/edited from LAYOUT
-- PIN fill colors use brighter active fills without separate glow effects
-- Responsive field shell with stable cell row height across phone, laptop, and desktop
-- Compact PIN labels, taller PIN buttons, and quieter desktop utility controls
-- Main-screen SYNC/OK button moved next to ACCOUNT
-- PIN switcher sits between view tabs and the active work surface
-- JSON export/import for backups
-- PWA install support
-- Mobile fixes for iOS safe areas, double-tap zoom, and Safari active states
+The explicit demo uses invented examples and resets on reload. Use your account for records you want to keep.
 
-## Data
+## Included in this beta
 
-All user data is stored locally in browser `localStorage`. Per-PIN keys use suffixes like `_pin0`, `_pin1`, and `_pin2`. Supabase sync stores a full app snapshot in `public.trckng_snapshots.app_state` when enabled.
+- All 13 original button types, settings and histories.
+- Three PINs, additional buttons, movable modules and an expanding field.
+- History Matrix, point recordings, editable interval labels/times/tags.
+- Work × hourly rate, shared work controls and captured per-session rates.
+- Inline # tags with suggestions; one state per press and custom states.
+- Weekly words/states, scenarios/help, synchronized Until clock hands.
+- Separate v2 account storage, checked migration, full v2 backup/restore, conflict recovery and offline loading after the initial visit.
 
-Main stored groups:
+See [v2 usage and limits](v2/README.md). Physical phone/tablet keyboard and Safari acceptance remain part of the personal beta. A separate installable v2 home-screen app, general module wiring, personal-cycle grouping and sound are later work.
 
-- weekly values: `trckng_sstm_data_pinX`
-- numeric change log: `trckng_sstm_counter_change_log_pinX`
-- cell labels/types/colors/descriptions
-- duration/timer runtime and settings
-- unit/value/math/money/LED/currency settings
-- v2 cell schema snapshots and layout positions
-- per-PIN theme and custom PIN names
+## Development and deployment
 
-## Backup
+Static HTML/CSS/JS; no build step. Run `node dev-server.mjs 5173` and open `http://127.0.0.1:5173/TRCKNG-SSTM/`. Add `--lan` after the port for a same-Wi-Fi preview.
 
-Use `EXPORT` before major changes or before clearing browser data. Import restores the current PIN state and supported v1.33.0 settings. Supabase `UPLOAD THIS DEVICE` / `LOAD CLOUD` handles full-app snapshots, signed-in local changes are queued for debounced autosync, and the main-screen `SYNC` button checks cloud before uploading pending changes.
+GitHub Pages publishes the root of `main`. V2 needs its folder **and** the matching shared root `index.html`, `style.css`, `app.js`, `app-config.js` and `history-matrix.js`. Workers have separate v1/v2 cache namespaces. Private exports, credentials and local planning notes do not belong in a release.
 
-## Supabase
+The existing publishable Supabase configuration is in `app-config.js`. V1 uses `trckng_snapshots`; v2 uses `trckng_v2_snapshots` and revision-checked `commit_trckng_v2`. New installations require `supabase/v2-isolation.sql` followed by `supabase/v2-modules.sql`; these are already applied to the configured project. No administrative credential is shipped.
 
-See `SUPABASE_SETUP.md`. The current Supabase project URL and publishable key are already in `app-config.js`; the password is never stored by this app. Autosync writes one full-app snapshot row per user, debounced after local changes, and pauses when a conflict needs manual choice.
+## Verification
 
-## Public App
-
-Current GitHub Pages URL:
-
-```text
-https://comp1mov.github.io/TRCKNG-SSTM/
-```
-
-The public build uses the `/TRCKNG-SSTM/` base path already configured in `manifest.json` and `service-worker.js`.
-
-## Development Roadmap
-
-See:
-
-- `GLOBAL_STRATEGY.md` for the larger modular grid, timeline, privacy, and sequencer direction.
-- `FEATURE_PLANS.md` for scoped feature plans and implementation options.
-- `TIME_GRID.md` for active order and parking lot.
-- `DEVELOPMENT_PLAN.md` for the current implementation roadmap.
-
-Recommended next phase:
-
-1. Finish Responsive Field Shell verification on desktop and phone.
-2. Continue LAYOUT cleanup: hidden/empty cells, visibility controls, and no duplicated EDIT surface.
-3. Add Cell Cycle Architecture: daily, weekly, monthly, and never-reset cells.
-4. Polish Header / Week / PIN visuals after the field shell is stable.
-5. Add drag reorder and resize handles.
-6. Add Goal Time and richer time-based cells after the base field model is stable.
-
-## Deploy
-
-The current manifest assumes GitHub Pages path `/TRCKNG-SSTM/`:
-
-```text
-https://username.github.io/TRCKNG-SSTM/
-```
-
-If deploying to another path, update `manifest.json`, icon paths, and `service-worker.js` cache URLs.
-
-## Local Preview
-
-```powershell
-node dev-server.mjs 5173
-```
-
-Open:
-
-```text
-http://127.0.0.1:5173/TRCKNG-SSTM/
-```
-
-For phone testing on the same Wi-Fi:
-
-```powershell
-node dev-server.mjs 5173 --lan
-```
+Unit and browser scripts are in `tests/`; browser checks require Playwright and use isolated profiles with invented data. `v2-release.browser.cjs` verifies the deployed old v1 worker upgrade, complete static precaching, independent caches and offline v2 loading. `v2-surface.browser.cjs` exercises migration, two mocked devices, conflicts, retries, recovery, export/restore and offline records. Other suites cover original types, field placement, intervals, clocks and input. No private account records are used by the checks.

@@ -1,10 +1,11 @@
-const CACHE_NAME = 'trckng-sstm-v1.33.23';
+const CACHE_NAME = 'trckng-sstm-v1.34.5';
 const urlsToCache = [
   '/TRCKNG-SSTM/',
   '/TRCKNG-SSTM/index.html',
   '/TRCKNG-SSTM/style.css',
   '/TRCKNG-SSTM/app-config.js',
   '/TRCKNG-SSTM/app.js',
+  '/TRCKNG-SSTM/history-matrix.js',
   '/TRCKNG-SSTM/manifest.json',
   '/TRCKNG-SSTM/icons/icon-192.png',
   '/TRCKNG-SSTM/icons/icon-512.png'
@@ -16,6 +17,7 @@ const networkFirstPaths = new Set([
   '/TRCKNG-SSTM/style.css',
   '/TRCKNG-SSTM/app-config.js',
   '/TRCKNG-SSTM/app.js',
+  '/TRCKNG-SSTM/history-matrix.js',
   '/TRCKNG-SSTM/manifest.json'
 ]);
 
@@ -38,7 +40,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName.startsWith('trckng-sstm-v1.') && cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
         })
@@ -55,6 +57,8 @@ self.addEventListener('fetch', event => {
 
   const requestUrl = new URL(event.request.url);
   const isSameOrigin = requestUrl.origin === self.location.origin;
+  // The parallel v2 shell owns its requests and caches.
+  if (isSameOrigin && requestUrl.pathname.startsWith('/TRCKNG-SSTM/v2/')) return;
   const shouldUseNetworkFirst =
     isSameOrigin &&
     (event.request.mode === 'navigate' || networkFirstPaths.has(requestUrl.pathname));
