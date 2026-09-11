@@ -1,4 +1,4 @@
-# SSTM v2 / beta 0.6.1
+# SSTM v2 / beta 0.6.2
 
 [Personal entry](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account) · [Demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo) · [V1](https://comp1mov.github.io/TRCKNG-SSTM/)
 
@@ -16,7 +16,9 @@ The top also shows actual local time. **CALENDAR** switches to calendar strips; 
 
 English is the default. **Menu → Language → Русский** switches without reloading. The preference stays on this device; personal labels, tags, typed drafts and records keep their original text. Built-in state choices are translated for display. New demo labels and recipe names use the language active at creation.
 
-Main numbers use a shared large size at each zoom level. Unit symbols sit on a separate small line; long clocks use a consistent smaller size, and unusually long values/dense work modules still fit their available space. Colored fills make modules easier to distinguish. A local JetBrains Mono font covers Latin and Cyrillic; it is cached for offline use, with its OFL license in `fonts/`.
+Main numbers use a shared large size at each zoom level. Unit symbols sit on a separate small line; long clocks use a consistent smaller size, and unusually long values/dense work modules still fit their available space. A local JetBrains Mono font covers Latin and Cyrillic; it is cached for offline use, with its OFL license in `fonts/`.
+
+Idle modules have a dark background, neutral values and quiet color outlines. Duration timers and recording controls show a hollow indicator at rest, then a filled indicator and colored background while running. Work keeps its existing Start/Stop indicator. A saved total alone does not light up a module. Counter changes give a brief flash; BPM follows its real on/off phases. Until stays a dark clock display while approaching its target and retains the expiry alert. Running timers remain identifiable with reduced motion, without continuously scaling their numbers.
 
 Phones and short landscape screens start with compact panels: recording, current clock, PINs and the field. Tap **⌄** beside Menu to expand, or **⌃** to collapse. This preference is saved on the device separately for small and large screens. **Menu** keeps Arrange, History, field controls and zoom available when compact. Tap the recording time (**INTERVALS ↗**) to review intervals. The field fills the remaining height down to the save-status row, accounting for safe areas and changing browser bars.
 

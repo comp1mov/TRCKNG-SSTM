@@ -140,8 +140,7 @@ body[data-cell-size="96"] .module-work{padding:6px;gap:2px}body[data-cell-size="
 @font-face{font-family:Sstm Mono;src:url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
 :root{--surface-font:'Sstm Mono',ui-monospace,monospace}
 body.v2-surface,.v2-surface button,.v2-surface input,.v2-surface textarea,.v2-surface select,.v2-surface .modal *,.v2-surface .btn-value,.v2-surface .btn-label,.v2-surface .btn-breakdown,.v2-surface .btn-status,.v2-surface .module-main,.v2-surface .module-secondary,.v2-surface .module-currency,.v2-surface .module-hours{font-family:var(--surface-font);font-variant-numeric:tabular-nums;font-variant-ligatures:none}
-.v2-surface .btn-habit:not(.empty-field-cell){background:#1d231a;background:color-mix(in srgb,var(--btn-color,#d1f55a) 15%,#11120f);border-color:var(--btn-color);box-shadow:inset 0 3px 0 var(--btn-color);color:var(--surface-ink);gap:4px;overflow:hidden}
-.v2-surface .btn-habit.running{background:color-mix(in srgb,var(--btn-color,#d1f55a) 26%,#11120f)}
+.v2-surface .btn-habit:not(.empty-field-cell){background:#11120f;border-color:color-mix(in srgb,var(--btn-color,#d1f55a) 38%,#34362d);box-shadow:none;color:var(--surface-ink);gap:4px;overflow:hidden}
 .v2-surface .btn-value,.v2-surface .btn-habit[data-type=points] .btn-value{font-size:64px;line-height:1;letter-spacing:-.035em;flex:none;width:100%;overflow:visible;text-overflow:clip;font-weight:400}
 .v2-surface .btn-label{font-size:13px;line-height:1.2;flex-shrink:0}.v2-surface .btn-breakdown{font-size:11px;flex-shrink:1}
 .face-time-main{display:block;line-height:1}.face-time-seconds{display:block;font-size:.48em;line-height:1.1;opacity:.85}
@@ -198,6 +197,26 @@ body.v2-surface{height:100dvh;min-height:0;box-sizing:border-box}
 .surface-demo.surface-compact #surfaceDemoLink{display:none}
 @media(max-height:560px){.v2-surface:not(.surface-compact) .controls-edit{display:flex}}
 @media(max-width:380px){.surface-compact .surface-brand{font-size:16px}.surface-compact .surface-head button{padding:6px;font-size:10px}.surface-compact #surfacePanelToggle{font-size:22px}.surface-compact .cycle-top #cycleWallClock{font-size:14px}}
+
+/* 0.6.2: colour communicates activity; stored values do not imply ON. */
+.v2-surface .btn-habit:not(.running):not(.led-on) .btn-value,
+.v2-surface .btn-habit:not(.running) .module-main{color:var(--surface-ink)}
+body.v2-surface .btn-habit.running:not([data-type=countdown]){border:1px solid var(--btn-color);background:color-mix(in srgb,var(--btn-color) 24%,#11120f);box-shadow:inset 0 3px 0 var(--btn-color);animation:none}
+.v2-surface .btn-habit:is([data-type=duration_sec],[data-type=duration_min],[data-type=sleep],[data-type=duration_sec_count],[data-type=timer],[data-type=points])::after{content:'';display:block;position:absolute;inset:7px 7px auto auto;width:7px;height:7px;padding:0;border:1px solid #7e8570;background:transparent;animation:none;transform:none;pointer-events:none}
+.v2-surface .btn-habit.running:not(.module-work):not(.clock-synced)::after{background:var(--btn-color);border-color:var(--btn-color)}
+.v2-surface .module-work::after{display:none}
+.v2-surface .btn-habit[data-type=timer].running .btn-value{animation:none}
+.v2-surface .module-work.running .module-state::before{animation:none}
+.v2-surface .btn-habit.clock-synced.running{background:#11120f;box-shadow:none}
+.v2-surface .btn-habit.clock-synced .btn-value{color:var(--surface-ink)}
+.v2-surface .btn-habit.pulsing{border-color:#ef9a82;box-shadow:inset 0 3px 0 #ef9a82}
+.v2-surface .btn-habit[data-type=led_pulse].led-on{background:var(--btn-color);border-color:var(--btn-color);box-shadow:none;color:#11120f}
+.v2-surface .btn-habit[data-type=led_pulse].led-on .btn-breakdown{color:#11120f;opacity:1}
+.v2-surface .btn-habit[data-type=led_pulse].led-off{background:#11120f;box-shadow:none}
+.v2-surface .btn-habit.animating{animation:none;transform:none;filter:none}
+.v2-surface .btn-habit.animating::before{animation:surfaceTap 280ms ease-out both}
+.v2-surface .btn-habit:not(.running):not(.empty-field-cell):active{background:color-mix(in srgb,var(--btn-color) 18%,#11120f)}
+@keyframes surfaceTap{from{opacity:.45}to{opacity:0}}
 body.v2-surface *{font-family:var(--surface-font)!important}
 .account-locked .surface-tools,.account-locked .controls-edit,.account-locked .header>.progress-meta,.account-locked .header>.progress-strip,.account-locked .surface-time-ruler,.account-locked #cycleClock,.account-locked #cycleReturn{display:none!important}
 .account-locked .surface-footer{margin-top:auto}.account-locked #surfaceWelcome{border-bottom:0}.v2-surface #accountModal .surface-panel-title{display:none}.v2-surface #accountModal .surface-panel-head{justify-content:flex-end}.v2-surface #accountModal .surface-back{margin-right:auto}

@@ -1,4 +1,4 @@
-# TRCKNG SSTM — v1.34.6 / v2 beta 0.6.1
+# TRCKNG SSTM — v1.34.6 / v2 beta 0.6.2
 
 A modular tracking field for habits, time, words, states and personal metrics.
 
@@ -14,7 +14,7 @@ Return from Account with **← BACK TO FIELD**. Press **START** to start a recor
 
 The explicit demo uses invented examples and resets on reload. Use your account for records you want to keep.
 
-English is the default interface language. **Menu → Language** switches to Russian without reloading or changing personal labels, notes or records. Large figures fit each module, with a shared Latin/Cyrillic font and colored module faces.
+English is the default interface language. **Menu → Language** switches to Russian without reloading or changing personal labels, notes or records. Large figures use a shared Latin/Cyrillic font. Idle modules are dark with quiet color outlines; running timers have a colored fill and a steady filled indicator. Counters briefly flash after a change, while BPM controls follow their actual pulse.
 
 On phones, the header starts compact. **⌄ / ⌃** beside Menu expands/collapses the panels; Menu contains Arrange, History and zoom. Tap the recording clock to open intervals. Counters share a large figure size, with unit symbols on a separate small line. The field uses the remaining screen height down to save status.
 
