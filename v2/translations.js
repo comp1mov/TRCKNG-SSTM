@@ -267,6 +267,80 @@ V2 ГОТОВА · V1 ПРОДОЛЖАЕТ ЖИТЬ ОТДЕЛЬНО|YOUR FIELD 
 Слово|Word
 `;
 window.SstmTranslations += `
+Удалить всю запись…|Delete entire recording…
+Удалить всю запись?|Delete this entire recording?
+Удалить этот отрезок?|Delete this interval?
+Корзина записей|Recording trash
+Корзина пуста.|Trash is empty.
+ВОССТАНОВИТЬ|RESTORE
+ЗАПИСЬ|RECORDING
+ОТРЕЗОК|INTERVAL
+В КОРЗИНУ|MOVE TO TRASH
+ОСТАНОВИТЬ И УДАЛИТЬ|STOP AND DELETE
+Запись уйдёт в корзину. Состояния, слова и отдельные таймеры сохранятся.|The recording will move to trash. States, words and separate timers are kept.
+На шкале останется промежуток. Время соседних занятий не изменится. Состояния и слова сохранятся.|A gap will remain on the timeline. Neighbouring activities keep their time. States and words are kept.
+Текущая запись остановится сейчас. Восстановление не запустит её снова.|The current recording will stop now. Restoring it will not restart the timer.
+Восстановлено. Запись остаётся остановленной.|Restored. The recording stays stopped.
+Восстановлено.|Restored.
+Удалено. Можно восстановить из корзины записей.|Deleted. You can restore it from recording trash.
+Сначала восстанови удалённый отрезок, чтобы менять его границы.|Restore the deleted interval before changing its boundaries.
+Сначала восстанови удалённые отрезки этой записи.|Restore this recording’s deleted intervals first.
+СОСТОЯНИЯ / ТЕГИ|STATES / TAGS
+СОСТОЯНИЯ|STATES
+# ТЕГ|# TAG
+# ТЕГИ|# TAGS
++ СОСТОЯНИЕ|+ STATE
++ ТЕГ|+ TAG
+Теги момента · необязательно|Moment tags · optional
+Теги через пробел|Tags separated by spaces
+#место #занятие|#place #activity
+СОХРАНИТЬ ТЕГ|SAVE TAG
+Найти состояние|Find a state
+БЫСТРО|QUICK
+ГРУППЫ|GROUPS
+СВОИ|CUSTOM
+Тепло / спокойно|Warm / at ease
+Силы / интерес|Energy / interest
+Напряжение|Tension
+Мало сил|Low energy
+Благодарность|Grateful
+Облегчение|Relieved
+Близость|Connected
+Безопасно|Safe
+Довольно|Content
+Интересно|Interested
+Вдохновение|Inspired
+Сосредоточенно|Focused
+Любопытно|Curious
+Надежда|Hopeful
+Игриво|Playful
+Решительно|Determined
+Злость|Angry
+Раздражение|Irritated
+Страшно|Afraid
+Беспокойно|Restless
+Перегруз|Overwhelmed
+Напряжённо|Tense
+Одиноко|Lonely
+Растерянность|Lost
+Пустота|Empty
+Обидно|Hurt
+Скучно|Bored
+Сонно|Sleepy
+Быстрый выбор · ещё 24 состояния в группах|Quick picks · 24 more states in groups
+Выбери группу, затем состояние.|Choose a group, then a state.
+Твои слова|Your words
+РЕЗУЛЬТАТЫ ПОИСКА|SEARCH RESULTS
+Не найдено. Можно добавить своё слово ниже.|No match. Add your own word below.
+Состояние или #тег|State or #tag
+Поиск отметок|Search observations
+КОРЗИНА ОТМЕТОК|OBSERVATION TRASH
+Восстановить отметку|Restore observation
+Удалить отметку|Delete observation
+В корзине за эту неделю пусто.|No trashed observations this week.
+В этой неделе нет подходящих отметок.|No matching observations this week.
+`;
+window.SstmTranslations += `
 ПРИМЕРЫ|EXAMPLES
 ПОКАЗАТЕЛИ|METRICS
 ЧИСТЫЙ PIN|EMPTY PIN

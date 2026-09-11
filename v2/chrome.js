@@ -42,7 +42,7 @@
   };
   // Account actions should open their window without an overlapping menu.
   menu.addEventListener('click', event => {
-    if (event.target.closest('.view-tab,#surfaceScenarios,#btnInfo,#btnExport,#btnImport,#surfaceSignIn')) {
+    if (event.target.closest('.view-tab,#surfaceScenarios,#surfaceMoments,#btnInfo,#btnExport,#btnImport,#surfaceSignIn')) {
       menu.hidden = true; $('#surfaceMenuButton').setAttribute('aria-expanded', 'false');
     }
   });

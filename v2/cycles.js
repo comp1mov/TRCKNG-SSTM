@@ -31,7 +31,7 @@
     catch (error) { $('surfaceHint').textContent = error.message; }
   }
   function open(cycleId, pointId) {
-    const journal = read(); selected = cycleId || journal.active || journal.cycles.at(-1)?.id || null;
+    const journal = read(); selected = cycleId || journal.active || data.visibleCycles(journal).at(-1)?.id || null;
     renderHistory(); $('cycleModal').classList.add('visible');
     if (pointId) requestAnimationFrame(() => document.getElementById(`record-${pointId}`)?.scrollIntoView({ block: 'center' }));
   }
@@ -46,11 +46,13 @@
   const back = button('К ЗАПИСИ'); back.id = 'cycleReturn'; document.querySelector('.header').append(back);
   const modal = make('div', 'modal'); modal.id = 'cycleModal';
   modal.innerHTML = `<div>
-    <div class="recording-summary"><strong id="cycleTitle"></strong><span id="cycleRange"></span></div>
+    <div class="recording-summary"><strong id="cycleTitle"></strong><span id="cycleRange"></span><small id="cycleRecorded"></small></div>
     <p class="cycle-explanation">Между точками — отрезок. Нажми на подпись, чтобы назвать; на время точки — чтобы исправить.</p>
     <details id="cycleArchive"><summary id="cycleArchiveTitle">Найти / другие записи</summary><input id="cycleSearch" type="search" aria-label="Поиск отрезков по названию или тегу" placeholder="Название или #тег"><div id="cycleSearchResults"></div><label class="cycle-select-label">Показать запись <select id="cycleSelect"></select></label><div id="cycleComparison"></div></details>
     <div id="cycleRows"></div><p id="cycleEmpty" class="cycle-explanation">Нажми «НАЧАТЬ» на поле. Следующее нажатие поставит точку и начнёт следующий отрезок. Названия необязательны.</p>
     <div id="cycleStopArea"><button id="cycleEnd" class="modal-btn" type="button">ОСТАНОВИТЬ ЗАПИСЬ</button><p class="cycle-explanation">Последний отрезок сохранится. Следующее нажатие начнёт отдельную запись.</p></div>
+    <button id="cycleDeleteRecord" type="button">Удалить всю запись…</button><div id="cycleDeleteReview" hidden></div>
+    <details id="cycleTrash"><summary>Корзина записей</summary><div id="cycleTrashRows"></div></details>
     <details id="cycleRepair"><summary>Исправления</summary><div id="cycleUndoArea"></div><div id="cycleEditLog"></div></details>
     <details class="recording-help"><summary>Запись или личный цикл?</summary><p class="cycle-explanation">Запись — от первого нажатия до остановки. Можно записать десять минут занятия или весь день. Остановить можно в любой момент: это не дедлайн, отрезки сохранятся.</p><p class="cycle-explanation">Личный цикл — выбранный тобой ритм, например от сна до следующего сна. Такая запись может длиться меньше или больше 24 часов. Полночь ничего не сбрасывает. Отдельные таймеры на поле работают независимо.</p></details>
   </div>`;
@@ -79,7 +81,7 @@
   function segments(cycle, now = Date.now()) {
     if (!cycle) return [];
     return cycle.points.map((point, index) => ({ point, start: point.at, end: cycle.points[index + 1]?.at ?? cycle.endedAt ?? now,
-      name: cycle.names[point.id] || '', live: cycle.endedAt === null && index === cycle.points.length - 1 })).filter(part => part.live || part.end > part.start);
+      name: cycle.names[point.id] || '', live: cycle.endedAt === null && index === cycle.points.length - 1 })).filter(part => !data.intervalDeleted(cycle, part.point.id) && (part.live || part.end > part.start));
   }
   function draw(host, cycle, hours) {
     host.replaceChildren(); if (!cycle) return;
@@ -93,7 +95,7 @@
     }
   }
   function render() {
-    const journal = read(), cycle = active(journal), shown = cycle || journal.cycles.at(-1), now = Date.now();
+    const journal = read(), cycle = active(journal), shown = cycle || data.visibleCycles(journal).at(-1), now = Date.now();
     const total = shown ? (shown.endedAt ?? now) - shown.startedAt : 0;
     $('cycleCapture').textContent = cycle ? '+ ТОЧКА' : 'НАЧАТЬ';
     $('cycleElapsed').textContent = elapsed(total);
@@ -188,7 +190,7 @@
   }
   function repairs(journal, cycle) {
     const area = $('cycleUndoArea'), log = $('cycleEditLog'); area.replaceChildren(); log.replaceChildren();
-    if (cycle && cycle.id === journal.cycles.at(-1)?.id) {
+    if (cycle && !cycle.deletedAt && !Object.keys(cycle.deletedIntervals || {}).length && cycle.id === journal.cycles.at(-1)?.id) {
       const expected = JSON.stringify(cycle), last = cycle.points.at(-1), n = cycle.points.length;
       const message = n === 1 ? 'Единственная точка будет убрана, запись исчезнет из списка.' : cycle.endedAt !== null ? 'Последняя точка остановки будет убрана. Запись продолжится с предыдущей точки.' : `Последняя точка будет убрана. Отрезки ${n - 1} и ${n} соединятся; название и теги первого сохранятся.`;
       area.append(make('p', 'cycle-explanation', `${message} Исходная точка и её подписи останутся в истории исправлений.`));
@@ -198,7 +200,7 @@
       }); undo.id = 'cycleUndo';
       const error = make('p', 'cycle-edit-error'); error.setAttribute('role', 'alert');
       area.append(make('small', '', `${wallTime(last.at)} · ${last.name || `точка ${n}`}`), undo, error);
-    } else if (cycle) area.append(make('p', 'cycle-explanation', 'Убрать последнюю точку можно только у последней записи. Время и подписи предыдущих записей можно исправить нажатием на них.'));
+    } else if (cycle) area.append(make('p', 'cycle-explanation', Object.keys(cycle.deletedIntervals || {}).length ? 'Сначала восстанови удалённые отрезки этой записи.' : 'Убрать последнюю точку можно только у последней записи. Время и подписи предыдущих записей можно исправить нажатием на них.'));
     const edits = (journal.edits || []).slice().reverse();
     if (edits.length) {
       const details = make('details'); details.append(make('summary', '', `История исправлений · все записи · ${edits.length}`));
@@ -206,20 +208,56 @@
       log.append(details);
     }
   }
+  function restore(cycle, pointId = null) {
+    try { write(data.setDeleted(read(), cycle.id, pointId, false, JSON.stringify(cycle))); $('surfaceHint').textContent = cycle.endedAt === null ? 'Восстановлено.' : 'Восстановлено. Запись остаётся остановленной.'; }
+    catch (err) { $('surfaceHint').textContent = err.message; }
+  }
+  function reviewDelete(cycle, pointId = null) {
+    const review = $('cycleDeleteReview'), index = cycle.points.findIndex(p => p.id === pointId), live = cycle.endedAt === null && (pointId === null || index === cycle.points.length - 1);
+    const start = pointId === null ? cycle.startedAt : cycle.points[index].at, end = pointId === null ? cycle.endedAt : cycle.points[index + 1]?.at;
+    review.replaceChildren(); review.hidden = false;
+    review.append(make('strong', '', pointId === null ? 'Удалить всю запись?' : 'Удалить этот отрезок?'));
+    const name = make('p', '', pointId === null ? '' : cycle.names[pointId] || `отрезок ${index + 1}`); name.dataset.noI18n = ''; review.append(name);
+    review.append(make('p', '', `${calendar(start)} → ${end ? calendar(end) : 'сейчас'} · ${elapsed((end ?? Date.now()) - start)}`));
+    review.append(make('p', 'cycle-explanation', pointId === null ? 'Запись уйдёт в корзину. Состояния, слова и отдельные таймеры сохранятся.' : 'На шкале останется промежуток. Время соседних занятий не изменится. Состояния и слова сохранятся.'));
+    if (live) review.append(make('p', 'cycle-explanation', 'Текущая запись остановится сейчас. Восстановление не запустит её снова.'));
+    const error = make('p', 'cycle-edit-error'); error.setAttribute('role', 'alert');
+    const actions = make('div', 'cycle-edit-actions');
+    actions.append(button(live ? 'ОСТАНОВИТЬ И УДАЛИТЬ' : 'В КОРЗИНУ', () => {
+      try { const next = data.setDeleted(read(), cycle.id, pointId, true, JSON.stringify(cycle)); editing = null; review.hidden = true; write(next); $('surfaceHint').textContent = 'Удалено. Можно восстановить из корзины записей.'; }
+      catch (err) { error.textContent = err.message; }
+    }), button('ОТМЕНА', () => { review.hidden = true; }));
+    review.append(error, actions); review.scrollIntoView({ block: 'nearest' }); actions.firstChild.focus({ preventScroll: true });
+  }
+  function renderTrash(journal) {
+    const rows = $('cycleTrashRows'); rows.replaceChildren();
+    for (const c of journal.cycles) {
+      const removed = c.deletedAt ? [null] : Object.keys(c.deletedIntervals || {});
+      for (const pointId of removed) {
+        const p = c.points.find(p => p.id === pointId), row = make('div', 'cycle-trash-row');
+        const label = make('span', '', `${calendar(p?.at ?? c.startedAt)} · ${pointId === null ? 'ЗАПИСЬ' : c.names[pointId] || 'ОТРЕЗОК'}`); label.dataset.noI18n = '';
+        const action = button('ВОССТАНОВИТЬ', () => restore(c, pointId)); action.dataset.restoreCycle = c.id; action.dataset.restorePoint = pointId || '';
+        row.append(label, action); rows.append(row);
+      }
+    }
+    if (!rows.childElementCount) rows.append(make('p', 'cycle-explanation', 'Корзина пуста.'));
+  }
   function renderHistory() {
     const focus = $('cycleRows').contains(document.activeElement) ? { record: document.activeElement.closest('.cycle-record')?.id, field: document.activeElement.dataset.draftField } : null;
     const selection = focus && document.activeElement.type === 'text' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
-    const journal = read();
-    if (!journal.cycles.some(c => c.id === selected)) selected = journal.active || journal.cycles.at(-1)?.id;
+    const journal = read(), visible = data.visibleCycles(journal);
+    if (!visible.some(c => c.id === selected)) selected = journal.active || visible.at(-1)?.id;
     const select = $('cycleSelect'); select.replaceChildren();
-    journal.cycles.forEach((c, index) => { const option = make('option', '', `Запись ${index + 1} · ${calendar(c.startedAt)}${c.endedAt === null ? ' · идёт' : ''}`); option.value = c.id; select.append(option); }); select.value = selected || '';
+    visible.forEach(c => { const option = make('option', '', `Запись ${journal.cycles.indexOf(c) + 1} · ${calendar(c.startedAt)}${c.endedAt === null ? ' · идёт' : ''}`); option.value = c.id; select.append(option); }); select.value = selected || '';
     const cycle = journal.cycles.find(c => c.id === selected), rows = $('cycleRows'); rows.replaceChildren();
     $('cycleTitle').textContent = cycle ? `ЗАПИСЬ ${String(journal.cycles.indexOf(cycle) + 1).padStart(2, '0')} · ${cycle.endedAt === null ? 'ИДЁТ' : 'СОХРАНЕНА'}` : 'НОВАЯ ЗАПИСЬ';
     $('cycleRange').textContent = cycle ? `${calendar(cycle.startedAt)} → ${cycle.endedAt === null ? 'сейчас' : calendar(cycle.endedAt)}` : '';
+    $('cycleRecorded').textContent = cycle && Object.keys(cycle.deletedIntervals || {}).length ? `Без удалённых отрезков: ${elapsed(segments(cycle).reduce((sum, part) => sum + part.end - part.start, 0))}` : '';
+    $('cycleDeleteRecord').hidden = !cycle; $('cycleDeleteRecord').onclick = () => reviewDelete(cycle);
     $('cycleEmpty').hidden = Boolean(cycle); $('cycleStopArea').hidden = !cycle || cycle.id !== journal.active;
-    $('cycleArchiveTitle').textContent = `Найти / другие записи · ${journal.cycles.length}`; $('cycleArchive').hidden = journal.cycles.length === 0;
+    $('cycleArchiveTitle').textContent = `Найти / другие записи · ${visible.length}`; $('cycleArchive').hidden = visible.length === 0;
     const comparison = $('cycleComparison'); comparison.replaceChildren();
-    const recent = journal.cycles.slice(-7), now = Date.now(), hours = scale(Math.max(0, ...recent.map(c => (c.endedAt ?? now) - c.startedAt)));
+    const recent = visible.slice(-7), now = Date.now(), hours = scale(Math.max(0, ...recent.map(c => (c.endedAt ?? now) - c.startedAt)));
     for (const item of recent) {
       const row = make('div', 'cycle-comparison-row'), title = button(`#${journal.cycles.indexOf(item) + 1} · ${elapsed((item.endedAt ?? now) - item.startedAt)}`, () => { selected = item.id; editing = null; $('cycleArchive').open = false; renderHistory(); });
       const strip = make('div', 'cycle-mini-strip'); draw(strip, item, hours); row.append(title, strip); comparison.append(row);
@@ -230,15 +268,19 @@
       const head = make('div', 'cycle-point-line');
       head.append(make('span', 'cycle-point-time', `${String(index + 1).padStart(2, '0')} / +${elapsed(point.at - cycle.startedAt)}`));
       const stamp = button(wallTime(point.at), () => startEdit(cycle, point, 'time'), 'cycle-calendar-time'); stamp.title = calendar(point.at); stamp.setAttribute('aria-label', `Исправить время точки ${index + 1}`); head.append(stamp);
+      stamp.disabled = Boolean(cycle.deletedIntervals?.[point.id] || cycle.deletedIntervals?.[cycle.points[index - 1]?.id]);
       const name = button(point.name || `точка ${index + 1}`, () => startEdit(cycle, point, 'point'), `cycle-name${point.name ? '' : ' unnamed'}`); name.setAttribute('aria-label', `Переименовать точку ${index + 1}`);
       head.insertBefore(name, stamp); row.append(head);
       const end = cycle.points[index + 1]?.at ?? cycle.endedAt ?? now, live = cycle.endedAt === null && index === cycle.points.length - 1, hasInterval = live || index < cycle.points.length - 1;
-      if (hasInterval) {
+      if (hasInterval && data.intervalDeleted(cycle, point.id)) {
+        const gap = make('div', 'cycle-gap'); gap.append(make('span', '', `Удалённый отрезок · ${elapsed(end - point.at)}`), button('ВОССТАНОВИТЬ', () => restore(cycle, point.id))); row.append(gap);
+      } else if (hasInterval) {
         const interval = make('div', `cycle-interval${live ? ' live' : ''}`);
         const title = button(cycle.names[point.id] || `отрезок ${index + 1}`, () => startEdit(cycle, point, 'interval'), `cycle-name${cycle.names[point.id] ? '' : ' unnamed'}`); title.setAttribute('aria-label', `Переименовать отрезок ${index + 1}`);
         const duration = make('span', 'cycle-record-duration', `${elapsed(end - point.at)}${live ? ' · идёт' : ''}`); if (live) duration.dataset.liveStart = String(point.at);
         const tags = button((cycle.tags?.[point.id] || []).map(t => `#${t}`).join(' ') || '+ тег', () => startEdit(cycle, point, 'tags'), 'cycle-tags'); tags.setAttribute('aria-label', `Изменить теги отрезка ${index + 1}`);
         interval.append(title, duration, tags);
+        const remove = button('×', () => reviewDelete(cycle, point.id), 'cycle-delete-interval'); remove.setAttribute('aria-label', `Удалить отрезок ${index + 1}`); interval.append(remove);
         const marks = (journal.moments || []).filter(m => !m.deletedAt && m.at >= point.at && m.at < end);
         if (marks.length) {
           const words = make('div', 'cycle-moments');
@@ -257,7 +299,7 @@
       }
       rows.append(row);
     }
-    repairs(journal, cycle); searchRecords();
+    repairs(journal, cycle); renderTrash(journal); searchRecords();
     if (focus?.field) { const input = [...rows.querySelectorAll('input')].find(el => !el.hidden && el.closest('.cycle-record')?.id === focus.record && el.dataset.draftField === focus.field); input?.focus({ preventScroll: true }); if (input && selection) input.setSelectionRange(...selection); }
   }
   window.TRCKNG_MODULES = {

@@ -11,6 +11,8 @@
     entries.set(ru, { ru, en }); entries.set(en, { ru, en });
   }
   const patterns = [
+    ['Удалить отрезок {0}', 'Delete interval {0}'], ['Удалённый отрезок · {0}', 'Deleted interval · {0}'],
+    ['Без удалённых отрезков: {0}', 'Excluding deleted intervals: {0}'],
     ['Название точки {0}', 'Point {0} name'], ['Название отрезка {0}', 'Interval {0} name'],
     ['Теги отрезка {0}', 'Interval {0} tags'], ['Точка {0} · название необязательно', 'Point {0} · optional name'],
     ['Отрезок {0} · название необязательно', 'Interval {0} · optional name'],

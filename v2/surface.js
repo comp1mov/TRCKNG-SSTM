@@ -155,7 +155,7 @@
   function setupUI() {
     const container = $('.container'), header = $('.header');
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.6.2</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.7.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -297,7 +297,7 @@
       export: () => {
         const modules = JSON.parse(viewStorage.getItem('sstm_v2_modules') || 'null') || window.SstmModules.empty();
         const journal = JSON.parse(viewStorage.getItem('sstm_v2_cycles') || 'null') || window.SstmData.emptyJournal();
-        const modern = Boolean(modules.tracks.length || journal.version === 2);
+        const modern = Boolean(modules.tracks.length || journal.version >= 2);
         return { dataset: 'sstm-v2', dataVersion: modern ? 2 : 1, ...(modern ? { moduleJournal: modules } : {}), migration: JSON.parse(viewStorage.getItem('sstm_v2_migration') || 'null'), cycleJournal: journal };
       },
       validate: snapshot => { window.SstmData.validate(snapshot); if (snapshot.dataset !== 'sstm-v2') throw new Error('Используй перенос v1 через аккаунт.'); },

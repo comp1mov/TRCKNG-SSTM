@@ -6,10 +6,20 @@
   const button = (text, action, cls) => { const n = el('button', text, cls); n.type = 'button'; n.onclick = action; return n; };
   const clock = at => new Date(at).toLocaleTimeString(window.SstmI18n?.locale || 'ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const date = at => new Date(at).toLocaleDateString(window.SstmI18n?.locale || 'ru-RU', { day: 'numeric', month: 'short' });
-  let draft = null, wordDraft = null, inlineNode = null, suggestions = [], suggestionIndex = -1, composing = false, wheelPage = 0, weekAt = Date.now(), filter = '', lastSaved = null;
+  let draft = null, wordDraft = null, inlineNode = null, suggestions = [], suggestionIndex = -1, composing = false, wheelPage = 0, stateGroup = 'quick', weekAt = Date.now(), filter = '', kindFilter = '', showTrash = false, lastSaved = [];
   const ready = () => !window.TRCKNG_ACCOUNT || window.TRCKNG_ACCOUNT.ready;
   const builtInState = state => state && M.defaults.some(o => o.id === state.id && o.label === state.label);
   const draftKey = d => `${d.source.pin}/${d.source.cellId}`;
+  const captureDrafts = () => JSON.parse(store.getItem('sstm_v2_capture_drafts') || '{}');
+  function saveCaptureDraft() {
+    if (!draft) return;
+    draft.text = $('momentTags').value;
+    const values = captureDrafts(); values[draftKey(draft)] = draft; store.setItem('sstm_v2_capture_drafts', JSON.stringify(values));
+  }
+  function clearCaptureDraft() {
+    if (!draft) return;
+    const values = captureDrafts(); delete values[draftKey(draft)]; store.setItem('sstm_v2_capture_drafts', JSON.stringify(values));
+  }
   function wordDrafts() {
     const values = JSON.parse(store.getItem('sstm_v2_tag_drafts') || '{}'), old = JSON.parse(store.getItem('sstm_v2_moment_draft') || 'null');
     if (old?.kind === 'tag') { values[draftKey(old)] ||= old; store.setItem('sstm_v2_tag_drafts', JSON.stringify(values)); store.removeItem('sstm_v2_moment_draft'); }
@@ -25,12 +35,15 @@
   }
   const modal = el('div', null, 'modal'); modal.id = 'momentModal';
   modal.innerHTML = `<div><p id="momentWhen" class="moment-when"></p><p id="momentContext" class="moment-note"></p>
+    <nav class="moment-capture-tabs"><button id="momentModeState" type="button">СОСТОЯНИЕ</button><button id="momentModeTag" type="button"># ТЕГ</button></nav>
+    <form id="momentTagsForm"><label for="momentTags">Теги момента · необязательно</label><input id="momentTags" maxlength="500" placeholder="#место #занятие" autocomplete="off" list="momentTagSuggestions"><datalist id="momentTagSuggestions"></datalist><button id="momentTagsSave" type="submit" hidden>СОХРАНИТЬ ТЕГ</button></form>
+    <div id="stateSearchBar"><input id="stateSearch" type="search" placeholder="Найти состояние" aria-label="Найти состояние" autocomplete="off"><div class="state-browse"><button id="stateQuick" type="button">БЫСТРО</button><button id="stateBrowse" type="button">ГРУППЫ</button><button id="stateOwn" type="button">СВОИ</button></div><p id="stateGroupLabel" class="moment-note"></p><div id="stateSearchResults"></div></div>
     <section id="momentStateForm"><p class="moment-note">Коснись состояния — оно сразу сохранится. Или веди из центра к слову и отпусти.</p><div id="stateWheel" class="state-wheel"><svg viewBox="0 0 300 300" aria-hidden="true"><circle cx="150" cy="150" r="111"/><path d="M150 18v264 M18 150h264 M57 57l186 186 M57 243L243 57"/></svg><button id="stateOrigin" type="button" aria-label="Веди из центра к состоянию">●</button><div id="stateOptions"></div></div><nav id="statePages"><button id="statePrevious" type="button" aria-label="Предыдущие состояния">←</button><output id="statePageLabel"></output><button id="stateNext" type="button" aria-label="Следующие состояния">→</button></nav><details id="stateCustom"><summary>+ СВОЁ СОСТОЯНИЕ</summary><form id="stateAddForm"><label for="stateNewLabel">Название для меню</label><input id="stateNewLabel" maxlength="40" placeholder="Своё слово" autocomplete="off"><button type="submit">ДОБАВИТЬ В МЕНЮ</button></form></details></section>
     <p id="momentError" role="alert"></p><button id="momentCancel" type="button">ОТМЕНА</button></div>`;
   document.body.append(modal);
   modal.querySelector('#stateWheel svg').setAttribute('preserveAspectRatio', 'none');
   const history = el('div', null, 'modal'); history.id = 'momentHistoryModal';
-  history.innerHTML = '<div><nav class="moment-week-nav"><button id="momentWeekPrev" type="button" aria-label="Предыдущая неделя отметок">←</button><output id="momentWeekLabel"></output><button id="momentWeekNext" type="button" aria-label="Следующая неделя отметок">→</button></nav><button id="momentWeekToday" type="button">ЭТА НЕДЕЛЯ</button><p class="moment-note">Слова, состояния и теги отрезков · все PIN. Недели — пн–вс по часам этого устройства.</p><div id="momentWeekTags"></div><div id="momentWeekRows"></div></div>';
+  history.innerHTML = '<div><div class="moment-capture-tabs"><button id="momentAddState" type="button">+ СОСТОЯНИЕ</button><button id="momentAddTag" type="button">+ ТЕГ</button></div><nav class="moment-week-nav"><button id="momentWeekPrev" type="button" aria-label="Предыдущая неделя отметок">←</button><output id="momentWeekLabel"></output><button id="momentWeekNext" type="button" aria-label="Следующая неделя отметок">→</button></nav><button id="momentWeekToday" type="button">ЭТА НЕДЕЛЯ</button><p class="moment-note">Слова, состояния и теги отрезков · все PIN. Недели — пн–вс по часам этого устройства.</p><input id="momentHistorySearch" type="search" placeholder="Состояние или #тег" aria-label="Поиск отметок"><nav id="momentKinds" class="moment-capture-tabs"></nav><div id="momentWeekTags"></div><button id="momentTrashToggle" type="button" aria-pressed="false">КОРЗИНА ОТМЕТОК</button><div id="momentWeekRows"></div><p id="momentHistoryError" role="alert"></p></div>';
   document.body.append(history);
   const inline = el('form', null, 'tag-inline'); inline.id = 'momentTagForm'; inline.hidden = true;
   inline.innerHTML = '<input id="momentWords" maxlength="500" placeholder="#слово" aria-label="Хештег" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tagSuggestions"><div class="tag-inline-actions"><button id="tagSave" type="submit" aria-label="Сохранить тег">✓</button><button id="tagCancel" type="button" aria-label="Отменить ввод тега">×</button></div><p id="tagInlineError" role="alert"></p>';
@@ -83,7 +96,7 @@
   inline.onsubmit = e => {
     e.preventDefault(); if (!wordDraft || composing) return;
     try {
-      const saved = wordDraft; persist(M.record(read(), saved)); clearWord(); parkWord(); lastSaved = saved.id;
+      const saved = wordDraft; persist(M.record(read(), saved)); clearWord(); parkWord(); lastSaved = [saved.id];
       $('surfaceHint').textContent = `${clock(saved.at)} · ${M.tags(saved.text).map(t => `#${t}`).join(' ')} · сохранено`; $('momentUndo').hidden = false;
     } catch (error) { $('tagInlineError').textContent = error.message; $('surfaceHint').textContent = error.message; popup.hidden = true; input.setAttribute('aria-expanded', 'false'); selectSuggestion(-1); }
   };
@@ -108,70 +121,107 @@
   function open(cell) {
     if (!ready()) return;
     parkWord();
-    wheelPage = 0;
-    draft = newDraft(cell);
+    wheelPage = 0; stateGroup = 'quick'; $('stateSearch').value = '';
+    draft = captureDrafts()[`${cell.pin}/${cell.id}`] || newDraft(cell); $('momentTags').value = draft.text;
     renderCapture(); modal.classList.add('visible');
-    requestAnimationFrame(() => { if (draft && modal.classList.contains('visible')) $('stateOptions').querySelector('button')?.focus(); });
+    requestAnimationFrame(() => { if (draft && modal.classList.contains('visible') && draft.kind === 'state') $('stateOptions').querySelector('button')?.focus({ preventScroll: true }); });
   }
   function renderCapture() {
     if (!draft) return;
     $('momentWhen').textContent = `${date(draft.at)} · ${clock(draft.at)}`;
     const context = M.intervalAt(read(), draft.at);
-    modal.querySelector('.surface-panel-title').textContent = 'СОСТОЯНИЕ';
+    modal.querySelector('.surface-panel-title').textContent = 'ОТМЕТИТЬ МОМЕНТ';
     $('momentContext').textContent = `${draft.source.label} · PIN ${draft.source.pin + 1}${context ? ` · ${context.name}` : ''}`;
     $('momentError').textContent = '';
+    const isState = draft.kind === 'state';
+    $('momentModeState').setAttribute('aria-pressed', String(isState)); $('momentModeTag').setAttribute('aria-pressed', String(!isState));
+    $('momentStateForm').hidden = !isState; $('stateSearchBar').hidden = !isState; $('momentTagsSave').hidden = isState;
+    $('momentTagsForm').querySelector('label').textContent = isState ? 'Теги момента · необязательно' : 'Теги через пробел';
+    $('momentTagSuggestions').replaceChildren(...T.suggest(read(), $('momentTags').value).map(word => { const option = el('option'); option.value = word; return option; }));
     renderWheel();
   }
   function capture(stateId) {
     if (!draft) return;
     try {
       const saved = draft;
-      const next = M.record(read(), { ...draft, stateId }); persist(next);
-      draft = null; lastSaved = saved.id; modal.classList.remove('visible');
+      const text = $('momentTags').value;
+      let next = M.record(read(), { ...draft, text, stateId }); const ids = [saved.id];
+      if (draft.kind === 'state' && text.trim()) { const id = `${saved.id}:tags`; next = M.record(next, { ...draft, id, kind: 'tag', text }); ids.push(id); }
+      persist(next);
+      clearCaptureDraft();
+      draft = null; lastSaved = ids; modal.classList.remove('visible');
       const mark = next.moments.find(m => m.id === saved.id);
       $('surfaceHint').textContent = `${clock(mark.at)} · ${mark.state?.label || mark.tags.map(t => `#${t}`).join(' ')} · сохранено`;
       $('momentUndo').hidden = false;
     } catch (error) { $('momentError').textContent = error.message; }
   }
-  $('momentCancel').onclick = () => { draft = null; modal.classList.remove('visible'); };
+  for (const [id, kind] of [['momentModeState', 'state'], ['momentModeTag', 'tag']]) $(id).onclick = () => { if (draft) { draft.kind = kind; saveCaptureDraft(); renderCapture(); if (kind === 'tag') $('momentTags').focus(); } };
+  $('momentTagsForm').onsubmit = event => { event.preventDefault(); if (draft?.kind === 'tag') capture(); };
+  $('momentTags').oninput = () => { saveCaptureDraft(); const input = $('momentTags'); $('momentTagSuggestions').replaceChildren(...T.suggest(read(), input.value, input.selectionStart).map(word => { const o = el('option'); o.value = T.complete(input.value, input.selectionStart, word).text; return o; })); };
+  $('momentCancel').onclick = () => { clearCaptureDraft(); draft = null; modal.classList.remove('visible'); };
+  const stateLabel = o => builtInState(o) ? window.SstmI18n.text(o.label) : o.label;
+  function chooseGroup(group) { stateGroup = group; wheelPage = 0; $('stateSearch').value = ''; renderWheel(); }
   function renderWheel() {
-    const all = M.options(read()), pages = Math.ceil(all.length / 8); wheelPage = Math.max(0, Math.min(pages - 1, wheelPage));
+    const journal = read(), options = M.options(journal), group = M.groups.find(g => g.id === stateGroup);
+    const all = stateGroup === 'groups' ? M.groups : stateGroup === 'quick' ? options.filter(o => M.legacyDefaults.some(d => d.id === o.id)) : stateGroup === 'custom' ? journal.stateOptions || [] : options.filter(o => group?.states.includes(o.id));
+    const query = M.key($('stateSearch').value), searching = Boolean(query), results = $('stateSearchResults');
+    results.replaceChildren(); results.hidden = !searching;
+    $('stateWheel').hidden = searching;
+    if (searching) {
+      for (const o of options.filter(o => M.key(`${o.label} ${stateLabel(o)}`).includes(query))) { const b = button(stateLabel(o), () => capture(o.id)); b.dataset.state = o.id; b.dataset.noI18n = ''; results.append(b); }
+      if (!results.childElementCount) results.append(el('p', 'Не найдено. Можно добавить своё слово ниже.', 'moment-note'));
+    }
+    const pages = Math.max(1, Math.ceil(all.length / 8)); wheelPage = Math.max(0, Math.min(pages - 1, wheelPage));
+    $('stateGroupLabel').textContent = searching ? 'РЕЗУЛЬТАТЫ ПОИСКА' : group?.label || (stateGroup === 'groups' ? 'Выбери группу, затем состояние.' : stateGroup === 'custom' ? 'Твои слова' : 'Быстрый выбор · ещё 24 состояния в группах');
     const choices = all.slice(wheelPage * 8, wheelPage * 8 + 8);
     $('stateOptions').replaceChildren(...choices.map((o, i) => {
-      const a = (-90 + i * 45) * Math.PI / 180, b = button(o.label, () => capture(o.id), 'state-option'); b.dataset.state = o.id;
-      if (!M.defaults.some(item => item.id === o.id)) b.dataset.noI18n = '';
+      const a = (-90 + i * (stateGroup === 'groups' ? 90 : 45)) * Math.PI / 180, b = button(o.label, () => stateGroup === 'groups' ? chooseGroup(o.id) : capture(o.id), 'state-option');
+      if (stateGroup === 'groups') b.dataset.group = o.id; else b.dataset.state = o.id;
+      if (stateGroup !== 'groups' && !builtInState(o)) b.dataset.noI18n = '';
       b.style.left = `${50 + Math.cos(a) * 37}%`; b.style.top = `${50 + Math.sin(a) * 37}%`; return b;
     }));
-    $('statePages').hidden = pages < 2; $('statePageLabel').textContent = `${wheelPage + 1} / ${pages}`;
+    $('statePages').hidden = searching || pages < 2; $('statePageLabel').textContent = `${wheelPage + 1} / ${pages}`;
     $('statePrevious').disabled = wheelPage === 0; $('stateNext').disabled = wheelPage === pages - 1;
   }
+  $('stateSearch').oninput = renderWheel;
+  $('stateQuick').onclick = () => chooseGroup('quick'); $('stateBrowse').onclick = () => chooseGroup('groups'); $('stateOwn').onclick = () => chooseGroup('custom');
   $('statePrevious').onclick = () => { wheelPage--; renderWheel(); }; $('stateNext').onclick = () => { wheelPage++; renderWheel(); };
   $('stateAddForm').onsubmit = event => {
     event.preventDefault();
     try {
       const next = M.addOption(read(), $('stateNewLabel').value); persist(next);
-      wheelPage = Math.floor((M.options(next).length - 1) / 8); renderWheel();
+      stateGroup = 'custom'; $('stateSearch').value = ''; wheelPage = Math.floor((next.stateOptions.length - 1) / 8); renderWheel();
       $('stateNewLabel').value = ''; $('stateCustom').open = false; $('momentError').textContent = '';
       $('stateOptions').lastElementChild?.focus();
     } catch (error) { $('momentError').textContent = error.message; }
   };
   let pointer = null, hovered = null;
   const wheel = $('stateWheel');
-  const highlight = target => { hovered?.classList.remove('hovered'); hovered = target?.closest('.state-option'); hovered?.classList.add('hovered'); };
+  const highlight = target => { hovered?.classList.remove('hovered'); hovered = target?.closest('.state-option'); if (hovered && !wheel.contains(hovered)) hovered = null; hovered?.classList.add('hovered'); $('stateOrigin').textContent = hovered ? hovered.textContent : '●'; };
   wheel.addEventListener('pointerdown', e => { if (e.target.id !== 'stateOrigin' || !e.isPrimary) return; e.preventDefault(); pointer = e.pointerId; wheel.setPointerCapture(pointer); });
   wheel.addEventListener('pointermove', e => { if (e.pointerId === pointer) highlight(document.elementFromPoint(e.clientX, e.clientY)); });
   wheel.addEventListener('pointerup', e => {
     if (e.pointerId !== pointer) return;
-    const choice = document.elementFromPoint(e.clientX, e.clientY)?.closest('.state-option')?.dataset.state;
-    pointer = null; highlight(null); wheel.releasePointerCapture(e.pointerId); e.preventDefault(); if (choice) capture(choice);
+    const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.state-option'), choice = target && wheel.contains(target) ? { ...target.dataset } : {};
+    pointer = null; highlight(null); wheel.releasePointerCapture(e.pointerId); e.preventDefault(); if (choice.group) chooseGroup(choice.group); else if (choice.state) capture(choice.state);
   });
   wheel.addEventListener('pointercancel', () => { pointer = null; highlight(null); });
+  wheel.addEventListener('lostpointercapture', () => { pointer = null; highlight(null); });
   function renderWeek() {
     const journal = read(), week = M.week(journal, weekAt), observations = new Map((journal.moments || []).map(m => [m.id, m])); $('momentWeekLabel').textContent = `${date(week.start)} — ${date(week.end - 1)}`;
+    const query = M.key($('momentHistorySearch').value);
+    const kinds = [['', 'ВСЕ'], ['state', 'СОСТОЯНИЯ'], ['tag', '# ТЕГИ']];
+    $('momentKinds').replaceChildren(...kinds.map(([kind, label]) => { const b = button(label, () => { kindFilter = kind; renderWeek(); }); b.setAttribute('aria-pressed', String(kindFilter === kind)); return b; }));
+    $('momentTrashToggle').setAttribute('aria-pressed', String(showTrash)); $('momentWeekTags').hidden = showTrash;
     const all = button('ВСЕ', () => { filter = ''; renderWeek(); }); all.dataset.uiState = ''; all.setAttribute('aria-pressed', String(!filter));
-    $('momentWeekTags').replaceChildren(all, ...week.tags.map(([tag, count]) => { const b = button(`#${tag} · ${count}`, () => { filter = filter === tag ? '' : tag; renderWeek(); }); b.dataset.tag = tag; b.setAttribute('aria-pressed', String(filter === tag)); return b; }));
+    $('momentWeekTags').replaceChildren(all, ...week.tags.map(([tag, count]) => {
+      const entries = week.entries.filter(e => e.tags.includes(tag)), state = observations.get(entries[0]?.id)?.state;
+      const label = entries.every(e => e.kind === 'state') && builtInState(state) ? `✳ ${stateLabel(state)}` : `#${tag}`;
+      const b = button(`${label} · ${count}`, () => { filter = filter === tag ? '' : tag; renderWeek(); }); b.dataset.tag = tag; b.setAttribute('aria-pressed', String(filter === tag)); return b;
+    }));
     const rows = $('momentWeekRows'); rows.replaceChildren(); let day = '';
-    for (const m of week.entries.filter(e => !filter || e.tags.includes(filter))) {
+    const entries = showTrash ? (journal.moments || []).filter(m => m.deletedAt && m.at >= week.start && m.at < week.end).map(m => ({ ...m, label: m.state?.label || m.tags.map(t => `#${t}`).join(' '), tags: m.state ? [M.key(m.state.label)] : m.tags })).sort((a, b) => b.at - a.at) : week.entries;
+    for (const m of entries.filter(e => (showTrash || !filter || e.tags.includes(filter)) && (!kindFilter || (kindFilter === 'tag' ? e.kind !== 'state' : e.kind === kindFilter)) && (!query || M.key(`${e.label} ${builtInState(observations.get(e.id)?.state) ? stateLabel(observations.get(e.id).state) : ''} ${e.tags.join(' ')}`).includes(query.replace(/^#/, ''))))) {
       const label = date(m.at); if (label !== day) { rows.append(el('h3', label, 'moment-day')); day = label; }
       const row = el('article', null, 'moment-row'); row.dataset.momentId = m.id; row.dataset.kind = m.kind;
       const time = el('time', clock(m.at)); time.dateTime = new Date(m.at).toISOString();
@@ -179,10 +229,21 @@
       if (builtInState(observations.get(m.id)?.state)) name.dataset.uiState = '';
       row.append(time, name);
       row.append(el('small', m.kind === 'interval' ? `${clock(m.at)} → ${date(m.until)} ${clock(m.until)} · ${m.tags.map(t => `#${t}`).join(' ')}` : `${m.kind === 'state' ? 'Состояние' : 'Слово'} · PIN ${m.source.pin + 1}${m.interval ? ` · ${m.interval.name}` : ''}`));
+      if (m.kind !== 'interval') {
+        const action = button(showTrash ? 'ВОССТАНОВИТЬ' : '×', () => { try { persist(showTrash ? M.restore(read(), m.id) : M.remove(read(), m.id)); $('momentHistoryError').textContent = ''; } catch (err) { $('momentHistoryError').textContent = err.message; } }, 'moment-row-action');
+        action.setAttribute('aria-label', showTrash ? 'Восстановить отметку' : 'Удалить отметку'); row.append(action);
+      }
       rows.append(row);
     }
-    if (!rows.childElementCount) rows.append(el('p', filter ? 'В этой неделе нет отметок с этим словом.' : 'Пока пусто. Нажми # или выбери состояние на поле.', 'moment-note'));
+    if (!rows.childElementCount) rows.append(el('p', showTrash ? 'В корзине за эту неделю пусто.' : filter || query || kindFilter ? 'В этой неделе нет подходящих отметок.' : 'Пока пусто. Нажми # или выбери состояние на поле.', 'moment-note'));
   }
+  $('momentHistorySearch').oninput = renderWeek;
+  $('momentTrashToggle').onclick = () => { showTrash = !showTrash; renderWeek(); };
+  for (const [id, type] of [['momentAddState', 'state'], ['momentAddTag', 'tag']]) $(id).onclick = () => {
+    const pin = Number(document.querySelector('.pin.active')?.dataset.pin || 0);
+    open({ pin, id: `moment-${type}`, type, label: type === 'state' ? 'СОСТОЯНИЕ' : '# ТЕГ' });
+    if (type === 'tag') $('momentTags').focus();
+  };
   for (const [id, amount] of [['momentWeekPrev', -7], ['momentWeekNext', 7]]) $(id).onclick = () => { const at = new Date(weekAt); at.setDate(at.getDate() + amount); weekAt = +at; filter = ''; renderWeek(); };
   $('momentWeekToday').onclick = () => { weekAt = Date.now(); filter = ''; renderWeek(); };
   function refresh() {
@@ -219,7 +280,8 @@
       previous.installNavigation();
       const show = () => { renderWeek(); history.classList.add('visible'); };
       const link = button('# СЛОВА / СОСТОЯНИЯ', show); link.id = 'historyMoments'; $('historyView').prepend(link);
-      const undo = button('↶ ОТМЕТКУ', () => { try { persist(M.remove(read(), lastSaved)); lastSaved = null; undo.hidden = true; $('surfaceHint').textContent = 'Последняя отметка отменена.'; } catch (error) { $('surfaceHint').textContent = error.message; } });
+      const menuLink = button('СОСТОЯНИЯ / ТЕГИ', show); menuLink.id = 'surfaceMoments'; $('surfaceMenu').prepend(menuLink);
+      const undo = button('↶ ОТМЕТКУ', () => { try { let journal = read(); for (const id of lastSaved) journal = M.remove(journal, id); persist(journal); lastSaved = []; undo.hidden = true; $('surfaceHint').textContent = 'Последняя отметка отменена.'; } catch (error) { $('surfaceHint').textContent = error.message; } });
       undo.id = 'momentUndo'; undo.hidden = true;
       document.querySelector('.surface-footer').insertBefore(undo, $('surfaceStatus'));
     }
@@ -227,4 +289,5 @@
   new MutationObserver(refresh).observe($('habitsGrid'), { childList: true });
   window.addEventListener('sstm-v2-loaded', () => { refresh(); renderWeek(); if (draft) renderCapture(); });
   window.addEventListener('sstm-v2-recordings-changed', () => { refresh(); renderWeek(); });
+  window.addEventListener('sstm-language-changed', () => { if (draft) renderCapture(); renderWeek(); });
 })();

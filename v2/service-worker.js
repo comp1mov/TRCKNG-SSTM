@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'trckng-sstm-v2-alpha-0.6.2';
+const CACHE = 'trckng-sstm-v2-alpha-0.7.0';
 const assets = ['./', './index.html', './surface.css', './surface.js', './field.js', './clocks.js', './data.js', './modules.js', './moments.js', './tag-input.js', './marks.js', './scenarios.js', './account.js', './cycles.js', './demo-data.js', './vendor/supabase-2.116.0.js',
   './translations.js', './i18n.js', './readability.js', './chrome.js', './fonts/JetBrainsMono-Regular.woff2',
   './points-lab.html', './style.css', './model.js', './store.js', './app.js',

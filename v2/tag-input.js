@@ -12,7 +12,7 @@
     const part = token(text, caret), words = new Map();
     const add = (value, at) => { const word = normalize(value); const prior = words.get(word) || { word, count: 0, at: 0 }; prior.count++; prior.at = Math.max(prior.at, at); words.set(word, prior); };
     for (const m of journal.moments || []) if (!m.deletedAt) for (const word of m.tags) add(word, m.at);
-    for (const c of journal.cycles) for (const p of c.points) for (const word of c.tags?.[p.id] || []) add(word, p.at);
+    for (const c of journal.cycles) if (!c.deletedAt) for (const p of c.points) if (!c.deletedIntervals?.[p.id]) for (const word of c.tags?.[p.id] || []) add(word, p.at);
     const other = new Set(normalize(text.slice(0, part.start) + ' ' + text.slice(part.end)).split(/[\s,#]+/u));
     return [...words.values()].filter(item => item.word.startsWith(part.prefix) && !other.has(item.word))
       .sort((a, b) => b.count - a.count || b.at - a.at || a.word.localeCompare(b.word, 'ru')).slice(0, 5).map(item => item.word);

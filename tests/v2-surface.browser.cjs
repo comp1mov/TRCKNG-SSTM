@@ -43,6 +43,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     };
     await context.route('**/*', routeAccount);
     const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
+    const field = async () => { if (!await page.locator('#btnViewTrack').isVisible()) await page.locator('#surfaceMenuButton').click(); await page.locator('#btnViewTrack').click(); };
     await page.addInitScript(() => { if (!localStorage.getItem('trckng_sstm_labels_pin0')) localStorage.setItem('trckng_sstm_labels_pin0', '{"cell01":"V1 sentinel"}'); });
     await page.goto(url); await page.locator('#habitsGrid .btn-habit').first().waitFor({ state: 'attached' });
     assert.equal(await page.locator('#addButton').count(), 0);
@@ -159,11 +160,12 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
       await page.screenshot({ path: path.join(output, `panel-${width}.png`), fullPage: true });
       await page.locator('#accountBackToField').click();
       assert.equal(await page.locator('#trackView').isVisible(), true);
-      await page.locator('#surfaceAccount').click(); await page.locator('#btnViewTrack').click();
+      await page.locator('#surfaceAccount').click(); await field();
       assert.equal(await page.locator('#accountModal').isVisible(), false, 'The field tab dismisses the account overlay');
       await page.screenshot({ path: path.join(output, `field-${width}.png`), fullPage: true });
     }
     assert.deepEqual(errors, []);
+    await page.setViewportSize({ width: 1280, height: 900 });
     const duplicate = await context.newPage(); await duplicate.goto(url);
     await duplicate.locator('#surfaceLoadError').waitFor();
     assert.match(await duplicate.locator('#surfaceLoadError').innerText(), /другой вкладке/);
@@ -172,46 +174,50 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     const repairedFirstTime = await page.evaluate(async () => {
       let j = JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')), c = j.cycles[0], p = c.points[0];
       j = SstmData.changeTime(j, c.id, p.id, p.at - 60000); j = SstmData.tagInterval(j, c.id, p.id, 'fixture shared');
+      j = SstmData.setDeleted(j, c.id, p.id, true, undefined);
+      j = SstmMoments.record(j, { kind: 'state', stateId: 'sstm:state:inspired', at: Date.now(), source: { pin: 0, cellId: 'fixture-state', label: 'Example state' } });
       TRCKNG_STORAGE.setItem('sstm_v2_cycles', JSON.stringify(j)); markCloudDirty('fixture interval repair');
       dispatchEvent(new Event('sstm-v2-loaded')); await TRCKNG_ACCOUNT.sync(); return p.at - 60000;
     });
     // A modular source/control commits together and travels with the same account.
     await page.locator('#pin2').click(); await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceScenarios').click();
     await page.locator('[data-recipe="work-pay"] button').click(); await page.locator('#cellEditInput').fill('Synced work fixture');
-    await page.locator('#cellEditSave').click(); await page.locator('#btnViewTrack').click();
+    await page.locator('#cellEditSave').click(); await field();
     const workId = await page.evaluate(() => HABITS.find(id => habitTypes[id] === 'modular'));
     await page.locator(`#btn-${workId}`).click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
     assert.equal(cloud.app_state.dataVersion, 2); assert.ok(cloud.app_state.moduleJournal.tracks[0].running);
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 2);
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 4);
     // Timestamped words and custom state choices share the checked account envelope.
     await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceScenarios').click(); await page.locator('[data-recipe="tag"] button').click();
-    await page.locator('#cellEditSave').click(); await page.locator('#btnViewTrack').click();
+    await page.locator('#cellEditSave').click(); await field();
     const tagId = await page.evaluate(() => HABITS.find(id => habitTypes[id] === 'tag'));
     await page.locator(`#btn-${tagId}`).click(); await page.locator('#momentWords').fill('#fixturemoment'); await page.locator('#momentWords').press('Enter');
     await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceScenarios').click(); await page.locator('[data-recipe="state"] button').click();
-    await page.locator('#cellEditSave').click(); await page.locator('#btnViewTrack').click();
+    await page.locator('#cellEditSave').click(); await field();
     const stateId = await page.evaluate(() => HABITS.find(id => habitTypes[id] === 'state'));
     await page.locator(`#btn-${stateId}`).click(); await page.locator('#stateCustom summary').click(); await page.locator('#stateNewLabel').fill('Fixture flow'); await page.locator('#stateAddForm button').click();
     await page.getByRole('button', { name: 'Fixture flow', exact: true }).click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
-    assert.equal(cloud.app_state.cycleJournal.version, 2); assert.equal(cloud.app_state.cycleJournal.moments.length, 2);
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 3);
+    assert.equal(cloud.app_state.cycleJournal.version, 3); assert.equal(cloud.app_state.cycleJournal.moments.length, 3);
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 4);
     await page.locator('#pin0').click();
     const device = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', isMobile: true, hasTouch: true });
     await device.route('**/*', routeAccount);
     const phone = await device.newPage(); phone.on('pageerror', e => errors.push(e.message));
-    await phone.goto(url); await phone.locator('#surfaceSignIn').tap();
+    await phone.goto(url); await phone.locator('#surfaceAccount').tap();
     await phone.waitForFunction(() => !document.querySelector('#accountSignIn').disabled);
     await phone.locator('#accountEmail').fill(user.email); await phone.locator('#accountPassword').fill('fixture-password'); await phone.locator('#accountSignIn').tap();
     await phone.waitForFunction(() => document.querySelector('#pin0')?.textContent === 'FIELD A');
     if (await phone.locator('#accountModal').isVisible()) await phone.locator('#accountBackToField').tap();
     await phone.locator('#pin2').tap(); await phone.locator(`#btn-${workId}`).tap();
     assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).stateOptions[0].label), 'Fixture flow');
-    assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).moments.length), 2);
+    assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).moments.length), 3);
     await phone.locator(`#btn-${stateId}`).tap(); await phone.locator('[data-state="calm"]').tap();
     assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_modules')).tracks[0].sessions.length), 1);
     await phone.locator('#pin0').tap();
     assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).cycles[0].points.length), 2, 'Points share the v2 account sync');
     const syncedJournal = await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')));
+    assert.ok(syncedJournal.cycles[0].deletedIntervals[syncedJournal.cycles[0].points[0].id], 'Interval trash travels to the second device');
+    assert.equal(syncedJournal.moments[0].state.id, 'sstm:state:inspired');
     assert.equal(syncedJournal.cycles[0].startedAt, repairedFirstTime); assert.equal(syncedJournal.edits[0].before.at, repairedFirstTime + 60000);
     assert.deepEqual(syncedJournal.cycles[0].tags[syncedJournal.cycles[0].points[0].id], ['fixture', 'shared']);
     assert.equal(await phone.locator('#habitsGrid .btn-habit').count(), 10);
@@ -227,7 +233,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(await page.locator(`#value-${extraId}`).innerText(), '4');
     assert.equal(await page.evaluate(id => cellLayout[id].col, extraId), 6);
     assert.equal(await page.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_modules')).tracks[0].running), null, 'Stopping on another device retains one completed interval');
-    assert.equal(await page.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).moments.length), 3, 'Phone state choice returns to the first device');
+    assert.equal(await page.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).moments.length), 4, 'Phone state choice returns to the first device');
     await phone.screenshot({ path: path.join(output, 'fresh-phone.png'), fullPage: true });
     await page.locator('#btn-cell01').click(); await page.locator('#btn-cell01').click();
     await phone.locator('#btn-cell01').tap(); await phone.evaluate(() => TRCKNG_ACCOUNT.sync());
@@ -282,7 +288,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     const exported = await downloadJson(() => page.locator('#btnExport').click(), 'v2-fixture.json');
     assert.equal(exported.value.dataset, 'sstm-v2'); assert.equal(exported.value.pinData.length, 3);
     assert.equal(exported.value.dataVersion, 2); assert.equal(exported.value.moduleJournal.tracks[0].sessions.length, 1);
-    assert.equal(exported.value.cycleJournal.moments.length, 3); assert.equal(exported.value.cycleJournal.stateOptions[0].label, 'Fixture flow');
+    assert.equal(exported.value.cycleJournal.moments.length, 4); assert.equal(exported.value.cycleJournal.stateOptions[0].label, 'Fixture flow');
     assert.equal(exported.value.cycleJournal.cycles[0].points.length, afterLostReply + 3);
     assert.equal(exported.value.cycleJournal.edits[0].before.at, repairedFirstTime + 60000, 'Export includes original observations');
     const restored = structuredClone(exported.value); restored.pinData[2].habitLabels.cell09 = 'Restored fixture';
@@ -298,7 +304,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator('#accountBackToField').click();
     await page.evaluate(() => TRCKNG_ACCOUNT.sync());
     const savedBeforeLogout = await page.evaluate(() => localStorage.getItem('trckng_sstm_data_pin0'));
-    await page.goto(url.replace('?mode=account&lang=ru', '')); await page.locator('#btnViewTrack').waitFor(); await page.locator('#btnViewTrack').click(); await page.locator('#btn-cell01').waitFor();
+    await page.goto(url.replace('?mode=account&lang=ru', '')); await page.locator('#surfaceMenuButton').waitFor(); await field(); await page.locator('#btn-cell01').waitFor();
     assert.equal(await page.locator('body').getAttribute('data-mode'), 'account', 'A returning signed-in visitor resumes their own account');
     await page.locator('#surfaceAccount').click(); await page.locator('#accountSignOut').click();
     await page.waitForURL('**mode=demo'); await page.locator('#btn-cell01').waitFor();
@@ -327,7 +333,8 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(await local.locator(`#value-${extraId}`).innerText(), '4');
     assert.equal(await local.evaluate(id => cellLayout[id].col, extraId), 6);
     assert.equal(await local.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_modules')).tracks[0].sessions.length), 1, 'Module history survives offline reload');
-    assert.equal(await local.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).moments.length), 3, 'Words and states survive offline reload');
+    assert.equal(await local.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).moments.length), 4, 'Words and states survive offline reload');
+    assert.ok(await local.evaluate(() => { const c = JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).cycles[0]; return c.deletedIntervals[c.points[0].id]; }), 'Trash survives offline reload');
     await local.locator('#pin2').click(); await local.locator(`#btn-${tagId}`).click(); await local.locator('#momentWords').fill('#offlineword'); await local.locator('#momentWords').press('Enter');
     await local.reload(); await local.locator('#cycleCapture').waitFor();
     assert.deepEqual(await local.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).moments.at(-1).tags), ['offlineword']);
@@ -341,6 +348,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await local.waitForFunction(() => /ОФЛАЙН|ИЗМЕНЕНИЯ ОЖИДАЮТ/.test(document.querySelector('#surfaceStatus')?.textContent), null, { timeout: 10000 });
     await local.locator('#cycleCapture').click();
     await local.locator('#cycleOpen').click();
+    await local.locator('.cycle-gap button').click();
     await local.getByLabel('Изменить теги отрезка 1', { exact: true }).click();
     await local.getByLabel('Теги отрезка 1', { exact: true }).fill('offline example');
     await local.getByRole('button', { name: 'СОХРАНИТЬ', exact: true }).click();
