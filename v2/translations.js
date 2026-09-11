@@ -2,6 +2,10 @@
 // UI copy only. User labels, tags, notes and stored observations are never translated.
 window.SstmTranslations = `
 ТВОЁ ПОЛЕ|YOUR FIELD
+Показать панели|Expand panels
+Свернуть панели|Collapse panels
+Открыть отрезки записи|Open recording intervals
+ОТРЕЗКИ ↗|INTERVALS ↗
 ВОЙТИ|SIGN IN
 МЕНЮ|MENU
 АККАУНТ|ACCOUNT

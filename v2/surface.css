@@ -156,6 +156,48 @@ body.v2-surface,.v2-surface button,.v2-surface input,.v2-surface textarea,.v2-su
 .v2-surface #accountAdvanced button{width:100%;margin:4px 0}.v2-surface #accountSyncNow{width:100%;background:transparent;border:1px solid var(--surface-line);color:var(--surface-ink)}#migrationAdvanced{margin-top:20px}
 @media(max-width:800px){#cycleElapsed{font-size:34px}.cycle-top .cycle-running-clock{min-width:150px}.v2-surface .btn-label{font-size:12px}}
 @media(max-height:520px) and (orientation:landscape){#cycleElapsed{font-size:28px}.v2-surface .btn-label{font-size:12px}}
+
+/* 0.6.1: the field owns the remaining viewport, including browser-bar changes. */
+body.v2-surface{height:100dvh;min-height:0;box-sizing:border-box}
+.v2-surface .container,body.v2-surface[data-view=history] .container{height:100%;min-height:0}
+.v2-surface .view-panel{min-height:0}
+.v2-surface .modal{bottom:calc(var(--panel-bottom,44px) + env(safe-area-inset-bottom))}
+.v2-surface .buttons-grid,.v2-surface .layout-grid{min-height:max(100%,calc(var(--field-rows,5) * var(--module-size)))}
+.v2-surface .btn-value-suffix{display:block;font-size:11px;line-height:1.2;margin:3px 0 0;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#surfacePanelToggle{flex:0 0 44px;width:44px;font-size:22px;padding:0}
+#surfaceMenu{overflow:auto;overscroll-behavior:contain}
+.cycle-top #cycleOpen{flex:1;min-width:0;border:0;padding:0;text-align:left;grid-column:auto}
+#cycleElapsed{display:block}.cycle-open-label{display:block;font-size:10px;line-height:1.4;color:var(--surface-accent)}
+.cycle-top{flex-wrap:nowrap}.cycle-top .cycle-running-clock{min-width:0}
+@media(max-width:800px){.cycle-top{grid-template-columns:auto minmax(0,1fr) auto}.cycle-top #cycleCalendar{grid-column:1/-1;min-height:44px}.cycle-top #cycleElapsed{font-size:clamp(24px,7.7vw,34px)}.cycle-top #cycleWallClock{font-size:16px}}
+
+.surface-compact .surface-head{padding:3px 6px;gap:4px}
+.surface-compact .surface-brand small,.surface-compact .surface-time{display:none}
+.surface-compact #surfaceAccount{margin-left:auto}
+.surface-compact .surface-tools{padding:3px 6px;display:block}
+.surface-compact .surface-tools .pins{display:flex;flex-wrap:nowrap;width:100%;gap:2px}
+.surface-compact .surface-tools .pin{flex:1;max-width:none;min-width:0}
+.surface-compact #cycleContext,.surface-compact #cycleCalendar,.surface-compact #cycleRuler{display:none}
+.surface-compact .cycle-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;padding:5px 6px}
+.surface-compact .cycle-top #cycleElapsed{font-size:clamp(24px,7.7vw,32px);letter-spacing:-.05em}
+.surface-compact .cycle-top #cycleWallClock{font-size:16px}
+.surface-compact .cycle-top #cycleCapture{padding:6px;font-size:10px}
+.surface-compact .cycle-top .cycle-running-clock{min-width:0}
+.surface-compact #cycleStrip{display:block;height:8px}
+.surface-compact .cycle-open-label{font-size:9px}
+.surface-compact #surfaceMenu .view-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+.surface-compact #surfaceMenu .view-tab{font-size:11px;padding:8px 4px}
+.surface-compact #surfaceMenu .controls-edit{display:flex;padding:8px 0;border-block:1px solid var(--surface-line)}
+.surface-compact #surfaceMenu .controls-edit .btn-control{width:auto;flex:1}
+.surface-compact #surfaceMenu .surface-zoom{width:100%;justify-content:space-between;margin:4px 0 0}
+.surface-compact #surfaceMenu #surfaceHome{display:block}
+.surface-compact #surfaceMenu #surfaceWelcome{display:flex;padding:8px 0;border:0;flex-wrap:wrap}
+.surface-compact #surfaceMenu #surfaceWelcome p{display:block}
+.surface-compact #surfaceHint{display:none}
+.surface-compact #surfaceStatus{max-width:100%;margin-left:auto}
+.surface-demo.surface-compact #surfaceDemoLink{display:none}
+@media(max-height:560px){.v2-surface:not(.surface-compact) .controls-edit{display:flex}}
+@media(max-width:380px){.surface-compact .surface-brand{font-size:16px}.surface-compact .surface-head button{padding:6px;font-size:10px}.surface-compact #surfacePanelToggle{font-size:22px}.surface-compact .cycle-top #cycleWallClock{font-size:14px}}
 body.v2-surface *{font-family:var(--surface-font)!important}
 .account-locked .surface-tools,.account-locked .controls-edit,.account-locked .header>.progress-meta,.account-locked .header>.progress-strip,.account-locked .surface-time-ruler,.account-locked #cycleClock,.account-locked #cycleReturn{display:none!important}
 .account-locked .surface-footer{margin-top:auto}.account-locked #surfaceWelcome{border-bottom:0}.v2-surface #accountModal .surface-panel-title{display:none}.v2-surface #accountModal .surface-panel-head{justify-content:flex-end}.v2-surface #accountModal .surface-back{margin-right:auto}

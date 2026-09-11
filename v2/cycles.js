@@ -41,7 +41,7 @@
   document.querySelector('#cellEditModal .type-selector').after(typeHelp);
   new MutationObserver(() => { typeHelp.hidden = !type.classList.contains('active'); }).observe(type, { attributes: true, attributeFilter: ['class'] });
   const clock = make('section'); clock.id = 'cycleClock';
-  clock.innerHTML = '<div class="cycle-top"><button id="cycleCapture" type="button">НАЧАТЬ</button><div class="cycle-running-clock"><span id="cycleElapsed">00:00:00</span><small id="cycleContext"></small></div><div class="cycle-now"><small>СЕЙЧАС</small><time id="cycleWallClock"></time></div><button id="cycleOpen" type="button">ОТРЕЗКИ</button><button id="cycleCalendar" type="button" aria-label="Показать календарную шкалу">КАЛЕНДАРЬ</button></div><div id="cycleStrip" aria-label="Отрезки текущей записи"></div><div id="cycleRuler" class="cycle-ruler"></div>';
+  clock.innerHTML = '<div class="cycle-top"><button id="cycleCapture" type="button">НАЧАТЬ</button><button id="cycleOpen" class="cycle-running-clock" type="button" aria-label="Открыть отрезки записи"><span id="cycleElapsed">00:00:00</span><small class="cycle-open-label">ОТРЕЗКИ ↗</small><small id="cycleContext"></small></button><div class="cycle-now"><small>СЕЙЧАС</small><time id="cycleWallClock"></time></div><button id="cycleCalendar" type="button" aria-label="Показать календарную шкалу">КАЛЕНДАРЬ</button></div><div id="cycleStrip" aria-label="Отрезки текущей записи"></div><div id="cycleRuler" class="cycle-ruler"></div>';
   document.querySelector('.header').prepend(clock);
   const back = button('К ЗАПИСИ'); back.id = 'cycleReturn'; document.querySelector('.header').append(back);
   const modal = make('div', 'modal'); modal.id = 'cycleModal';

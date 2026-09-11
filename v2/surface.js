@@ -76,7 +76,7 @@
     if (!demo && status.ready === false) {
       $('#migrationGate')?.scrollIntoView({ block: 'nearest' }); $('#migrationPreview')?.focus(); return;
     }
-    window.setView('track'); $('#btnViewTrack').focus();
+    window.setView('track'); (document.body.classList.contains('surface-compact') ? $('#surfaceMenuButton') : $('#btnViewTrack')).focus();
   }
   window.TRCKNG_NAVIGATION = { fromAccount: goToField };
   function closeMenu() { $('#surfaceMenu').hidden = true; $('#surfaceMenuButton').setAttribute('aria-expanded', 'false'); }
@@ -155,7 +155,7 @@
   function setupUI() {
     const container = $('.container'), header = $('.header');
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.6.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false">МЕНЮ</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.6.1</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -347,6 +347,7 @@
       };
     }
     await loadScript('./field.js');
+    await loadScript('./chrome.js');
     await loadScript('./clocks.js');
     await loadScript('./readability.js');
     window.SstmI18n.start();

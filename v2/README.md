@@ -1,4 +1,4 @@
-# SSTM v2 / beta 0.6.0
+# SSTM v2 / beta 0.6.1
 
 [Personal entry](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account) · [Demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo) · [V1](https://comp1mov.github.io/TRCKNG-SSTM/)
 
@@ -16,7 +16,9 @@ The top also shows actual local time. **CALENDAR** switches to calendar strips; 
 
 English is the default. **Menu → Language → Русский** switches without reloading. The preference stays on this device; personal labels, tags, typed drafts and records keep their original text. Built-in state choices are translated for display. New demo labels and recipe names use the language active at creation.
 
-Main numbers aim for 2–3 times their previous size, fitting long values and dense modules to available space. Colored fills make modules easier to distinguish. A local JetBrains Mono font covers Latin and Cyrillic; it is cached for offline use, with its OFL license in `fonts/`.
+Main numbers use a shared large size at each zoom level. Unit symbols sit on a separate small line; long clocks use a consistent smaller size, and unusually long values/dense work modules still fit their available space. Colored fills make modules easier to distinguish. A local JetBrains Mono font covers Latin and Cyrillic; it is cached for offline use, with its OFL license in `fonts/`.
+
+Phones and short landscape screens start with compact panels: recording, current clock, PINs and the field. Tap **⌄** beside Menu to expand, or **⌃** to collapse. This preference is saved on the device separately for small and large screens. **Menu** keeps Arrange, History, field controls and zoom available when compact. Tap the recording time (**INTERVALS ↗**) to review intervals. The field fills the remaining height down to the save-status row, accounting for safe areas and changing browser bars.
 
 Account shows identity, save status, sign out and sync. Backup/recovery is collapsed and opens when a conflict needs attention. Legacy v1 source/recovery downloads appear only when those copies exist.
 
@@ -41,6 +43,8 @@ Only one local tab writes a given account at a time. Across devices, revision ch
 A new visitor sees invented examples. Explicit `?mode=demo` does not initialize Auth, read private records or write account data. Demo interactions reset on reload. Use `?mode=account` for persistent personal tracking.
 
 ## Beta verification and limits
+
+`v2-mobile-field.browser.cjs` covers compact/expanded layouts at six phone/tablet/desktop sizes in Edge and Playwright WebKit, menu access, module creation, point recording, unchanged data when folding, dismissal without accidental tracking, EN/RU switching, consistent figures with unit symbols and saved presentation preferences. Physical Safari/browser-bar and software-keyboard behavior still needs device acceptance.
 
 `v2-onboarding.browser.cjs` covers anonymous demo, live EN/RU switching with drafts, large figures/font loading, email-confirmation signup, fresh field creation without v1 requests, record sync/reload and account layouts. All accounts and responses in this test are fabricated; public Auth settings were checked read-only to confirm email registration is enabled.
 

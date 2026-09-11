@@ -14,6 +14,7 @@ const base = 'http://127.0.0.1:5173/TRCKNG-SSTM/';
   assert.equal(await page.locator('#accountBackToField').innerText(), '← К ПРИМЕРАМ');
   await page.locator('#accountBackToField').click(); await page.waitForURL(url => url.searchParams.get('mode') === 'demo' && url.searchParams.get('lang') === 'ru');
   await page.locator('#btn-cell01').click(); const count = await page.locator('#value-cell01').innerText();
+  await page.locator('#surfacePanelToggle').click(); // Exercise the expanded navigation; compact access has its own suite.
   await page.locator('#btnViewLayout').click(); await page.locator('#surfaceAddCell').click();
   await page.locator('#cellEditInput').fill('Saved draft');
   await page.locator('#btnViewTrack').click();

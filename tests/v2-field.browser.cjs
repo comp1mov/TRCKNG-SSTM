@@ -83,7 +83,8 @@ const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru';
     assert.equal(await page.locator('#cellEditModal').isVisible(), false);
     // Clicking open grid space anchors a new draft at that exact location.
     await page.locator('#surfaceHome').click();
-    await page.locator('#layoutGrid').click({ position: { x: 3.5 * 128, y: 3.5 * 128 } });
+    const unit = await page.evaluate(() => Number(document.body.dataset.cellSize));
+    await page.locator('#layoutGrid').click({ position: { x: 3.5 * unit, y: 3.5 * unit } });
     assert.deepEqual(await page.evaluate(() => [pendingNewCell.layout.row, pendingNewCell.layout.col]), [4, 4]);
     await page.locator('#cellEditCancel').click();
 
@@ -119,7 +120,7 @@ const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru';
     await touch.route('**/*', route => new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort());
     const phone = await touch.newPage(); phone.on('pageerror', error => errors.push(error.message));
     await phone.goto(url); await phone.locator('#surfaceAddCell').waitFor({ state: 'attached' });
-    await phone.locator('#btnViewLayout').tap();
+    await phone.locator('#surfaceMenuButton').tap(); await phone.locator('#btnViewLayout').tap();
     const a = await phone.locator('#layout-cell01 .field-grip').boundingBox(), b = await phone.locator('#layout-cell02 .field-grip').boundingBox();
     const cdp = await touch.newCDPSession(phone);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: a.x + 10, y: a.y + 10 }] });

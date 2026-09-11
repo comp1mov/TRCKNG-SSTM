@@ -71,6 +71,8 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-v2-modules-check'); 
   await control.screenshot({ path: path.join(output, 'work-button.png') });
   for (const width of [768, 390, 320]) {
    await page.setViewportSize({ width, height: 850 }); await control.scrollIntoViewIfNeeded();
+   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+   if (await page.locator('body').evaluate(n => n.classList.contains('surface-compact'))) await page.locator('#surfacePanelToggle').click();
    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
    await page.screenshot({ path: path.join(output, `work-${width}.png`) });
    await page.locator('#btnViewLayout').click(); await page.locator(`#layout-${id} .layout-action`).nth(1).click();

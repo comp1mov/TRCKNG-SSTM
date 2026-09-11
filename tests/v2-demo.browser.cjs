@@ -47,7 +47,7 @@ const base = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/';
     await page.locator('#btnViewTrack').click(); await page.locator('#pin1').click();
     assert.equal(await page.locator('#btn-cell03').getAttribute('data-type'), 'currency');
     await page.locator('#btn-cell01').click();
-    assert.equal(await page.locator('#value-cell01').innerText(), '115¤');
+    assert.equal(await page.locator('#value-cell01').textContent(), '115¤');
     await page.locator('#pin2').click(); await page.locator('#btn-cell01').click();
     await page.locator('#cellEditInput').fill('Test button'); await page.locator('#cellEditSave').click();
     await page.locator('#btnViewTrack').click();
@@ -64,6 +64,8 @@ const base = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/';
     await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true });
     for (const width of [768, 390, 320]) {
       await page.setViewportSize({ width, height: 844 });
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      if (await page.locator('body').evaluate(n => n.classList.contains('surface-compact'))) await page.locator('#surfacePanelToggle').click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await page.locator('#btnViewLayout').click(); await page.locator('#layout-cell01 .layout-action').nth(1).click();
       await page.screenshot({ path: path.join(output, `editor-${width}.png`), fullPage: true });
