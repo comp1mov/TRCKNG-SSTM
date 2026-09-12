@@ -17,7 +17,8 @@ const base = 'http://127.0.0.1:5173/TRCKNG-SSTM/';
   await page.locator('#surfacePanelToggle').click(); // Exercise the expanded navigation; compact access has its own suite.
   await page.locator('#btnViewLayout').click(); await page.locator('#surfaceAddCell').click();
   await page.locator('#cellEditInput').fill('Saved draft');
-  await page.locator('#btnViewTrack').click();
+  // Creation folds the header; the brand remains a direct return to the field.
+  await page.locator('.surface-brand').click();
   assert.equal(await page.locator('#trackView').isVisible(), true);
   assert.equal(await page.locator('#cellEditModal').isVisible(), false);
   await page.locator('#surfaceDock button').click();

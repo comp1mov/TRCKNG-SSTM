@@ -60,7 +60,7 @@ const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru';
     assert.ok(moved.col > 5, 'Field supports modules beyond original bounds');
     assert.equal(await page.locator('#cellEditModal').isVisible(), false, 'Dragging never opens the editor');
     assert.ok(await page.locator('#layoutView').evaluate(el => el.scrollWidth > el.clientWidth));
-    // Repeated Save preserves free positions, and a size collision changes nothing.
+    // Repeated Save preserves free positions; a larger size moves only colliding neighbours.
     await page.locator(`#layout-${id} .layout-action`).nth(1).click();
     await page.locator('#cellEditInput').fill('Moved counter'); await page.locator('#cellEditSave').click();
     assert.deepEqual(await page.evaluate(id => cellLayout[id], id), moved);
@@ -68,9 +68,10 @@ const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru';
     await page.locator('#layout-cell01 .layout-action').nth(1).click();
     const beforeResize = await page.evaluate(() => JSON.stringify([cellLayout, habitLabels]));
     await page.locator('#cellEditModal [data-layout-size="2x2"]').click(); await page.locator('#cellEditSave').click();
-    assert.equal(await page.locator('.cell-layout-error').isVisible(), true);
-    assert.equal(await page.evaluate(() => JSON.stringify([cellLayout, habitLabels])), beforeResize);
-    await page.locator('#cellEditCancel').click();
+    assert.equal(await page.locator('#cellEditModal').isVisible(), false);
+    assert.equal(await page.evaluate(() => cellLayout.cell01.colSpan), 2);
+    assert.equal(await page.evaluate(() => cellLayout.cell01.rowSpan), 2);
+    assert.equal(await page.evaluate(() => JSON.stringify(habitLabels)), JSON.stringify(JSON.parse(beforeResize)[1]));
     // Keyboard movement and Escape are also non-destructive.
     await page.locator(`#layout-${id} .field-grip`).focus();
     await page.keyboard.press('ArrowDown');
@@ -131,7 +132,7 @@ const url = 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru';
     await phone.screenshot({ path: path.join(output, 'phone-arrange.png') });
     await touch.close();
     assert.deepEqual(errors, []);
-    console.log('PASS: restored strips; create/cancel/draft with >9 modules; count/history; pointer swap and edge growth; collision rejection; stable edit positions; keyboard/Escape; multi-PIN snapshot and export roundtrips; v1 compatibility; real touch drag.');
+    console.log('PASS: restored strips; create/cancel/draft with >9 modules; count/history; pointer swap and edge growth; collision displacement; stable edit positions; keyboard/Escape; multi-PIN snapshot and export roundtrips; v1 compatibility; real touch drag.');
     console.log(`Synthetic screenshots: ${output}`);
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

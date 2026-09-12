@@ -561,4 +561,56 @@ window.SstmTranslations += `
 Расчёт|Estimate
 Полных часов|Whole hours
 Полоска — накопление следующего полного часа.|The strip shows progress to the next whole hour.
+ОТМЕТИТЬ|RECORD
+ВРЕМЯ|TIME
+ДЕНЬГИ|MONEY
+ИНСТРУМЕНТЫ|TOOLS
+Что делает кнопка|What the button does
+Счётчик|Counter
+Число|Number
+Секундомер|Stopwatch
+Сумма минут|Total minutes
+Сумма секунд|Total seconds
+Сон|Sleep
+До события|Until
+Точки / отрезки|Points / intervals
+Пополнение|Income
+Бюджет|Budget
+Формула|Formula
+Пульс / BPM|Pulse / BPM
+Конвертер валют|Currency converter
+Нажатие прибавляет шаг.|Tap adds the configured step.
+Нажатие открывает ввод значения.|Tap to enter a value.
+Введи слово прямо на поле.|Enter a word directly on the field.
+Выбери слово на карте состояний.|Choose a word on the state map.
+Начать / остановить. Видно текущий или последний отрезок.|Start / stop. Shows the current or last interval.
+Начать / остановить. Видно накопленное время в минутах.|Start / stop. Shows accumulated minutes.
+Начать / остановить. Видно накопленное время в секундах.|Start / stop. Shows accumulated seconds.
+Начать / остановить сон. Отображение можно настроить.|Start / stop sleep. Choose how it is displayed.
+Обратный отсчёт. Повторное нажатие остановит и сбросит его.|Countdown. Tap again to stop and reset it.
+Часы до выбранной даты и времени.|A clock counting down to a date and time.
+Каждое нажатие ставит границу общей записи.|Each tap marks a boundary in the shared recording.
+Начать / остановить работу. Время превращается в расчётную сумму.|Start / stop work. Time becomes an estimated amount.
+Нажатие прибавляет денежный шаг.|Tap adds the money step.
+Нажатие вычитает расход из начальной суммы.|Tap subtracts an expense from the starting amount.
+Расчёт из кнопок или постоянного числа.|Calculate from buttons or a constant number.
+Нажатие включает или выключает пульс.|Tap to turn the pulse on or off.
+Нажатие открывает пересчёт суммы.|Tap to convert an amount.
+Подпись и история|Description and history
+Выбери действие, размер и имя. Настройки ниже относятся только к выбранному типу. Соседи сдвинутся при сохранении, если нужно освободить место.|Choose an action, size and name. Settings below apply to the selected type. Neighbours move on save if space is needed.
+Край поля. Выбери меньший размер или другое место.|Field limit. Choose a smaller size or another location.
+Соседи сдвинутся при сохранении. Их размеры и записи сохранятся.|Neighbours will move on save. Their sizes and records are kept.
+Размер в клетках. Кнопка останется на выбранном месте.|Size in cells. The button stays at the selected location.
+НАСТРОИТЬ КНОПКУ|EDIT BUTTON
+НОВАЯ КНОПКА|NEW BUTTON
+Добавить кнопку в пустую клетку|Add a button in this empty cell
+МАТРИЦА|MATRIX
+Все состояния на одной карте.|All states on one map.
+Вверху больше сил, внизу меньше. Слева приятнее, справа тяжелее. Это ориентиры для выбора.|More energy above, less below. More pleasant on the left, more difficult on the right. These are guides for choosing.
+ВЫБОР ДВИЖЕНИЕМ|DRAG TO CHOOSE
+Коснись слова, чтобы записать.|Tap a word to record it.
+ПРИЯТНЕЕ|MORE PLEASANT
+ТЯЖЕЛЕЕ|MORE DIFFICULT
+Размер|Size
+Имя кнопки|Button name
 `;

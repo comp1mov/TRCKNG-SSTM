@@ -17,7 +17,7 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-v2-corrections', eng
    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2); await page.mouse.down(); await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 10 }); await page.mouse.up();
   };
   await show(); await page.locator('#momentAddState').click(); const initial = (await journal()).moments.length;
-  await page.locator('#stateBrowse').click(); await drag('[data-group=energy]'); assert.equal((await journal()).moments.length, initial, 'Choosing a group does not record');
+  await page.locator('#stateBrowse').click(); await page.locator('[data-group=energy]').click(); assert.equal((await journal()).moments.length, initial, 'Choosing a group does not record');
   await page.locator('#momentTags').fill('#example #studio'); await drag('[data-state="sstm:state:inspired"]');
   let j = await journal(); assert.equal(j.version, 3); assert.equal(j.moments.length, initial + 2); assert.equal(j.moments.at(-2).state.id, 'sstm:state:inspired'); assert.deepEqual(j.moments.at(-1).tags, ['example', 'studio']); assert.equal(j.moments.at(-2).at, j.moments.at(-1).at);
   await page.locator('#momentUndo').click(); j = await journal(); assert.ok(j.moments.at(-1).deletedAt && j.moments.at(-2).deletedAt, 'Undo removes the whole state + tags capture');

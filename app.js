@@ -4,7 +4,7 @@
     const trckngStorage = window.TRCKNG_STORAGE || window.localStorage;
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.34.6';
+    const APP_VERSION = '1.34.7';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -984,8 +984,7 @@
         colSpan: preset.colSpan,
         rowSpan: preset.rowSpan
       };
-      // The editor validates room before saving; resizing one module must not
-      // silently repack the positions of every other module.
+      // The editor applies its validated placement plan before this size save.
       saveCellLayout();
     }
 
@@ -6784,7 +6783,8 @@ function saveCellEditValues() {
       if (pendingNewCell && (pendingNewCell.pin !== currentPin || !document.getElementById('cellEditInput').value.trim())) {
         fail('Укажи название новой кнопки.'); return;
       }
-      if (!fieldSlotAvailable(editingHabit, nextLayout)) {
+      const placement = window.TRCKNG_LAYOUT?.plan(getCellsSnapshot(), editingHabit, nextLayout, FIELD_LIMIT);
+      if (window.TRCKNG_LAYOUT ? !placement : !fieldSlotAvailable(editingHabit, nextLayout)) {
         fail('Для этого размера не хватает места. Сначала передвинь кнопку или её соседей.'); return;
       }
       const proposedType = modal.querySelector('.type-btn.active[data-type]')?.dataset.type || CELL_TYPES.UNIT;
@@ -6801,6 +6801,7 @@ function saveCellEditValues() {
       let moduleEdit;
       try { moduleEdit = window.TRCKNG_MODULES?.prepareEdit?.({ habit: editingHabit, pin: currentPin, type: proposedType, label: document.getElementById('cellEditInput').value.trim() }); }
       catch (error) { fail(error.message); return; }
+      if (placement) Object.assign(cellLayout, placement);
       if (pendingNewCell) {
         HABITS.push(pendingNewCell.id);
         cellLayout[pendingNewCell.id] = nextLayout;

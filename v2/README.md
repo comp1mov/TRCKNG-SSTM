@@ -1,4 +1,4 @@
-# SSTM v2 / beta 0.7.1
+# SSTM v2 / beta 0.8.0
 
 [Personal entry](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account) · [Demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo) · [V1](https://comp1mov.github.io/TRCKNG-SSTM/)
 
@@ -30,13 +30,17 @@ Account shows identity, save status, sign out and sync. Backup/recovery is colla
 
 ## Buttons and windows
 
-All original types remain available. **ARRANGE** offers creation, settings and module placement; free space and edge dragging grow the grid. Exact equal-size drops swap modules. Minimized panels retain drafts and appear in the window dock. Account always has a labelled return action.
+Tap a **+** in an empty field cell on any PIN to create there. These affordances are generated for the visible area and are not stored as buttons. Existing blank cells also open directly from the field. **ARRANGE** offers settings and module placement; free space and edge dragging grow the grid. Exact equal-size drops swap modules. Minimized panels retain drafts and appear in the window dock. Account always has a labelled return action.
+
+The editor groups all existing types under **RECORD / TIME / MONEY / TOOLS**. Choosing a category browses its types; tap a type to select it. The current type and its action are described below. **Description and history** contains secondary flags and reset. Save/Cancel stay available while scrolling.
+
+Choose 2×2 or another size without clearing space manually: the requested anchor stays fixed, and only colliding neighbours shift right or down by whole cells, including a cascade if needed. The plan chooses the shorter total shift and keeps neighbours' sizes, identities and records. A notice explains displacement before Save. Cancel or a failed validation moves nothing. Placement stays within the existing 200×200 module-coordinate limit; at the limit another location may be needed. Duration/recording and work indicators sit at the bottom, clear of the large value.
 
 **Menu → Scenarios / Help** offers initial recipes. **Work × rate** takes an hourly amount, currency and preferred display. First press starts, second saves the work interval. Pauses do not earn. Each session retains its starting rate. A second control can show the same work source with another display.
 
 Tap **#** to type inside the module. Existing tags are suggested by prefix across PINs. Tap a suggestion or use arrows and Enter to complete; another Enter or ✓ saves. × discards; Escape or leaving the field parks a separate local draft with its original time. Demo drafts reset on reload.
 
-Tap **STATE** for eight quick choices. **GROUPS** opens four groups containing 64 everyday states, eight choices per page. Tap a group or drag from the center and release over it; use the arrows for its second page, then choose a state the same way. Choosing a group or page does not create a record. Releasing outside a word cancels the gesture. Search understands preset names and everyday phrases in English and Russian regardless of interface language, such as “looking forward”, “скучаю” or “не знаю”, plus your own words. One state is recorded per selection; press again for another. **+ ADD YOUR OWN STATE** adds vocabulary without recording an observation; matching custom words keep their identity in search and groups.
+Tap **STATE** for eight quick choices. **MATRIX** opens all 64 everyday states on one large map: energy above, less energy below; more pleasant on the left, more difficult on the right. These are browsing guides. On phones, scroll to reach the lower areas. Tap a word to capture it, or enable **DRAG TO CHOOSE**, move across visible words and release on one. Releasing outside a word cancels; ordinary scrolling records nothing. Gesture mode resets when opening a capture. A quadrant heading opens its smaller paged radial selection; quick choices and custom vocabulary remain available. Search understands preset names and everyday phrases in English and Russian regardless of interface language, such as “looking forward”, “скучаю” or “не знаю”, plus your own words. One state is recorded per selection; press again for another. **+ ADD YOUR OWN STATE** adds vocabulary without recording an observation; matching custom words keep their identity in search and the map.
 
 **Menu → STATES / TAGS** opens the shared notebook. Add a state or tag directly, optionally attach tags to the same state timestamp, search the selected week, filter by kind/keyword, or delete/restore an observation. The latest-capture undo also undoes any tags attached in that capture. Typed capture drafts survive closing the panel with their original time; **CANCEL** discards them. The field's inline hashtag input still works. Header controls temporarily fold while these panels are open; phone layouts and landscape selection preserve touch targets.
 
@@ -53,6 +57,8 @@ Only one local tab writes a given account at a time. Across devices, revision ch
 A new visitor sees invented examples. Explicit `?mode=demo` does not initialize Auth, read private records or write account data. Demo interactions reset on reload. Use `?mode=account` for persistent personal tracking.
 
 ## Beta verification and limits
+
+`v2-layout.test.cjs` checks deterministic cascades, mixed sizes, boundaries, hidden cells and dense fields. `v2-creation-map.browser.cjs` checks atomic create/cancel/failure, retained neighbour records, PIN slots, snapshot roundtrip, grouped editor layouts, all matrix targets, touch-scroll cancellation and single gesture capture in Edge and Playwright WebKit. Original type, field/touch-drag, modular timer, mobile-panel, two-device sync and worker/offline suites also passed. V2 0.8.0 changes layout/presentation using the existing data format. The shared engine hook is inactive in v1; root worker 1.34.7 and v2 worker 0.8.0 retain separate caches.
 
 `v2-state-catalog.test.cjs` checks all 64 translations, phrase search, custom-name collisions, snapshot validation and rejection by the released 0.7.0 reader. `v2-emotions.browser.cjs` verifies interval toggle/draft preservation, all 64 touch targets at five viewport sizes, paging, bilingual search and new-state capture/export in Edge and Playwright WebKit. The mocked two-device test carries a new preset through sync, conflict recovery, export/restore and offline reload.
 

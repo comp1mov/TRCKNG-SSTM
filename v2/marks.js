@@ -41,6 +41,33 @@
     <section id="momentStateForm"><p class="moment-note">Коснись состояния — оно сразу сохранится. Или веди из центра к слову и отпусти.</p><div id="stateWheel" class="state-wheel"><svg viewBox="0 0 300 300" aria-hidden="true"><circle cx="150" cy="150" r="111"/><path d="M150 18v264 M18 150h264 M57 57l186 186 M57 243L243 57"/></svg><button id="stateOrigin" type="button" aria-label="Веди из центра к состоянию">●</button><div id="stateOptions"></div></div><nav id="statePages"><button id="statePrevious" type="button" aria-label="Предыдущие состояния">←</button><output id="statePageLabel"></output><button id="stateNext" type="button" aria-label="Следующие состояния">→</button></nav><details id="stateCustom"><summary>+ СВОЁ СОСТОЯНИЕ</summary><form id="stateAddForm"><label for="stateNewLabel">Название для меню</label><input id="stateNewLabel" maxlength="40" placeholder="Своё слово" autocomplete="off"><button type="submit">ДОБАВИТЬ В МЕНЮ</button></form></details></section>
     <p id="momentError" role="alert"></p><button id="momentCancel" type="button">ОТМЕНА</button></div>`;
   document.body.append(modal);
+  $('stateBrowse').textContent = 'МАТРИЦА';
+  const stateMap = el('section'); stateMap.id = 'stateMap'; stateMap.hidden = true;
+  stateMap.innerHTML = '<div class="state-map-tools"><p>Вверху больше сил, внизу меньше. Слева приятнее, справа тяжелее. Это ориентиры для выбора.</p><button id="stateMapGesture" type="button" aria-pressed="false">ВЫБОР ДВИЖЕНИЕМ</button><output id="stateMapPreview" aria-live="polite">Коснись слова, чтобы записать.</output></div><div class="state-map-axis"><span>ПРИЯТНЕЕ</span><span>ТЯЖЕЛЕЕ</span></div><div id="stateMapWords"></div>';
+  $('stateWheel').before(stateMap);
+  stateMap.prepend(stateMap.querySelector('.state-map-tools p'));
+  let mapGesture = false, mapPointer = null, mapHovered = null, mapSuppressClick = false;
+  $('stateMapGesture').onclick = () => { mapGesture = !mapGesture; $('stateMapGesture').setAttribute('aria-pressed', String(mapGesture)); stateMap.classList.toggle('gesture-select', mapGesture); };
+  const mapHighlight = target => {
+    mapHovered?.classList.remove('hovered'); mapHovered = target?.closest('.state-map-word');
+    if (mapHovered && !stateMap.contains(mapHovered)) mapHovered = null;
+    mapHovered?.classList.add('hovered'); $('stateMapPreview').textContent = mapHovered ? mapHovered.textContent : 'Коснись слова, чтобы записать.';
+  };
+  stateMap.addEventListener('pointerdown', e => {
+    if (!mapGesture || !e.isPrimary || e.button !== 0 || !e.target.closest('#stateMapWords')) return;
+    e.preventDefault(); mapPointer = e.pointerId; stateMap.setPointerCapture(mapPointer); mapHighlight(e.target);
+  });
+  stateMap.addEventListener('pointermove', e => { if (e.pointerId === mapPointer) mapHighlight(document.elementFromPoint(e.clientX, e.clientY)); });
+  stateMap.addEventListener('pointerup', e => {
+    if (e.pointerId !== mapPointer) return;
+    const n = document.elementFromPoint(e.clientX, e.clientY)?.closest('.state-map-word');
+    const id = n && stateMap.contains(n) ? n.dataset.state : null;
+    mapPointer = null; mapHighlight(null); stateMap.releasePointerCapture(e.pointerId); e.preventDefault();
+    mapSuppressClick = true; setTimeout(() => { mapSuppressClick = false; }, 0); if (id) capture(id);
+  });
+  stateMap.addEventListener('click', e => { if (mapSuppressClick) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  const cancelMapPointer = () => { mapPointer = null; mapHighlight(null); };
+  stateMap.addEventListener('pointercancel', cancelMapPointer); stateMap.addEventListener('lostpointercapture', cancelMapPointer);
   modal.querySelector('#stateWheel svg').setAttribute('preserveAspectRatio', 'none');
   const history = el('div', null, 'modal'); history.id = 'momentHistoryModal';
   history.innerHTML = '<div><div class="moment-capture-tabs"><button id="momentAddState" type="button">+ СОСТОЯНИЕ</button><button id="momentAddTag" type="button">+ ТЕГ</button></div><nav class="moment-week-nav"><button id="momentWeekPrev" type="button" aria-label="Предыдущая неделя отметок">←</button><output id="momentWeekLabel"></output><button id="momentWeekNext" type="button" aria-label="Следующая неделя отметок">→</button></nav><button id="momentWeekToday" type="button">ЭТА НЕДЕЛЯ</button><p class="moment-note">Слова, состояния и теги отрезков · все PIN. Недели — пн–вс по часам этого устройства.</p><input id="momentHistorySearch" type="search" placeholder="Состояние или #тег" aria-label="Поиск отметок"><nav id="momentKinds" class="moment-capture-tabs"></nav><div id="momentWeekTags"></div><button id="momentTrashToggle" type="button" aria-pressed="false">КОРЗИНА ОТМЕТОК</button><div id="momentWeekRows"></div><p id="momentHistoryError" role="alert"></p></div>';
@@ -122,6 +149,7 @@
     if (!ready()) return;
     parkWord();
     wheelPage = 0; stateGroup = 'quick'; $('stateSearch').value = '';
+    mapGesture = false; $('stateMapGesture').setAttribute('aria-pressed', 'false'); stateMap.classList.remove('gesture-select');
     draft = captureDrafts()[`${cell.pin}/${cell.id}`] || newDraft(cell); $('momentTags').value = draft.text;
     renderCapture(); modal.classList.add('visible');
     requestAnimationFrame(() => { if (draft && modal.classList.contains('visible') && draft.kind === 'state') $('stateOptions').querySelector('button')?.focus({ preventScroll: true }); });
@@ -165,15 +193,28 @@
     const journal = read(), options = M.options(journal), group = M.groups.find(g => g.id === stateGroup);
     const all = stateGroup === 'groups' ? M.groups : stateGroup === 'quick' ? options.filter(o => M.legacyDefaults.some(d => d.id === o.id)) : stateGroup === 'custom' ? journal.stateOptions || [] : M.groupOptions(journal, stateGroup);
     const query = M.key($('stateSearch').value), searching = Boolean(query), results = $('stateSearchResults');
+    const mapping = stateGroup === 'groups' && !searching;
+    stateMap.hidden = !mapping; modal.classList.toggle('state-map-open', mapping && draft?.kind === 'state');
+    $('stateMapWords').replaceChildren();
+    if (mapping) for (const id of ['energy', 'tension', 'ease', 'low']) {
+      const g = M.groups.find(g => g.id === id), quadrant = el('section', null, 'state-map-quadrant'); quadrant.dataset.quadrant = id;
+      const heading = button(g.label, () => chooseGroup(id), 'state-map-heading'); heading.dataset.group = id; quadrant.append(heading);
+      const words = el('div', null, 'state-map-grid');
+      for (const o of M.groupOptions(journal, id)) {
+        const b = button(stateLabel(o), () => capture(o.id), 'state-map-word'); b.dataset.state = o.id; b.dataset.noI18n = ''; words.append(b);
+      }
+      quadrant.append(words); $('stateMapWords').append(quadrant);
+    }
+    for (const [id, active] of [['stateQuick', stateGroup === 'quick'], ['stateBrowse', stateGroup === 'groups'], ['stateOwn', stateGroup === 'custom']]) $(id).setAttribute('aria-pressed', String(active));
     results.replaceChildren(); results.hidden = !searching;
-    $('stateWheel').hidden = searching;
+    $('stateWheel').hidden = searching || mapping;
     if (searching) {
       for (const o of M.search(journal, query)) { const b = button(stateLabel(o), () => capture(o.id)); b.dataset.state = o.id; b.dataset.noI18n = ''; results.append(b); }
       if (!results.childElementCount) results.append(el('p', 'Не найдено. Можно добавить своё слово ниже.', 'moment-note'));
     }
     const pages = Math.max(1, Math.ceil(all.length / 8)); wheelPage = Math.max(0, Math.min(pages - 1, wheelPage));
-    $('stateGroupLabel').textContent = searching ? 'РЕЗУЛЬТАТЫ ПОИСКА' : group?.label || (stateGroup === 'groups' ? 'Выбери группу, затем состояние.' : stateGroup === 'custom' ? 'Твои слова' : `Быстрый выбор · всего состояний: ${M.defaults.length}`);
-    const choices = all.slice(wheelPage * 8, wheelPage * 8 + 8);
+    $('stateGroupLabel').textContent = searching ? 'РЕЗУЛЬТАТЫ ПОИСКА' : group?.label || (stateGroup === 'groups' ? 'Все состояния на одной карте.' : stateGroup === 'custom' ? 'Твои слова' : `Быстрый выбор · всего состояний: ${M.defaults.length}`);
+    const choices = mapping ? [] : all.slice(wheelPage * 8, wheelPage * 8 + 8);
     $('stateOptions').replaceChildren(...choices.map((o, i) => {
       const b = button(o.label, () => stateGroup === 'groups' ? chooseGroup(o.id) : capture(o.id), 'state-option');
       if (stateGroup === 'groups') b.dataset.group = o.id; else b.dataset.state = o.id;
@@ -183,7 +224,7 @@
       const [x, y, width] = positions[stateGroup === 'groups' ? i * 2 : i];
       b.style.left = `${x}%`; b.style.top = y; b.style.width = `${width}%`; return b;
     }));
-    $('statePages').hidden = searching || pages < 2; $('statePageLabel').textContent = `${wheelPage + 1} / ${pages}`;
+    $('statePages').hidden = searching || mapping || pages < 2; $('statePageLabel').textContent = `${wheelPage + 1} / ${pages}`;
     $('statePrevious').disabled = wheelPage === 0; $('stateNext').disabled = wheelPage === pages - 1;
   }
   $('stateSearch').oninput = renderWheel;

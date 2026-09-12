@@ -155,7 +155,7 @@
   function setupUI() {
     const container = $('.container'), header = $('.header');
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.7.1</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.8.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -206,7 +206,10 @@
     new MutationObserver(() => { restore(); $('#surfaceHint').textContent = visibleView() === 'layout' ? 'Нажми пустую ячейку или кнопку, чтобы настроить её' : 'Нажми кнопку, чтобы записать · РАССТАВИТЬ — настройки'; }).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
     document.querySelectorAll('.pin').forEach(button => button.addEventListener('click', () => requestAnimationFrame(restore)));
     document.querySelectorAll('.view-panel').forEach(view => view.addEventListener('scroll', () => { if (!view.hidden) remember(); }, { passive: true }));
-    $('#habitsGrid').addEventListener('click', event => { const cell = event.target.closest('.empty-field-cell'); if (cell) arrangeCell(cell.dataset.cellId); });
+    $('#habitsGrid').addEventListener('click', event => {
+      const cell = event.target.closest('.empty-field-cell');
+      if (cell) { closeMenu(); window.openCellEditModal(cell.dataset.cellId, window.getCellsSnapshot().findIndex(c => c.id === cell.dataset.cellId)); }
+    });
     const refreshLabels = () => {
       document.querySelectorAll('.empty-field-cell').forEach(cell => { cell.textContent = '+'; cell.title = 'Настроить свободную ячейку'; });
       document.querySelectorAll('.layout-cell[data-empty="true"] .layout-cell-name').forEach(label => { label.textContent = 'СВОБОДНО'; });
@@ -346,7 +349,9 @@
         return result;
       };
     }
+    await loadScript('./layout.js');
     await loadScript('./field.js');
+    await loadScript('./creation.js');
     await loadScript('./chrome.js');
     await loadScript('./clocks.js');
     await loadScript('./readability.js');

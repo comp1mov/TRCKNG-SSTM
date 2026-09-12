@@ -33,6 +33,7 @@ const output = path.join(require('node:os').tmpdir(), 'sstm-v2-modules-check'); 
   assert.ok(parseFloat(await control.locator('.module-main').innerText()) > 0);
   await page.locator('#btnViewLayout').click(); await page.locator(`#layout-${id} .layout-action`).nth(1).click();
   assert.equal(await page.locator('#moduleAmount').isDisabled(), true);
+  await page.locator('#creationGroups [data-creation-group=time]').click();
   await page.locator('#cellEditModal [data-type=points]').click(); await page.locator('#cellEditSave').click();
   assert.match(await page.locator('.cell-layout-error').innerText(), /Останови/); await page.locator('#cellEditCancel').click();
   // Another PIN controls the same source, but has its own display settings.

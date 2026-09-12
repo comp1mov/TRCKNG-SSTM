@@ -1,4 +1,4 @@
-# TRCKNG SSTM — v1.34.6 / v2 beta 0.7.1
+# TRCKNG SSTM — v1.34.7 / v2 beta 0.8.0
 
 A modular tracking field for habits, time, words, states and personal metrics.
 
@@ -21,11 +21,11 @@ On phones, the header starts compact. **⌄ / ⌃** beside Menu expands/collapse
 ## Included in this beta
 
 - All 13 original button types, settings and histories.
-- Three PINs, additional buttons, movable modules and an expanding field.
+- Three PINs, creation from empty field cells, grouped button settings and an expanding field. Larger buttons shift colliding neighbours on save.
 - History Matrix, point recordings, editable interval labels/times/tags.
 - Reversible interval/recording deletion; deleted intervals leave gaps without changing neighbouring durations.
 - Work × hourly rate, shared work controls and captured per-session rates.
-- Inline # tags with suggestions; 64 states, grouped gesture selection, bilingual phrase search and custom words.
+- Inline # tags with suggestions; a 64-state matrix, quick choices, bilingual phrase search and custom words.
 - **Menu → States / Tags** for quick capture, weekly search and observation trash.
 - Weekly words/states, scenarios/help, synchronized Until clock hands.
 - Separate v2 account storage, checked migration, full v2 backup/restore, conflict recovery and offline loading after the initial visit.

@@ -11,6 +11,30 @@
   const stamp = () => JSON.stringify(cells().map(cell => [cell.id, cell.layout]));
   const say = text => { $('#surfaceHint').textContent = text; };
   const limit = 200;
+  const track = $('#habitsGrid'), trackView = $('#trackView');
+  let slotsFrame = 0;
+  function renderSlots() {
+    slotsFrame = 0;
+    if (document.body.dataset.view !== 'track') return;
+    const unit = step(), rect = track.getBoundingClientRect(), viewport = trackView.getBoundingClientRect(), current = cells();
+    const wanted = new Set();
+    const firstRow = Math.max(1, Math.floor((viewport.top - rect.top) / unit) + 1), lastRow = Math.min(rows, Math.ceil((viewport.bottom - rect.top) / unit));
+    const firstCol = Math.max(1, Math.floor((viewport.left - rect.left) / unit) + 1), lastCol = Math.min(columns, Math.ceil((viewport.right - rect.left) / unit));
+    const existing = new Map([...track.querySelectorAll('.field-add-slot')].map(n => [n.dataset.slot, n]));
+    for (let row = firstRow; row <= lastRow; row++) for (let col = firstCol; col <= lastCol; col++) {
+      if (current.some(c => window.TRCKNG_LAYOUT.overlaps(c.layout, { row, col, rowSpan: 1, colSpan: 1 }))) continue;
+      const key = `${row}:${col}`; wanted.add(key);
+      let slot = existing.get(key);
+      if (!slot) {
+        slot = document.createElement('button'); slot.type = 'button'; slot.className = 'field-add-slot'; slot.dataset.slot = key; slot.textContent = '+';
+        slot.setAttribute('aria-label', 'Добавить кнопку в пустую клетку');
+        slot.onclick = () => window.openNewCellModal(row, col); track.append(slot);
+      }
+      Object.assign(slot.style, { left: `${(col - 1) * unit}px`, top: `${(row - 1) * unit}px`, width: `${unit}px`, height: `${unit}px` });
+    }
+    for (const [key, n] of existing) if (!wanted.has(key)) n.remove();
+  }
+  const scheduleSlots = () => { if (!slotsFrame) slotsFrame = requestAnimationFrame(renderSlots); };
   let drag = null, frame = 0, suppressClick = false, press = null;
   let columns = 5, rows = 5;
 
@@ -22,6 +46,7 @@
       field.style.setProperty('--field-columns', columns);
       field.style.setProperty('--field-rows', rows);
     }
+    scheduleSlots();
   }
 
   function decorate() {
@@ -160,5 +185,10 @@
     if (records.some(record => [...record.addedNodes, ...record.removedNodes].some(node => node.classList?.contains('layout-cell')))) decorate();
   }).observe(grid, { childList: true });
   new MutationObserver(() => { cancel(); bounds(); }).observe(document.body, { attributes: true, attributeFilter: ['data-cell-size', 'data-view'] });
+  new MutationObserver(records => {
+    if (records.some(r => [...r.addedNodes, ...r.removedNodes].some(n => n.classList?.contains('btn-habit')))) scheduleSlots();
+  }).observe(track, { childList: true });
+  trackView.addEventListener('scroll', scheduleSlots, { passive: true });
+  new ResizeObserver(scheduleSlots).observe(trackView);
   decorate();
 })();
