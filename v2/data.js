@@ -5,7 +5,7 @@
   const object = value => value && typeof value === 'object' && !Array.isArray(value);
   function validateJournal(journal) {
     const fail = () => { throw new Error('Журнал циклов повреждён или создан другой версией.'); };
-    if (!object(journal) || ![1, 2, 3].includes(journal.version) || !Array.isArray(journal.cycles)) fail();
+    if (!object(journal) || ![1, 2, 3, 4].includes(journal.version) || !Array.isArray(journal.cycles)) fail();
     if (journal.version >= 2) {
       const moments = root.SstmMoments || (typeof require === 'function' ? require('./moments.js') : null);
       if (!moments) fail(); moments.validate(journal);
@@ -61,7 +61,7 @@
     }
     for (const pin of snapshot.pinData) for (const [cellId, type] of Object.entries(pin.habitTypes)) {
       if (type === 'modular' && !snapshot.moduleJournal?.bindings.some(b => b.pin === pin.pin && b.cellId === cellId)) throw new Error('В копии не хватает источника модульной кнопки.');
-      if (['tag', 'state'].includes(type) && ![2, 3].includes(snapshot.cycleJournal?.version)) throw new Error('В копии не хватает журнала отметок.');
+      if (['tag', 'state'].includes(type) && ![2, 3, 4].includes(snapshot.cycleJournal?.version)) throw new Error('В копии не хватает журнала отметок.');
     }
     return snapshot;
   }
@@ -79,7 +79,7 @@
       const raw = backing.getItem(key);
       if (!raw) return { version: 1, values: {} };
       const parsed = JSON.parse(raw);
-      if (![1, 2, 3, 4].includes(parsed.version) || !parsed.values || typeof parsed.values !== 'object' || Array.isArray(parsed.values)) throw new Error('Локальная копия v2 не распознана. Она оставлена без изменений.');
+      if (![1, 2, 3, 4, 5].includes(parsed.version) || !parsed.values || typeof parsed.values !== 'object' || Array.isArray(parsed.values)) throw new Error('Локальная копия v2 не распознана. Она оставлена без изменений.');
       return parsed;
     }
     const commit = value => {
@@ -192,7 +192,7 @@
     }
     if (deleted && now < (pointId === null ? cycle.endedAt : cycle.points[index + 1].at)) throw new Error('Проверь часы устройства.');
     if (next.version === 1) { next.moments = []; next.stateOptions = []; }
-    next.version = 3;
+    next.version = Math.max(next.version, 3);
     if (pointId === null) { if (deleted) cycle.deletedAt = now; else delete cycle.deletedAt; }
     else { cycle.deletedIntervals ||= {}; if (deleted) cycle.deletedIntervals[pointId] = now; else delete cycle.deletedIntervals[pointId]; }
     return validateJournal(next);

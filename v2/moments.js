@@ -3,26 +3,24 @@
 (function (root) {
   const clone = value => JSON.parse(JSON.stringify(value));
   const fail = message => { throw Error(message); };
-  const legacyDefaults = [
-    ['good', 'Хорошо'], ['calm', 'Спокойно'], ['joy', 'Радостно'], ['energy', 'Есть силы'],
-    ['tired', 'Усталость'], ['worry', 'Тревожно'], ['sad', 'Грустно'], ['unsure', 'Неясно']
-  ].map(([id, label]) => ({ id, label }));
-  const groups = [
-    { id: 'ease', label: 'Тепло / спокойно', states: ['good', 'calm', 'joy', 'grateful', 'relieved', 'connected', 'safe', 'content'] },
-    { id: 'energy', label: 'Силы / интерес', states: ['energy', 'interested', 'inspired', 'focused', 'curious', 'hopeful', 'playful', 'determined'] },
-    { id: 'tension', label: 'Напряжение', states: ['worry', 'angry', 'irritated', 'afraid', 'restless', 'overwhelmed', 'stressed', 'unsure'] },
-    { id: 'low', label: 'Мало сил', states: ['tired', 'sad', 'lonely', 'lost', 'empty', 'hurt', 'bored', 'sleepy'] }
-  ];
-  const defaults = [...legacyDefaults, ...[
-    ['grateful', 'Благодарность'], ['relieved', 'Облегчение'], ['connected', 'Близость'], ['safe', 'Безопасно'], ['content', 'Довольно'],
-    ['interested', 'Интересно'], ['inspired', 'Вдохновение'], ['focused', 'Сосредоточенно'], ['curious', 'Любопытно'], ['hopeful', 'Надежда'], ['playful', 'Игриво'], ['determined', 'Решительно'],
-    ['angry', 'Злость'], ['irritated', 'Раздражение'], ['afraid', 'Страшно'], ['restless', 'Беспокойно'], ['overwhelmed', 'Перегруз'], ['stressed', 'Напряжённо'],
-    ['lonely', 'Одиноко'], ['lost', 'Растерянность'], ['empty', 'Пустота'], ['hurt', 'Обидно'], ['bored', 'Скучно'], ['sleepy', 'Сонно']
-  ].map(([id, label]) => ({ id: `sstm:state:${id}`, label }))];
-  groups.forEach(g => { g.states = g.states.map(id => legacyDefaults.some(o => o.id === id) ? id : `sstm:state:${id}`); });
+  const catalog = root.SstmStateCatalog || (typeof require === 'function' ? require('./state-catalog.js') : null);
+  const { legacyDefaults, defaults, groups } = catalog;
   const key = word => word.normalize('NFKC').trim().toLocaleLowerCase('ru-RU');
   // Existing custom words win over newly introduced presets with the same name/ID.
   const options = journal => [...defaults.filter(o => !(journal.stateOptions || []).some(custom => custom.id === o.id || key(custom.label) === key(o.label))), ...(journal.stateOptions || [])];
+  function groupOptions(journal, groupId) {
+    const all = options(journal), group = groups.find(g => g.id === groupId);
+    return (group?.states || []).map(id => all.find(o => o.id === id) || all.find(o => key(o.label) === key(defaults.find(d => d.id === id).label))).filter(Boolean);
+  }
+  const searchKey = value => key(String(value)).replace(/ё/g, 'е').replace(/\s+/g, ' ');
+  function search(journal, query) {
+    const words = searchKey(query).split(' ').filter(Boolean);
+    return options(journal).filter(o => {
+      const preset = catalog.entries.find(p => p.id === o.id && p.label === o.label) || catalog.entries.find(p => key(p.label) === key(o.label));
+      const terms = searchKey(`${o.label} ${preset?.en || ''} ${preset?.aliases || ''}`);
+      return words.every(word => terms.includes(word));
+    });
+  }
   function tags(text) {
     const result = [...new Set(String(text).normalize('NFKC').split(/[\s,#]+/u).map(key).filter(Boolean))];
     if (result.length > 12 || result.some(t => t.length > 40 || /[\p{Cc}\p{Cf}]/u.test(t))) fail('До 12 слов через пробел, каждое — до 40 символов.');
@@ -35,7 +33,7 @@
       if (!o || typeof o.id !== 'string' || !o.id || choices.has(o.id) || typeof o.label !== 'string' || !o.label.trim() || o.label.length > 40 || labels.has(key(o.label)) || /[\p{Cc}\p{Cf}]/u.test(o.label)) fail('Не удалось прочитать список состояний.');
       choices.add(o.id); labels.add(key(o.label));
     }
-    if (journal.version >= 3) defaults.forEach(o => choices.add(o.id));
+    catalog.entries.filter(o => o.version <= journal.version).forEach(o => choices.add(o.id));
     const ids = new Set();
     for (const m of journal.moments) {
       if (!m || typeof m.id !== 'string' || !m.id || ids.has(m.id) || !['tag', 'state'].includes(m.kind) || !Number.isFinite(m.at) || m.at <= 0 || !Number.isFinite(m.createdAt) || m.createdAt < m.at || !Number.isInteger(m.offsetMinutes) || Math.abs(m.offsetMinutes) > 840 || !m.source || ![0, 1, 2].includes(m.source.pin) || typeof m.source.cellId !== 'string' || typeof m.source.label !== 'string' || !Array.isArray(m.tags) || JSON.stringify(tags(m.tags.join(' '))) !== JSON.stringify(m.tags)) fail('Не удалось прочитать отметку времени.');
@@ -48,7 +46,7 @@
   function upgrade(journal) {
     const next = clone(journal);
     if (next.version === 1) { next.version = 2; next.moments = []; next.stateOptions = []; }
-    if (![2, 3].includes(next.version)) fail('Обнови приложение для отметок.');
+    if (![2, 3, 4].includes(next.version)) fail('Обнови приложение для отметок.');
     return validate(next);
   }
   function addOption(journal, label, id = crypto.randomUUID()) {
@@ -62,7 +60,7 @@
     const next = upgrade(journal);
     if (next.moments.some(m => m.id === id)) return next; // A repeated submit of one draft is idempotent.
     const state = kind === 'state' ? options(next).find(o => o.id === stateId) : null;
-    if (state && !legacyDefaults.some(o => o.id === stateId) && !next.stateOptions.some(o => o.id === stateId)) next.version = 3;
+    if (state && !next.stateOptions.some(o => o.id === stateId)) next.version = Math.max(next.version, catalog.entries.find(o => o.id === stateId).version);
     if (kind === 'tag' && !tags(text).length) fail('Введи хотя бы одно слово.');
     if (kind === 'state' && !state) fail('Выбери состояние из меню.');
     next.moments.push({ id, kind, at, createdAt: now, offsetMinutes, source: clone(source), tags: kind === 'tag' ? tags(text) : [], state: state ? clone(state) : null });
@@ -105,6 +103,6 @@
     for (const e of entries) for (const tag of new Set(e.tags)) counts.set(tag, (counts.get(tag) || 0) + 1);
     return { start, end, entries, tags: [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ru')) };
   }
-  const api = { defaults, legacyDefaults, groups, options, key, tags, validate, upgrade, addOption, record, remove, restore, intervalAt, weekBounds, week };
+  const api = { defaults, legacyDefaults, groups, options, groupOptions, search, key, tags, validate, upgrade, addOption, record, remove, restore, intervalAt, weekBounds, week };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.SstmMoments = api;
 })(globalThis);

@@ -267,6 +267,42 @@ V2 ГОТОВА · V1 ПРОДОЛЖАЕТ ЖИТЬ ОТДЕЛЬНО|YOUR FIELD 
 Слово|Word
 `;
 window.SstmTranslations += `
+Закрыть отрезки записи|Close recording intervals
+ОТРЕЗКИ ×|INTERVALS ×
+Нежность|Tender
+Меня любят|Loved
+Любовь|Loving
+Доверие|Trusting
+Принятие|Accepting
+Умиротворение|At peace
+Гордость|Proud
+Восторг|Delighted
+Воодушевление|Excited
+Уверенность|Confident
+Есть желание|Motivated
+Энтузиазм|Enthusiastic
+Вовлечённость|Engaged
+Удивление|Surprised
+Предвкушение|Anticipating
+В потоке|In flow
+Досада|Frustrated
+Нетерпение|Impatient
+Негодование|Resentful
+Зависть|Envious
+Вина|Guilty
+Стыд|Ashamed
+Уязвимость|Vulnerable
+Беспомощность|Helpless
+Разочарование|Disappointed
+Печаль|Sorrowful
+Тоска|Longing
+Ностальгия|Nostalgic
+Безразличие|Indifferent
+Истощение|Drained
+Отстранённость|Detached
+Тяжело|Heavy-hearted
+`;
+window.SstmTranslations += `
 Удалить всю запись…|Delete entire recording…
 Удалить всю запись?|Delete this entire recording?
 Удалить этот отрезок?|Delete this interval?

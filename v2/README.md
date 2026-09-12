@@ -1,4 +1,4 @@
-# SSTM v2 / beta 0.7.0
+# SSTM v2 / beta 0.7.1
 
 [Personal entry](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account) · [Demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo) · [V1](https://comp1mov.github.io/TRCKNG-SSTM/)
 
@@ -11,6 +11,8 @@
 5. Open **INTERVALS** to add optional names/tags, correct times or **STOP RECORDING**. A recording may be short or span more than 24 hours; midnight does not end it.
 
 The top also shows actual local time. **CALENDAR** switches to calendar strips; **BACK TO RECORDING** returns. Separate sleep-to-sleep grouping across multiple recordings remains future work.
+
+Tap **INTERVALS** again to close its window. This keeps the recording running and retains any label/time drafts, just like the close button. The control shows whether its window is open.
 
 To remove a mistaken interval, press its **×**, review the time range, then **MOVE TO TRASH**. Its boundaries stay in place as a gap; neighbours do not gain its time. **Delete entire recording…** removes the selected recording. Deleting the running interval or recording explicitly stops it. **Recording trash → RESTORE** brings it back, stopped; restoring a removed interval in an otherwise running recording leaves that recording running. States, words and independent timers are kept. Trash is included in account sync and exports; there is no permanent purge in this beta.
 
@@ -34,7 +36,7 @@ All original types remain available. **ARRANGE** offers creation, settings and m
 
 Tap **#** to type inside the module. Existing tags are suggested by prefix across PINs. Tap a suggestion or use arrows and Enter to complete; another Enter or ✓ saves. × discards; Escape or leaving the field parks a separate local draft with its original time. Demo drafts reset on reload.
 
-Tap **STATE** for eight quick choices. **GROUPS** opens four groups containing 32 everyday states. Tap a group or drag from the center and release over it; then choose a state the same way. Choosing a group does not create a record. Releasing outside a word cancels the gesture. Search works with displayed preset names and your own words. One state is recorded per selection; press again for another. **+ ADD YOUR OWN STATE** adds vocabulary without recording an observation; existing custom words take precedence over matching new presets.
+Tap **STATE** for eight quick choices. **GROUPS** opens four groups containing 64 everyday states, eight choices per page. Tap a group or drag from the center and release over it; use the arrows for its second page, then choose a state the same way. Choosing a group or page does not create a record. Releasing outside a word cancels the gesture. Search understands preset names and everyday phrases in English and Russian regardless of interface language, such as “looking forward”, “скучаю” or “не знаю”, plus your own words. One state is recorded per selection; press again for another. **+ ADD YOUR OWN STATE** adds vocabulary without recording an observation; matching custom words keep their identity in search and groups.
 
 **Menu → STATES / TAGS** opens the shared notebook. Add a state or tag directly, optionally attach tags to the same state timestamp, search the selected week, filter by kind/keyword, or delete/restore an observation. The latest-capture undo also undoes any tags attached in that capture. Typed capture drafts survive closing the panel with their original time; **CANCEL** discards them. The field's inline hashtag input still works. Header controls temporarily fold while these panels are open; phone layouts and landscape selection preserve touch targets.
 
@@ -44,13 +46,15 @@ Tap **STATE** for eight quick choices. **GROUPS** opens four groups containing 3
 
 Account identity is shared with v1; datasets are separate. The checked initial copy reads all three PINs, rechecks the source timestamp and retains the original as a downloadable backup. Existing v2 is loaded instead of copied again. V2 supports full backup export/restore with a recovery copy.
 
-Using trash or a newly added preset upgrades the recording journal to version 3 and the local envelope to version 4. Older app versions reject these data instead of accidentally losing deletions or states. The cloud snapshot remains data version 2. Refresh v2 on each device before continuing with the upgraded data; v1 is independent.
+Trash and the first 32 presets retain the existing data format. Selecting one of the 32 presets added in 0.7.1 upgrades the recording journal to version 4 and the local envelope to version 5. Later use of an older choice or trash cannot downgrade the journal. Older app versions reject these data instead of accidentally losing states. The cloud snapshot remains data version 2. Refresh v2 on each device before continuing with upgraded data; v1 is independent.
 
 Only one local tab writes a given account at a time. Across devices, revision checks pause conflicting snapshots; automatic merging is not implemented. Wait for **ALL SAVED** before switching devices. If offline, records stay on that device pending sync. Local records are browser storage, not device-level encryption; avoid clearing site data before syncing/exporting.
 
 A new visitor sees invented examples. Explicit `?mode=demo` does not initialize Auth, read private records or write account data. Demo interactions reset on reload. Use `?mode=account` for persistent personal tracking.
 
 ## Beta verification and limits
+
+`v2-state-catalog.test.cjs` checks all 64 translations, phrase search, custom-name collisions, snapshot validation and rejection by the released 0.7.0 reader. `v2-emotions.browser.cjs` verifies interval toggle/draft preservation, all 64 touch targets at five viewport sizes, paging, bilingual search and new-state capture/export in Edge and Playwright WebKit. The mocked two-device test carries a new preset through sync, conflict recovery, export/restore and offline reload.
 
 `v2-corrections.test.cjs` checks preserved deletion boundaries, restore/live-stop rules, stale/corrupt data rejection, vocabulary collisions and versioned storage. `v2-corrections.browser.cjs` covers notebook capture/search/trash, group/word gestures, five desktop/tablet/phone layouts in Edge and Playwright WebKit, interval/recording deletion previews and export roundtrip. `v2-surface.browser.cjs` also carries removed intervals and expanded states through the mocked two-device account flow.
 

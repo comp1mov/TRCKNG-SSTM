@@ -11,6 +11,7 @@
     entries.set(ru, { ru, en }); entries.set(en, { ru, en });
   }
   const patterns = [
+    ['Быстрый выбор · всего состояний: {0}', 'Quick picks · {0} states in total'],
     ['Удалить отрезок {0}', 'Delete interval {0}'], ['Удалённый отрезок · {0}', 'Deleted interval · {0}'],
     ['Без удалённых отрезков: {0}', 'Excluding deleted intervals: {0}'],
     ['Название точки {0}', 'Point {0} name'], ['Название отрезка {0}', 'Interval {0} name'],

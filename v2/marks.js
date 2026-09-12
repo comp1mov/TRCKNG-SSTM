@@ -163,22 +163,25 @@
   function chooseGroup(group) { stateGroup = group; wheelPage = 0; $('stateSearch').value = ''; renderWheel(); }
   function renderWheel() {
     const journal = read(), options = M.options(journal), group = M.groups.find(g => g.id === stateGroup);
-    const all = stateGroup === 'groups' ? M.groups : stateGroup === 'quick' ? options.filter(o => M.legacyDefaults.some(d => d.id === o.id)) : stateGroup === 'custom' ? journal.stateOptions || [] : options.filter(o => group?.states.includes(o.id));
+    const all = stateGroup === 'groups' ? M.groups : stateGroup === 'quick' ? options.filter(o => M.legacyDefaults.some(d => d.id === o.id)) : stateGroup === 'custom' ? journal.stateOptions || [] : M.groupOptions(journal, stateGroup);
     const query = M.key($('stateSearch').value), searching = Boolean(query), results = $('stateSearchResults');
     results.replaceChildren(); results.hidden = !searching;
     $('stateWheel').hidden = searching;
     if (searching) {
-      for (const o of options.filter(o => M.key(`${o.label} ${stateLabel(o)}`).includes(query))) { const b = button(stateLabel(o), () => capture(o.id)); b.dataset.state = o.id; b.dataset.noI18n = ''; results.append(b); }
+      for (const o of M.search(journal, query)) { const b = button(stateLabel(o), () => capture(o.id)); b.dataset.state = o.id; b.dataset.noI18n = ''; results.append(b); }
       if (!results.childElementCount) results.append(el('p', 'Не найдено. Можно добавить своё слово ниже.', 'moment-note'));
     }
     const pages = Math.max(1, Math.ceil(all.length / 8)); wheelPage = Math.max(0, Math.min(pages - 1, wheelPage));
-    $('stateGroupLabel').textContent = searching ? 'РЕЗУЛЬТАТЫ ПОИСКА' : group?.label || (stateGroup === 'groups' ? 'Выбери группу, затем состояние.' : stateGroup === 'custom' ? 'Твои слова' : 'Быстрый выбор · ещё 24 состояния в группах');
+    $('stateGroupLabel').textContent = searching ? 'РЕЗУЛЬТАТЫ ПОИСКА' : group?.label || (stateGroup === 'groups' ? 'Выбери группу, затем состояние.' : stateGroup === 'custom' ? 'Твои слова' : `Быстрый выбор · всего состояний: ${M.defaults.length}`);
     const choices = all.slice(wheelPage * 8, wheelPage * 8 + 8);
     $('stateOptions').replaceChildren(...choices.map((o, i) => {
-      const a = (-90 + i * (stateGroup === 'groups' ? 90 : 45)) * Math.PI / 180, b = button(o.label, () => stateGroup === 'groups' ? chooseGroup(o.id) : capture(o.id), 'state-option');
+      const b = button(o.label, () => stateGroup === 'groups' ? chooseGroup(o.id) : capture(o.id), 'state-option');
       if (stateGroup === 'groups') b.dataset.group = o.id; else b.dataset.state = o.id;
       if (stateGroup !== 'groups' && !builtInState(o)) b.dataset.noI18n = '';
-      b.style.left = `${50 + Math.cos(a) * 37}%`; b.style.top = `${50 + Math.sin(a) * 37}%`; return b;
+      // Wider word targets in five separate rows avoid single-letter wrapping.
+      const positions = [[50, '22px', 44], [80, '30%', 36], [83, '50%', 34], [80, '70%', 36], [50, 'calc(100% - 22px)', 44], [20, '70%', 36], [17, '50%', 34], [20, '30%', 36]];
+      const [x, y, width] = positions[stateGroup === 'groups' ? i * 2 : i];
+      b.style.left = `${x}%`; b.style.top = y; b.style.width = `${width}%`; return b;
     }));
     $('statePages').hidden = searching || pages < 2; $('statePageLabel').textContent = `${wheelPage + 1} / ${pages}`;
     $('statePrevious').disabled = wheelPage === 0; $('stateNext').disabled = wheelPage === pages - 1;

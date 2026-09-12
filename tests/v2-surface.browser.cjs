@@ -175,7 +175,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
       let j = JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')), c = j.cycles[0], p = c.points[0];
       j = SstmData.changeTime(j, c.id, p.id, p.at - 60000); j = SstmData.tagInterval(j, c.id, p.id, 'fixture shared');
       j = SstmData.setDeleted(j, c.id, p.id, true, undefined);
-      j = SstmMoments.record(j, { kind: 'state', stateId: 'sstm:state:inspired', at: Date.now(), source: { pin: 0, cellId: 'fixture-state', label: 'Example state' } });
+      j = SstmMoments.record(j, { kind: 'state', stateId: 'sstm:state:tender', at: Date.now(), source: { pin: 0, cellId: 'fixture-state', label: 'Example state' } });
       TRCKNG_STORAGE.setItem('sstm_v2_cycles', JSON.stringify(j)); markCloudDirty('fixture interval repair');
       dispatchEvent(new Event('sstm-v2-loaded')); await TRCKNG_ACCOUNT.sync(); return p.at - 60000;
     });
@@ -186,7 +186,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     const workId = await page.evaluate(() => HABITS.find(id => habitTypes[id] === 'modular'));
     await page.locator(`#btn-${workId}`).click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
     assert.equal(cloud.app_state.dataVersion, 2); assert.ok(cloud.app_state.moduleJournal.tracks[0].running);
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 4);
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 5);
     // Timestamped words and custom state choices share the checked account envelope.
     await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceScenarios').click(); await page.locator('[data-recipe="tag"] button').click();
     await page.locator('#cellEditSave').click(); await field();
@@ -197,8 +197,8 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     const stateId = await page.evaluate(() => HABITS.find(id => habitTypes[id] === 'state'));
     await page.locator(`#btn-${stateId}`).click(); await page.locator('#stateCustom summary').click(); await page.locator('#stateNewLabel').fill('Fixture flow'); await page.locator('#stateAddForm button').click();
     await page.getByRole('button', { name: 'Fixture flow', exact: true }).click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
-    assert.equal(cloud.app_state.cycleJournal.version, 3); assert.equal(cloud.app_state.cycleJournal.moments.length, 3);
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 4);
+    assert.equal(cloud.app_state.cycleJournal.version, 4); assert.equal(cloud.app_state.cycleJournal.moments.length, 3);
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 5);
     await page.locator('#pin0').click();
     const device = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', isMobile: true, hasTouch: true });
     await device.route('**/*', routeAccount);
@@ -217,7 +217,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).cycles[0].points.length), 2, 'Points share the v2 account sync');
     const syncedJournal = await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')));
     assert.ok(syncedJournal.cycles[0].deletedIntervals[syncedJournal.cycles[0].points[0].id], 'Interval trash travels to the second device');
-    assert.equal(syncedJournal.moments[0].state.id, 'sstm:state:inspired');
+    assert.equal(syncedJournal.moments[0].state.id, 'sstm:state:tender');
     assert.equal(syncedJournal.cycles[0].startedAt, repairedFirstTime); assert.equal(syncedJournal.edits[0].before.at, repairedFirstTime + 60000);
     assert.deepEqual(syncedJournal.cycles[0].tags[syncedJournal.cycles[0].points[0].id], ['fixture', 'shared']);
     assert.equal(await phone.locator('#habitsGrid .btn-habit').count(), 10);

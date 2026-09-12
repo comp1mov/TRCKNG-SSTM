@@ -57,8 +57,15 @@
     <details class="recording-help"><summary>Запись или личный цикл?</summary><p class="cycle-explanation">Запись — от первого нажатия до остановки. Можно записать десять минут занятия или весь день. Остановить можно в любой момент: это не дедлайн, отрезки сохранятся.</p><p class="cycle-explanation">Личный цикл — выбранный тобой ритм, например от сна до следующего сна. Такая запись может длиться меньше или больше 24 часов. Полночь ничего не сбрасывает. Отдельные таймеры на поле работают независимо.</p></details>
   </div>`;
   document.body.append(modal);
-  new MutationObserver(() => document.body.classList.toggle('surface-intervals-open', modal.classList.contains('visible'))).observe(modal, { attributes: true, attributeFilter: ['class'] });
-  $('cycleCapture').onclick = () => capture(); $('cycleOpen').onclick = () => open();
+  $('cycleOpen').setAttribute('aria-controls', 'cycleModal'); $('cycleOpen').setAttribute('aria-expanded', 'false');
+  new MutationObserver(() => {
+    const shown = modal.classList.contains('visible'); document.body.classList.toggle('surface-intervals-open', shown);
+    $('cycleOpen').setAttribute('aria-expanded', String(shown)); $('cycleOpen').setAttribute('aria-label', shown ? 'Закрыть отрезки записи' : 'Открыть отрезки записи');
+    $('cycleOpen').querySelector('.cycle-open-label').textContent = shown ? 'ОТРЕЗКИ ×' : 'ОТРЕЗКИ ↗';
+  }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+  $('cycleCapture').onclick = () => capture(); $('cycleOpen').onclick = () => {
+    if (modal.classList.contains('visible')) modal.classList.remove('visible'); else open();
+  };
   const historyLink = button('ЗАПИСИ / ОТРЕЗКИ', () => open()); historyLink.id = 'historyCycles'; $('historyView').prepend(historyLink);
   $('cycleEnd').onclick = () => { capture(true); selected = read().cycles.at(-1)?.id; renderHistory(); };
   $('cycleSelect').onchange = event => { selected = event.target.value; editing = null; $('cycleArchive').open = false; renderHistory(); };

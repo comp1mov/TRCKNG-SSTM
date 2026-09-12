@@ -45,8 +45,8 @@ test('whole-record trash retains interval trash, labels and independent observat
     const bad = structuredClone(j); mutate(bad); assert.throws(() => D.validateJournal(bad));
   }
 });
-test('32 presets, custom collisions, expanded records and tombstones survive protected snapshot/storage roundtrip', () => {
-  assert.equal(M.defaults.length, 32); assert.equal(new Set(M.groups.flatMap(g => g.states)).size, 32);
+test('preset catalog, custom collisions, records and tombstones survive protected snapshot/storage roundtrip', () => {
+  assert.equal(M.defaults.length, 64); assert.equal(new Set(M.groups.flatMap(g => g.states)).size, 64);
   let j = { ...M.upgrade(D.emptyJournal()), stateOptions: [{ id: 'custom-close', label: 'Близость' }] }; D.validateJournal(j);
   assert.equal(M.options(j).filter(o => o.label === 'Близость').length, 1);
   assert.equal(M.options(j).find(o => o.label === 'Близость').id, 'custom-close');
