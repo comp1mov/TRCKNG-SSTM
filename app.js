@@ -4,7 +4,7 @@
     const trckngStorage = window.TRCKNG_STORAGE || window.localStorage;
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.34.8';
+    const APP_VERSION = '1.34.9';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -3092,6 +3092,7 @@ function applyTheme() {
               if (stopwatch?.isType(type)) stopwatch.ensure(currentPin, habit, type);
               durationStates[habit] = {
                 ...(stopwatch?.isType(type) ? { sessionStartedAt: stopwatch.origin(state) } : {}),
+                ...(state.lastSessionIsSaved ? { lastSessionIsSaved: true } : {}),
                 startTime: weekStartMs,
                 isRunning: true,
                 accumulated: 0,
@@ -4212,12 +4213,14 @@ function handleDurationClick(habit, type) {
 
       if (!state.isRunning) {
         const now = Date.now();
+        const previousLast = unified ? stopwatch.last({ state, sessions: durationSessions, habit, now }) : null;
         durationStates[habit] = {
           startTime: now,
           isRunning: true,
           ...(unified ? { sessionStartedAt: now } : {}),
           accumulated: unified ? stopwatch.total({ state: durationStates[habit] || {}, stored: weekData[currentWeekKey]?.[habit], type, now }) : state.accumulated || 0,
-          lastSession: 0
+          lastSession: unified ? previousLast : 0,
+          ...(unified ? { lastSessionIsSaved: previousLast !== null } : {})
         };
         startGlobalInterval();
       } else {
@@ -4234,6 +4237,7 @@ function handleDurationClick(habit, type) {
         // For session-focused durations, remember the last session length
         if (type === CELL_TYPES.DURATION_SEC || type === CELL_TYPES.SLEEP || unified) {
           nextState.lastSession = unified ? Math.max(0, Math.floor((stoppedAt - stopwatch.origin(state)) / 1000)) : elapsed;
+          if (unified) nextState.lastSessionIsSaved = true;
         }
 
         durationStates[habit] = nextState;

@@ -85,7 +85,7 @@
       const raw = backing.getItem(key);
       if (!raw) return { version: 1, values: {} };
       const parsed = JSON.parse(raw);
-      if (![1, 2, 3, 4, 5, 6].includes(parsed.version) || !parsed.values || typeof parsed.values !== 'object' || Array.isArray(parsed.values)) throw new Error('Локальная копия v2 не распознана. Она оставлена без изменений.');
+      if (![1, 2, 3, 4, 5, 6, 7].includes(parsed.version) || !parsed.values || typeof parsed.values !== 'object' || Array.isArray(parsed.values)) throw new Error('Локальная копия v2 не распознана. Она оставлена без изменений.');
       return parsed;
     }
     const commit = value => {
@@ -93,7 +93,8 @@
       if (JSON.parse(value.values.sstm_v2_modules || 'null')?.tracks?.length) value.version = Math.max(value.version, 2);
       const journalVersion = JSON.parse(value.values.sstm_v2_cycles || 'null')?.version;
       if (journalVersion >= 2) value.version = Math.max(value.version, journalVersion + 1);
-      if (value.values.sstm_v2_stopwatches) value.version = Math.max(value.version, 6);
+      const stopwatchVersion = JSON.parse(value.values.sstm_v2_stopwatches || 'null')?.version;
+      if (stopwatchVersion) value.version = Math.max(value.version, stopwatchVersion + 5);
       backing.setItem(key, JSON.stringify(value));
     };
     const write = value => { if (!batch) commit(value); };

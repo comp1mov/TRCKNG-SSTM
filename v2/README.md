@@ -1,4 +1,4 @@
-# SSTM v2 / beta 0.9.0
+# SSTM v2 / beta 0.9.1
 
 [Personal entry](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account) · [Demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo) · [V1](https://comp1mov.github.io/TRCKNG-SSTM/)
 
@@ -34,9 +34,16 @@ Tap a **+** in an empty field cell on any PIN to create there. These affordances
 
 The editor groups all existing types under **RECORD / TIME / MONEY / TOOLS**. Choosing a category browses its types; tap a type to select it. The current type and its action are described below. **Description and history** contains secondary flags and reset. Save/Cancel stay available while scrolling.
 
-**TIME → Stopwatch** now covers the former stopwatch, total-minutes and total-seconds choices. In **Measure**, select **Current / last interval** or **Total this week**. In **Format**, choose a clock or total hours; total minutes/seconds remain under Other units. The preview shows the chosen presentation, and the field labels the measure. New stopwatches start with a clock/interval view; existing controls retain their initial measure/unit until changed. Tap still starts/stops the same stopwatch.
+**TIME → Stopwatch → Stopwatch view** offers ready-made presentations:
 
-Changing these views preserves the original control, stored units, totals and timestamped history, including sub-minute runtime precision. During a week rollover handled by this version, the current interval continues from its original start while the weekly total starts again. For older stopped minute/second-total controls, the last retained session is used if available; absent detail is shown as **—**, not invented from a weekly sum. Past weekly aggregates can already be rounded by older versions. All-time totals, activity attribution and Days since remain planned. Sleep retains its specialized options; countdown, Until and point recording keep their separate actions.
+- **Stopwatch · classic:** current interval, or last when stopped; this week's total underneath. A short `MM:SS` clock grows to `H:MM:SS` after an hour.
+- **Total minutes / Total seconds:** whole minutes or seconds this week, with the same exact duration broken down into hours, minutes and seconds underneath.
+- **Total time / Total hours:** this week's clock or decimal hours, with the current/last interval underneath.
+- **Last interval:** the previous completed interval stays visible while the next runs underneath. A first run has no previous result and shows **—**.
+
+The preview shows both lines. Existing explicit 0.9 display settings remain available as **My saved view** until you choose a preset. There is one view selector; no separate unit submenu. Tap still starts/stops the same stopwatch.
+
+Changing these views preserves the original control, stored units, totals and timestamped history, including sub-minute runtime precision. The classic minute preset renders 65 seconds as `01 min` plus `0h 1m 5s`; it does not round the stored duration. During a week rollover handled by this version, the current interval continues from its original start while the weekly total starts again. Starting another run preserves the previous completed duration. Older running states that cleared that value can use a retained preceding session, excluding the current run's weekly fragments. Absent detail is shown as **—**, not invented from a weekly sum. Past weekly aggregates can already be rounded by older versions. Sleep retains its specialized options; countdown, Until and point recording keep their separate actions.
 
 Choose 2×2 or another size without clearing space manually: the requested anchor stays fixed, and only colliding neighbours shift right or down by whole cells, including a cascade if needed. The plan chooses the shorter total shift and keeps neighbours' sizes, identities and records. A notice explains displacement before Save. Cancel or a failed validation moves nothing. Placement stays within the existing 200×200 module-coordinate limit; at the limit another location may be needed. Duration/recording and work indicators sit at the bottom, clear of the large value.
 
@@ -56,7 +63,7 @@ Account identity is shared with v1; datasets are separate. The checked initial c
 
 Trash and the first 32 presets retain the existing data format. Selecting one of the 32 presets added in 0.7.1 upgrades the recording journal to version 4 and the local envelope to version 5. Later use of an older choice or trash cannot downgrade the journal. Older app versions reject these data instead of accidentally losing states. The cloud snapshot remains data version 2. Refresh v2 on each device before continuing with upgraded data; v1 is independent.
 
-Saving a stopwatch view, starting/stopping a generic stopwatch, or handling its running week rollover adds the versioned stopwatch preferences: full snapshot schema 5 and local envelope 6. The cloud still uses data version 2 and the existing table. Preferences travel through account sync, export/restore and recovery. Earlier v2 clients reject these newer copies before applying them, including offline; refresh v2 on other devices to continue. No existing timestamps or weekly units are converted by this upgrade.
+Stopwatch settings use full snapshot schema 5 and cloud data version 2 in the existing table. Choosing a preset or capturing a generic stopwatch upgrades its view journal to version 2 and local envelope to 7, protecting the previous-session semantics. Existing version-1 views stay readable. Preferences travel through account sync, export/restore and recovery. Earlier v2 clients reject newer copies before applying them, including offline; refresh v2 on other devices to continue. No existing timestamps or weekly units are converted by this upgrade.
 
 Only one local tab writes a given account at a time. Across devices, revision checks pause conflicting snapshots; automatic merging is not implemented. Wait for **ALL SAVED** before switching devices. If offline, records stay on that device pending sync. Local records are browser storage, not device-level encryption; avoid clearing site data before syncing/exporting.
 
@@ -64,7 +71,7 @@ A new visitor sees invented examples. Explicit `?mode=demo` does not initialize 
 
 ## Beta verification and limits
 
-`v2-stopwatch.test.cjs` checks precise duration formats, interval/weekly semantics, missing retained detail, schema validation and rejection by the 0.8.0 reader. `v2-stopwatch.browser.cjs` verifies all three legacy sources, unchanged history on repeated format switches, live start/stop, week rollover, new-control defaults, cancel/parked/stale drafts and snapshot adoption in Edge and Playwright WebKit at five EN/RU sizes. The synthetic two-device suite also carries view changes through sync, conflict/recovery and export/restore. Original button types, navigation, field creation, mobile layout and worker upgrade/offline checks passed. Physical devices and actual private accounts remain user acceptance.
+`v2-stopwatch.test.cjs` checks precise formats and classic presets, separate current/previous/weekly values, missing retained detail, schema validation and rejection by the 0.8.0/0.9.0 readers. `v2-stopwatch.browser.cjs` verifies all three legacy sources, unchanged history on repeated preset switches, the previous result during a subsequent run, week rollover, old saved-view compatibility, cancel/parked/stale drafts and snapshot adoption in Edge and Playwright WebKit at five EN/RU sizes. Preview visibility is checked against sticky header/save controls. The synthetic two-device suite carries preset changes through sync, conflict/recovery and export/restore. Original button types and worker upgrade/offline checks passed. Physical devices and actual private accounts remain user acceptance.
 
 `v2-layout.test.cjs` checks deterministic cascades, mixed sizes, boundaries, hidden cells and dense fields. `v2-creation-map.browser.cjs` checks atomic create/cancel/failure, retained neighbour records, PIN slots, snapshot roundtrip, grouped editor layouts, all matrix targets, touch-scroll cancellation and single gesture capture in Edge and Playwright WebKit. Original type, field/touch-drag, modular timer, mobile-panel, two-device sync and worker/offline suites also passed. V2 0.8.0 changes layout/presentation using the existing data format. The shared engine hook is inactive in v1; root worker 1.34.7 and v2 worker 0.8.0 retain separate caches.
 
@@ -80,4 +87,4 @@ Original types, recordings/edits, shared work, words/states, field navigation, m
 
 Real phone/tablet keyboards, physical Safari and private multi-device acceptance remain user testing. The main v2 is a browser link; a separate installable v2 home-screen app is not included yet. `points-lab.html` is an older separate IndexedDB experiment, not the account-connected daily-use entry.
 
-Next work: Days since and explicit interval-to-activity links, then coordinated history Timeline / Matrix with state/count exploration and personal-cycle comparison. Inventory/general composition, predictive cycles, device imports and generative sound remain later work.
+Next work: a general history Timeline / Matrix for selected counts, durations and states, with explicit interval/source links and personal-cycle comparison. Work, money and tag filters are optional layers. Elapsed time since a counter's last mark can be a view of existing observations; a separate Days-since span journal is not planned for the next stage. Inventory/general composition, predictive cycles, device imports and generative sound remain later work.

@@ -1,6 +1,20 @@
 'use strict';
 // UI copy only. User labels, tags, notes and stored observations are never translated.
 window.SstmTranslations = `
+Вид секундомера|Stopwatch view
+Секундомер · как раньше|Stopwatch · classic
+Сумма времени|Total time
+Сумма часов|Total hours
+Последний отрезок|Last interval
+Мой сохранённый вид|My saved view
+Выбирай готовый вид. Нажатие начинает или останавливает отсчёт; смена вида сохраняет время и историю.|Choose a ready-made view. Tap starts or stops; changing the view preserves time and history.
+Крупно — текущий отрезок, после остановки — последний. Под ним — сумма за неделю. Минуты:секунды; часы появляются после часа.|Main: current interval, or last when stopped. Below: this week's total. Minutes:seconds; hours appear after one hour.
+Крупно — целые минуты за неделю, как раньше. Под ними — расшифровка с часами и секундами.|Main: whole minutes this week, as before. Below: the same time including hours and seconds.
+Крупно — все секунды за неделю. Под ними — это же время в часах, минутах и секундах.|Main: total seconds this week. Below: the same time in hours, minutes and seconds.
+Крупно — сумма времени за неделю. Под ней — текущий или последний отрезок.|Main: total time this week. Below: current or last interval.
+Крупно — часы за неделю с дробной частью. Под ними — текущий или последний отрезок.|Main: decimal hours this week. Below: current or last interval.
+Крупно — последний завершённый отрезок, даже когда идёт следующий. Под ним — текущий отсчёт. Если прошлой записи нет, видно «—».|Main: last completed interval, even while the next is running. Below: current elapsed time. No previous record is shown as “—”.
+Твой выбранный ранее вид сохранён. Можно оставить его или выбрать один из готовых вариантов.|Your earlier view is preserved. Keep it or choose one of the ready-made options.
 Начать / остановить. Отрезок или сумма; формат выбирается ниже.|Start / stop. Show an interval or total; choose the format below.
 Показатель|Measure
 Текущий / последний отрезок|Current / last interval

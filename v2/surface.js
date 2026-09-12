@@ -157,7 +157,7 @@
   function setupUI() {
     const container = $('.container'), header = $('.header');
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.9.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.9.1</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
