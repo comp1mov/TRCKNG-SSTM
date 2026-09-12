@@ -105,13 +105,15 @@
   function editorStamp(modal, sourcePin) {
     const keys = modal.id === 'cellEditModal' ? ['labels', 'types', 'colors', 'descriptions', 'timer_settings', 'money_settings', 'unit_settings', 'value_formats', 'math_settings', 'cell_flags', 'cell_layout', 'led_settings', 'currency_settings'] :
       modal.id === 'valueModal' ? ['data'] : modal.id === 'currencyModal' ? ['currency_settings'] : [];
-    return JSON.stringify(keys.map(key => {
+    const values = keys.map(key => {
       try {
         const value = JSON.parse((window.TRCKNG_STORAGE || localStorage).getItem(`trckng_sstm_${key}_pin${sourcePin}`) || '{}');
         if (key === 'data') return Object.fromEntries(Object.entries(value).map(([week, cells]) => [week, cells?.[modal.dataset.subjectId]]));
         return value[modal.dataset.subjectId] ?? null;
       } catch (_) { return 'unavailable'; }
-    }));
+    });
+    if (modal.id === 'cellEditModal') values.push(window.TRCKNG_STOPWATCH?.read().views.find(v => v.pin === sourcePin && v.cellId === modal.dataset.subjectId) || null);
+    return JSON.stringify(values);
   }
   function setupPanels() {
     const labels = { momentModal: 'ОТМЕТИТЬ МОМЕНТ', momentHistoryModal: 'СЛОВА / СОСТОЯНИЯ', scenarioModal: 'СЦЕНАРИИ / ПОМОЩЬ', workHistoryModal: 'РАБОТА / РАСЧЁТ', cycleModal: 'ОТРЕЗКИ', accountModal: 'АККАУНТ V2', cellEditModal: 'КНОПКА', valueModal: 'ЗНАЧЕНИЕ', currencyModal: 'КОНВЕРТЕР', correctionModal: 'КОРРЕКЦИЯ', dashboardModal: 'ШКАЛЫ', themeModal: 'ЦВЕТА', infoModal: 'О ПРОЕКТЕ' };
@@ -155,7 +157,7 @@
   function setupUI() {
     const container = $('.container'), header = $('.header');
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.8.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.9.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -245,7 +247,7 @@
   async function boot() {
     window.TRCKNG_SURFACE = 'v2';
     await loadScript('../app-config.js');
-    await loadScript('./modules.js'); await loadScript('./state-catalog.js'); await loadScript('./moments.js'); await loadScript('./data.js');
+    await loadScript('./modules.js'); await loadScript('./state-catalog.js'); await loadScript('./moments.js'); await loadScript('./stopwatch.js'); await loadScript('./data.js');
     // Explicit demo links never initialize Auth or read an existing session.
     // For an ordinary first visit, the SDK decides whether this is a returning account.
     if (!demo) {
@@ -301,10 +303,15 @@
         const modules = JSON.parse(viewStorage.getItem('sstm_v2_modules') || 'null') || window.SstmModules.empty();
         const journal = JSON.parse(viewStorage.getItem('sstm_v2_cycles') || 'null') || window.SstmData.emptyJournal();
         const modern = Boolean(modules.tracks.length || journal.version >= 2);
-        return { dataset: 'sstm-v2', dataVersion: modern ? 2 : 1, ...(modern ? { moduleJournal: modules } : {}), migration: JSON.parse(viewStorage.getItem('sstm_v2_migration') || 'null'), cycleJournal: journal };
+        const stopwatchJournal = JSON.parse(viewStorage.getItem('sstm_v2_stopwatches') || 'null');
+        return { dataset: 'sstm-v2', dataVersion: modern || stopwatchJournal ? 2 : 1, ...(modern || stopwatchJournal ? { moduleJournal: modules } : {}),
+          ...(stopwatchJournal ? { schemaVersion: 5, stopwatchJournal } : {}), migration: JSON.parse(viewStorage.getItem('sstm_v2_migration') || 'null'), cycleJournal: journal };
       },
       validate: snapshot => { window.SstmData.validate(snapshot); if (snapshot.dataset !== 'sstm-v2') throw new Error('Используй перенос v1 через аккаунт.'); },
-      apply: snapshot => { viewStorage.setItem('sstm_v2_cycles', JSON.stringify(snapshot.cycleJournal || window.SstmData.emptyJournal())); viewStorage.setItem('sstm_v2_modules', JSON.stringify(snapshot.moduleJournal || window.SstmModules.empty())); viewStorage.setItem('sstm_v2_migration', JSON.stringify(snapshot.migration || null)); }
+      apply: snapshot => {
+        viewStorage.setItem('sstm_v2_cycles', JSON.stringify(snapshot.cycleJournal || window.SstmData.emptyJournal())); viewStorage.setItem('sstm_v2_modules', JSON.stringify(snapshot.moduleJournal || window.SstmModules.empty())); viewStorage.setItem('sstm_v2_migration', JSON.stringify(snapshot.migration || null));
+        if (snapshot.stopwatchJournal) viewStorage.setItem('sstm_v2_stopwatches', JSON.stringify(snapshot.stopwatchJournal)); else viewStorage.removeItem('sstm_v2_stopwatches');
+      }
     };
     try { cameras = JSON.parse(viewStorage.getItem(cameraKey)) || {}; } catch (_) { /* Device-only view. */ }
     const response = await fetch(url('../index.html'));
@@ -352,6 +359,7 @@
     await loadScript('./layout.js');
     await loadScript('./field.js');
     await loadScript('./creation.js');
+    await loadScript('./stopwatch-ui.js');
     await loadScript('./chrome.js');
     await loadScript('./clocks.js');
     await loadScript('./readability.js');

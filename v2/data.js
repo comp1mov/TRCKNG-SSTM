@@ -41,7 +41,13 @@
     if (!snapshot || snapshot.snapshotType !== 'fullApp' || !Array.isArray(snapshot.pinData) || snapshot.pinData.length !== 3 ||
         snapshot.pinData.some(pin => !object(pin) || ![0, 1, 2].includes(pin.pin)) || new Set(snapshot.pinData.map(pin => pin.pin)).size !== 3) throw new Error('Нужна полная копия всех трёх PIN.');
     if (snapshot.dataset && (snapshot.dataset !== 'sstm-v2' || ![1, 2].includes(snapshot.dataVersion))) throw new Error('Эта версия данных пока не поддерживается.');
-    if (!Number.isInteger(snapshot.schemaVersion) || snapshot.schemaVersion < 1 || snapshot.schemaVersion > 4) throw new Error('Версия исходных данных пока не поддерживается.');
+    if (!Number.isInteger(snapshot.schemaVersion) || snapshot.schemaVersion < 1 || snapshot.schemaVersion > (snapshot.dataset ? 5 : 4)) throw new Error('Версия исходных данных пока не поддерживается.');
+    if (snapshot.schemaVersion === 5 || snapshot.stopwatchJournal !== undefined) {
+      if (snapshot.schemaVersion !== 5 || snapshot.dataVersion !== 2 || snapshot.dataset !== 'sstm-v2') throw new Error('Обнови приложение для настроек секундомера.');
+      const stopwatch = root.SstmStopwatch || (typeof require === 'function' ? require('./stopwatch.js') : null);
+      if (!stopwatch) throw new Error('Обнови приложение для настроек секундомера.');
+      stopwatch.validate(snapshot.stopwatchJournal);
+    }
     for (const pin of snapshot.pinData) {
       if (!object(pin.habitLabels) || !object(pin.habitTypes) || !object(pin.weekData) || Object.values(pin.habitLabels).some(value => typeof value !== 'string')) throw new Error('В копии не хватает данных PIN.');
       for (const [key, value] of Object.entries(pin)) {
@@ -79,7 +85,7 @@
       const raw = backing.getItem(key);
       if (!raw) return { version: 1, values: {} };
       const parsed = JSON.parse(raw);
-      if (![1, 2, 3, 4, 5].includes(parsed.version) || !parsed.values || typeof parsed.values !== 'object' || Array.isArray(parsed.values)) throw new Error('Локальная копия v2 не распознана. Она оставлена без изменений.');
+      if (![1, 2, 3, 4, 5, 6].includes(parsed.version) || !parsed.values || typeof parsed.values !== 'object' || Array.isArray(parsed.values)) throw new Error('Локальная копия v2 не распознана. Она оставлена без изменений.');
       return parsed;
     }
     const commit = value => {
@@ -87,6 +93,7 @@
       if (JSON.parse(value.values.sstm_v2_modules || 'null')?.tracks?.length) value.version = Math.max(value.version, 2);
       const journalVersion = JSON.parse(value.values.sstm_v2_cycles || 'null')?.version;
       if (journalVersion >= 2) value.version = Math.max(value.version, journalVersion + 1);
+      if (value.values.sstm_v2_stopwatches) value.version = Math.max(value.version, 6);
       backing.setItem(key, JSON.stringify(value));
     };
     const write = value => { if (!batch) commit(value); };

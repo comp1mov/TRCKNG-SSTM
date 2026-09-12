@@ -1,6 +1,23 @@
 'use strict';
 // UI copy only. User labels, tags, notes and stored observations are never translated.
 window.SstmTranslations = `
+Начать / остановить. Отрезок или сумма; формат выбирается ниже.|Start / stop. Show an interval or total; choose the format below.
+Показатель|Measure
+Текущий / последний отрезок|Current / last interval
+Сумма за эту неделю|Total this week
+Часы : минуты : секунды|Hours : minutes : seconds
+Всего часов|Total hours
+Всего минут|Total minutes
+Всего секунд|Total seconds
+Другие единицы|Other units
+Первое нажатие — начать, следующее — остановить. Формат меняет только цифры; время и история сохраняются.|First tap starts, next tap stops. Changing the format preserves your time and history.
+ЭТА НЕДЕЛЯ|THIS WEEK
+ПРОШЛАЯ НЕДЕЛЯ|PREVIOUS WEEK
+ТЕКУЩИЙ ОТРЕЗОК|CURRENT INTERVAL
+ПОСЛЕДНИЙ ОТРЕЗОК|LAST INTERVAL
+НЕТ ОТРЕЗКОВ|NO INTERVALS
+Обнови приложение для настроек секундомера.|Refresh the app for stopwatch settings.
+Настройки секундомера повреждены.|Stopwatch settings are invalid.
 ТВОЁ ПОЛЕ|YOUR FIELD
 Показать панели|Expand panels
 Свернуть панели|Collapse panels

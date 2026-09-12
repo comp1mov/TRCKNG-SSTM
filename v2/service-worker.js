@@ -1,6 +1,6 @@
 'use strict';
-const CACHE = 'trckng-sstm-v2-alpha-0.8.0';
-const assets = ['./', './index.html', './surface.css', './surface.js', './field.js', './layout.js', './creation.js', './clocks.js', './data.js', './modules.js', './moments.js', './tag-input.js', './marks.js', './scenarios.js', './account.js', './cycles.js', './demo-data.js', './vendor/supabase-2.116.0.js',
+const CACHE = 'trckng-sstm-v2-alpha-0.9.0';
+const assets = ['./', './index.html', './surface.css', './surface.js', './field.js', './layout.js', './creation.js', './stopwatch.js', './stopwatch-ui.js', './clocks.js', './data.js', './modules.js', './moments.js', './tag-input.js', './marks.js', './scenarios.js', './account.js', './cycles.js', './demo-data.js', './vendor/supabase-2.116.0.js',
   './translations.js', './i18n.js', './state-catalog.js', './readability.js', './chrome.js', './fonts/JetBrainsMono-Regular.woff2',
   './points-lab.html', './style.css', './model.js', './store.js', './app.js',
   '../index.html', '../style.css', '../app-config.js', '../app.js', '../history-matrix.js'];

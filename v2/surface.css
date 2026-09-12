@@ -259,3 +259,13 @@ body:has(#cellEditModal.visible) .header>:not(.surface-head):not(#surfaceMenu){d
 .creation-hint strong,.creation-hint span{display:block}.creation-hint strong{color:var(--surface-ink);margin-bottom:4px}.v2-surface #cellEditModal #cellEditLabel{text-align:left}.v2-surface #cellEditModal .cell-edit-help-btn{display:none}.v2-surface #cellEditModal #cellEditInput{text-align:left}.v2-surface #cellEditModal .cell-edit-label{text-align:left}
 .state-map-tools{display:flex;align-items:center;gap:10px;position:sticky;top:61px;z-index:3;background:#11120f;padding:6px 0;border-bottom:1px solid var(--surface-line)}.state-map-tools button{flex:0 0 130px}.state-map-tools output{margin:0;min-height:0;font-size:14px}#stateMap>p{font-size:12px;line-height:1.5;color:#adb39f}.state-map-open #momentStateForm>.moment-note{display:none}
 @media(max-width:480px){.state-map-grid{grid-template-columns:minmax(0,1fr)}.v2-surface #momentModal .state-map-word{padding:8px;font-size:13px;min-height:48px}.state-map-tools{top:60px}}
+.v2-surface .creation-types [aria-pressed=true]{border-color:var(--surface-accent,#d1f55a);color:var(--surface-accent,#d1f55a)}
+.v2-surface .stopwatch-settings{display:grid;grid-template-columns:1fr;gap:12px;margin:14px 0;padding:14px 0;border-block:1px solid #444}
+.v2-surface .stopwatch-settings[hidden]{display:none}
+.v2-surface .stopwatch-settings label{display:grid;gap:7px;font-size:12px;color:#b9bdb0}
+.v2-surface .stopwatch-settings select{min-width:0;width:100%;min-height:46px;padding:8px;background:#141510;color:#e5e8db;border:1px solid #626755;border-radius:0;font:inherit;font-size:13px}
+.v2-surface .stopwatch-settings output{grid-column:1/-1;display:grid;gap:8px;padding:12px;background:#171913;border-left:2px solid #d1f55a}
+.v2-surface .stopwatch-settings output strong{font-size:clamp(28px,5vw,42px);font-weight:400;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.v2-surface .stopwatch-settings output span{font-size:11px;color:#b8bdaa}
+.v2-surface .stopwatch-settings p{grid-column:1/-1;margin:0;font-size:12px;line-height:1.5;color:#b9bdb0}
+.v2-surface #cellEditModal>div{scroll-padding-block:80px 90px}

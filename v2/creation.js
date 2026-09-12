@@ -8,9 +8,7 @@
       ['unit', 'Счётчик', 'Нажатие прибавляет шаг.'], ['value', 'Число', 'Нажатие открывает ввод значения.'],
       ['tag', 'Хештег', 'Введи слово прямо на поле.'], ['state', 'Состояние', 'Выбери слово на карте состояний.']]],
     ['time', 'ВРЕМЯ', [
-      ['duration_sec', 'Секундомер', 'Начать / остановить. Видно текущий или последний отрезок.'],
-      ['duration_min', 'Сумма минут', 'Начать / остановить. Видно накопленное время в минутах.'],
-      ['duration_sec_count', 'Сумма секунд', 'Начать / остановить. Видно накопленное время в секундах.'],
+      ['duration_sec', 'Секундомер', 'Начать / остановить. Отрезок или сумма; формат выбирается ниже.'],
       ['sleep', 'Сон', 'Начать / остановить сон. Отображение можно настроить.'],
       ['timer', 'Таймер', 'Обратный отсчёт. Повторное нажатие остановит и сбросит его.'],
       ['countdown', 'До события', 'Часы до выбранной даты и времени.'],
@@ -38,9 +36,13 @@
     }
   }
   oldRows.forEach(n => n.remove());
+  // Retain legacy selectors for editor identity; only one stopwatch is offered.
+  for (const type of ['duration_min', 'duration_sec_count']) {
+    const button = buttons.find(b => b.dataset.type === type); choices.append(button); info.set(type, info.get('duration_sec'));
+  }
   function showGroup(group) {
     for (const tab of tabs.children) tab.setAttribute('aria-pressed', String(tab.dataset.creationGroup === group));
-    for (const b of buttons) b.hidden = info.get(b.dataset.type)?.group !== group;
+    for (const b of buttons) b.hidden = ['duration_min', 'duration_sec_count'].includes(b.dataset.type) || info.get(b.dataset.type)?.group !== group;
   }
   const advanced = el('details', '', 'creation-advanced'); advanced.id = 'creationAdvanced'; advanced.append(el('summary', 'Подпись и история'));
   $('descriptionField').before(advanced); advanced.append($('descriptionField'), $('flagSettingsFields'));
@@ -59,6 +61,7 @@
       lastSubject = subject;
     }
     hint.replaceChildren(el('strong', info.get(type)?.title), el('span', info.get(type)?.help));
+    for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.type === type || b.dataset.type === 'duration_sec' && ['duration_min', 'duration_sec_count'].includes(type)));
     const size = modal.querySelector('[data-layout-size].active')?.dataset.layoutSize || '1x1';
     const [colSpan, rowSpan] = size.split('x').map(Number);
     if (!subject) return;

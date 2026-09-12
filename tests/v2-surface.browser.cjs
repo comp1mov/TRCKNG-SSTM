@@ -106,6 +106,8 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(await page.locator('#trackView').isVisible(), true);
     assert.equal(await page.evaluate(() => Boolean(TRCKNG_ACCOUNT.ready)), true, 'Returning to the field does not sign out');
     await page.locator('#btn-cell03').click();
+    await page.evaluate(() => openCellEditModal('cell03'));
+    await page.locator('#stopwatchMode').selectOption('week'); await page.locator('#stopwatchFormat').selectOption('hours'); await page.locator('#cellEditSave').click();
     await page.locator('#pin1').click();
     const types = await page.locator('#habitsGrid .btn-habit').evaluateAll(nodes => nodes.map(n => n.dataset.type));
     for (const kind of ['money_budget', 'math', 'led_pulse', 'currency']) assert.ok(types.includes(kind));
@@ -186,7 +188,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     const workId = await page.evaluate(() => HABITS.find(id => habitTypes[id] === 'modular'));
     await page.locator(`#btn-${workId}`).click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
     assert.equal(cloud.app_state.dataVersion, 2); assert.ok(cloud.app_state.moduleJournal.tracks[0].running);
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 5);
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 6);
     // Timestamped words and custom state choices share the checked account envelope.
     await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceScenarios').click(); await page.locator('[data-recipe="tag"] button').click();
     await page.locator('#cellEditSave').click(); await field();
@@ -198,7 +200,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator(`#btn-${stateId}`).click(); await page.locator('#stateCustom summary').click(); await page.locator('#stateNewLabel').fill('Fixture flow'); await page.locator('#stateAddForm button').click();
     await page.getByRole('button', { name: 'Fixture flow', exact: true }).click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
     assert.equal(cloud.app_state.cycleJournal.version, 4); assert.equal(cloud.app_state.cycleJournal.moments.length, 3);
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 5);
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 6);
     await page.locator('#pin0').click();
     const device = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', isMobile: true, hasTouch: true });
     await device.route('**/*', routeAccount);
@@ -214,6 +216,8 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await phone.locator(`#btn-${stateId}`).tap(); await phone.locator('[data-state="calm"]').tap();
     assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_modules')).tracks[0].sessions.length), 1);
     await phone.locator('#pin0').tap();
+    assert.deepEqual(await phone.evaluate(() => buildCloudSnapshot().stopwatchJournal.views.find(v => v.pin === 0 && v.cellId === 'cell03')), {pin:0,cellId:'cell03',mode:'week',format:'hours'});
+    await phone.evaluate(() => openCellEditModal('cell03')); await phone.locator('#stopwatchFormat').selectOption('clock'); await phone.locator('#cellEditSave').click();
     assert.equal(await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).cycles[0].points.length), 2, 'Points share the v2 account sync');
     const syncedJournal = await phone.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')));
     assert.ok(syncedJournal.cycles[0].deletedIntervals[syncedJournal.cycles[0].points[0].id], 'Interval trash travels to the second device');
@@ -230,6 +234,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.evaluate(() => triggerCloudSync('test-device-return', { force: true }));
     await page.locator('#pin0').click();
     assert.equal(await page.locator('#btn-cell01 .btn-value').innerText(), '13');
+    assert.equal(await page.evaluate(() => buildCloudSnapshot().stopwatchJournal.views.find(v => v.pin === 0 && v.cellId === 'cell03').format), 'clock');
     assert.equal(await page.locator(`#value-${extraId}`).innerText(), '4');
     assert.equal(await page.evaluate(id => cellLayout[id].col, extraId), 6);
     assert.equal(await page.evaluate(() => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_modules')).tracks[0].running), null, 'Stopping on another device retains one completed interval');
@@ -287,6 +292,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator('#surfaceMenuButton').click();
     const exported = await downloadJson(() => page.locator('#btnExport').click(), 'v2-fixture.json');
     assert.equal(exported.value.dataset, 'sstm-v2'); assert.equal(exported.value.pinData.length, 3);
+    assert.equal(exported.value.schemaVersion, 5); assert.equal(exported.value.stopwatchJournal.views.find(v => v.pin === 0 && v.cellId === 'cell03').format, 'clock');
     assert.equal(exported.value.dataVersion, 2); assert.equal(exported.value.moduleJournal.tracks[0].sessions.length, 1);
     assert.equal(exported.value.cycleJournal.moments.length, 4); assert.equal(exported.value.cycleJournal.stateOptions[0].label, 'Fixture flow');
     assert.equal(exported.value.cycleJournal.cycles[0].points.length, afterLostReply + 3);

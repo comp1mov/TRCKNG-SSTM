@@ -4,7 +4,7 @@
     const trckngStorage = window.TRCKNG_STORAGE || window.localStorage;
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.34.7';
+    const APP_VERSION = '1.34.8';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -3088,7 +3088,10 @@ function applyTheme() {
               recordDurationSession(habit, startTime, weekStartMs, getSpanSessionSource(type));
               sessionsChanged = true;
 
+              const stopwatch = window.TRCKNG_STOPWATCH;
+              if (stopwatch?.isType(type)) stopwatch.ensure(currentPin, habit, type);
               durationStates[habit] = {
+                ...(stopwatch?.isType(type) ? { sessionStartedAt: stopwatch.origin(state) } : {}),
                 startTime: weekStartMs,
                 isRunning: true,
                 accumulated: 0,
@@ -3234,6 +3237,7 @@ function applyTheme() {
 
       if (previousState.isRunning && previousState.startTime) {
         durationStates[habit] = {
+          ...(previousState.sessionStartedAt ? { sessionStartedAt: previousState.sessionStartedAt } : {}),
           startTime: Number(previousState.startTime),
           isRunning: true,
           accumulated: completedSeconds,
@@ -3831,6 +3835,7 @@ function applyTheme() {
 
     function computeDurationTotalSeconds(habit) {
       const state = durationStates[habit] || {};
+      if (window.TRCKNG_STOPWATCH?.isType(habitTypes[habit])) return window.TRCKNG_STOPWATCH.total({ state, stored: weekData[currentWeekKey]?.[habit], type: habitTypes[habit] });
       const accumulated = Number(state.accumulated || 0);
       let total = accumulated;
       if (state.isRunning && state.startTime) {
@@ -4193,6 +4198,9 @@ function attachMoneyPressHandlers(btn, habit, type) {
 
 function handleDurationClick(habit, type) {
       const state = durationStates[habit] || { startTime: null, isRunning: false, accumulated: 0, lastSession: 0 };
+      const stopwatch = window.TRCKNG_STOPWATCH;
+      const unified = stopwatch?.isType(type);
+      if (unified) stopwatch.ensure(currentPin, habit, type);
 
       if (decreaseMode) {
         durationStates[habit] = { startTime: null, isRunning: false, accumulated: 0, lastSession: 0 };
@@ -4207,7 +4215,8 @@ function handleDurationClick(habit, type) {
         durationStates[habit] = {
           startTime: now,
           isRunning: true,
-          accumulated: state.accumulated || 0,
+          ...(unified ? { sessionStartedAt: now } : {}),
+          accumulated: unified ? stopwatch.total({ state: durationStates[habit] || {}, stored: weekData[currentWeekKey]?.[habit], type, now }) : state.accumulated || 0,
           lastSession: 0
         };
         startGlobalInterval();
@@ -4223,8 +4232,8 @@ function handleDurationClick(habit, type) {
         };
 
         // For session-focused durations, remember the last session length
-        if (type === CELL_TYPES.DURATION_SEC || type === CELL_TYPES.SLEEP) {
-          nextState.lastSession = elapsed;
+        if (type === CELL_TYPES.DURATION_SEC || type === CELL_TYPES.SLEEP || unified) {
+          nextState.lastSession = unified ? Math.max(0, Math.floor((stoppedAt - stopwatch.origin(state)) / 1000)) : elapsed;
         }
 
         durationStates[habit] = nextState;
@@ -4598,7 +4607,11 @@ function scheduleMathRefresh() {
             btn.style.setProperty('--progress', progress);
           }
 
-          if (type === CELL_TYPES.DURATION_SEC) {
+          const unifiedDisplay = window.TRCKNG_STOPWATCH?.render({ habit, pin: currentPin, type, state, stored: weekData[currentWeekKey]?.[habit], sessions: durationSessions });
+          if (unifiedDisplay) {
+            if (valueEl) valueEl.innerHTML = unifiedDisplay.main;
+            if (breakdownEl) breakdownEl.textContent = unifiedDisplay.breakdown + (description ? ` · ${description}` : '');
+          } else if (type === CELL_TYPES.DURATION_SEC) {
             // Live update: main value shows current session, breakdown shows total
             const sessionSeconds = elapsed;
             const fmtSession = formatDurationSec(sessionSeconds);
@@ -5117,7 +5130,11 @@ function scheduleMathRefresh() {
           let displayValue;
           let breakdown;
 
-          if (type === CELL_TYPES.DURATION_SEC) {
+          const unifiedDisplay = window.TRCKNG_STOPWATCH?.render({ habit, pin: currentPin, type, state, previousWeekPreview, stored: previousWeekPreview ? previewValue : weekData[currentWeekKey]?.[habit], sessions: durationSessions });
+          if (unifiedDisplay) {
+            displayValue = unifiedDisplay.main;
+            breakdown = unifiedDisplay.breakdown;
+          } else if (type === CELL_TYPES.DURATION_SEC) {
             // Show current session length as main value
             const sessionSeconds = previousWeekPreview
               ? total
@@ -5146,7 +5163,7 @@ function scheduleMathRefresh() {
             breakdown = fmt.breakdown;
           }
 
-          const description = previousWeekPreview ? `previous week ${getDisplayWeekKey()}` : (habitDescriptions[habit] || breakdown);
+          const description = unifiedDisplay ? breakdown + (!previousWeekPreview && habitDescriptions[habit] ? ` · ${habitDescriptions[habit]}` : '') : previousWeekPreview ? `previous week ${getDisplayWeekKey()}` : (habitDescriptions[habit] || breakdown);
 
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
@@ -6718,6 +6735,7 @@ function openCellEditModal(habit, index) {
       delete ledSettings[habit];
       delete ledStates[habit];
       delete currencySettings[habit];
+      window.TRCKNG_STOPWATCH?.set(currentPin, habit, CELL_TYPES.UNIT, null);
 
       saveLabels();
       saveTypes();
@@ -6787,7 +6805,8 @@ function saveCellEditValues() {
       if (window.TRCKNG_LAYOUT ? !placement : !fieldSlotAvailable(editingHabit, nextLayout)) {
         fail('Для этого размера не хватает места. Сначала передвинь кнопку или её соседей.'); return;
       }
-      const proposedType = modal.querySelector('.type-btn.active[data-type]')?.dataset.type || CELL_TYPES.UNIT;
+      const selectedType = modal.querySelector('.type-btn.active[data-type]')?.dataset.type || CELL_TYPES.UNIT;
+      const proposedType = window.TRCKNG_STOPWATCH?.resolveType(habitTypes[editingHabit], selectedType) || selectedType;
       if (proposedType === CELL_TYPES.MATH) {
         const proposed = { a: document.getElementById('mathSourceA')?.value, op: document.getElementById('mathOp')?.value,
           bMode: modal.querySelector('.type-btn.active[data-math-bmode]')?.dataset.mathBmode, b: document.getElementById('mathSourceB')?.value };
@@ -6798,8 +6817,11 @@ function saveCellEditValues() {
         if (!Number.isFinite(minutes) || minutes <= 0 || minutes > 525600) { fail('Укажи длительность таймера от доли минуты до года.'); return; }
         if (timerStates[editingHabit]?.isRunning && minutes !== timerSettings[editingHabit]?.duration) { fail('Останови таймер перед изменением длительности.'); return; }
       }
-      let moduleEdit;
-      try { moduleEdit = window.TRCKNG_MODULES?.prepareEdit?.({ habit: editingHabit, pin: currentPin, type: proposedType, label: document.getElementById('cellEditInput').value.trim() }); }
+      let moduleEdit, stopwatchView;
+      try {
+        moduleEdit = window.TRCKNG_MODULES?.prepareEdit?.({ habit: editingHabit, pin: currentPin, type: proposedType, label: document.getElementById('cellEditInput').value.trim() });
+        stopwatchView = window.TRCKNG_STOPWATCH?.prepareEdit?.({ habit: editingHabit, type: proposedType });
+      }
       catch (error) { fail(error.message); return; }
       if (placement) Object.assign(cellLayout, placement);
       if (pendingNewCell) {
@@ -6811,8 +6833,7 @@ function saveCellEditValues() {
       const newLabel = document.getElementById('cellEditInput').value.trim();
       const newColor = document.getElementById('cellEditColor').value;
       const newDescription = document.getElementById('cellEditDescription').value.trim();
-      const activeTypeBtn = document.querySelector('#cellEditModal .type-btn.active[data-type]');
-      const newType = (activeTypeBtn && activeTypeBtn.dataset.type) ? activeTypeBtn.dataset.type : CELL_TYPES.UNIT;
+      const newType = proposedType;
       const normalizedType = (newType === CELL_TYPES.COUNTER) ? CELL_TYPES.UNIT : newType;
 
 
@@ -7037,6 +7058,7 @@ function saveCellEditValues() {
       setCellLayoutSize(editingHabit, activeLayoutBtn?.dataset.layoutSize || '1x1');
 
       moduleEdit?.();
+      window.TRCKNG_STOPWATCH?.commitEdit?.({ habit: editingHabit, pin: currentPin, type: normalizedType, view: stopwatchView });
 
       closeCellEditModal();
       renderHabits();
