@@ -1,5 +1,13 @@
 # TRCKNG SSTM Project Log
 
+## UNIT elapsed view and tap confirmation — 2026-09-13
+
+Release 0.9.2 prepared for publication: existing Unit settings now offer Count (default) or Time since last mark, plus optional tap confirmation. The elapsed face shows minutes/seconds below one hour, hours/minutes below 48 hours, then completed days with EN/RU units. The existing weekly/all-weeks count stays underneath; previous-week preview retains historical counts. Positive marks renew the baseline; decreases and zero-change taps do not. Numerical undo restores the previous baseline, including null. Unknown legacy recency remains unknown unless retained positive history supplies it.
+
+The optional view, confirmation and lastMarkAt live in existing per-PIN unitSettings; previousUnitMark is retained in counter-change normalization for undo. Baselines survive journal trimming and roundtrip through existing full snapshots/storage. No new tables or duration sessions. Shared-engine behavior is gated on the v2 recency adapter. New scripts join the v2 offline cache. Earlier clients can display their normal count but do not implement these options; use updated clients for editing/undo of this feature.
+
+Passed synthetic recency unit/browser tests (48-hour boundary, plurals, confirmation cancellation, decrease/no-op/undo, snapshot adoption, stored-state reload, stale/cancelled editors and 320/390/768/1280 widths), existing stopwatch and all-button browser suites, and release-worker/offline tests. Inspected the 390px editor screenshot. Stabilized the all-button test to wait for the editor's scheduled name focus before filling other fields. Existing private records and account services were not accessed. Publication authorized by the user; live deployment verification pending.
+
 ## 2026-08-17
 
 ### Scenarios And Terminology Note

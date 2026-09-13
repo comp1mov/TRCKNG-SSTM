@@ -8,7 +8,11 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
   const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru'); await page.locator('#surfaceScenarios').waitFor({ state: 'attached' });
   const click = id => page.locator(`#btn-${id}`).click();
-  const edit = async id => { await page.locator('#btnViewLayout').click(); await page.locator(`#layout-${id} .layout-action`).nth(1).click(); };
+  const edit = async id => {
+   await page.locator('#btnViewLayout').click(); await page.locator(`#layout-${id} .layout-action`).nth(1).click();
+   // The editor deliberately focuses its name after opening. Wait before filling another field.
+   await page.waitForFunction(() => document.activeElement === document.getElementById('cellEditInput'));
+  };
   const save = async () => { await page.locator('#cellEditSave').click(); await page.locator('#btnViewTrack').click(); };
   const value = id => page.evaluate(id => weekData[getWeekKey()][id] || 0, id);
   await edit('cell01'); await page.locator('#unitStep').fill('3'); await save();

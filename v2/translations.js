@@ -644,4 +644,10 @@ window.SstmTranslations += `
 ТЯЖЕЛЕЕ|MORE DIFFICULT
 Размер|Size
 Имя кнопки|Button name
+Вид Unit|Unit view
+Количество|Count
+Время с последней отметки|Time since last mark
+До 48 часов — часы и минуты, затем — полные дни. Количество остаётся под временем. Если отметка неизвестна, видно «—».|Until 48 hours: hours and minutes, then complete days. The count stays below the time. An unknown mark shows —.
+Подтверждать нажатие|Confirm each tap
+Случайное касание не изменит число и отсчёт без подтверждения.|An accidental tap cannot change the count or elapsed time without confirmation.
 `;

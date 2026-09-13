@@ -2706,6 +2706,7 @@ function applyTheme() {
           previousLastUpdate: entry.previousLastUpdate ? Number(entry.previousLastUpdate) : null,
           nextLastUpdate: entry.nextLastUpdate ? Number(entry.nextLastUpdate) : null,
           source: String(entry.source || 'tap'),
+          ...(Object.hasOwn(entry, 'previousUnitMark') ? { previousUnitMark: Number(entry.previousUnitMark) || null } : {}),
           undoneAt: entry.undoneAt ? Number(entry.undoneAt) : null
         }))
         .sort((a, b) => a.at - b.at)
@@ -2769,10 +2770,18 @@ function applyTheme() {
           delete counterLastUpdate[entry.habit];
         }
 
+        if (window.SstmUnitRecency && Object.hasOwn(entry, 'previousUnitMark')) {
+          unitSettings[entry.habit] = { ...unitSettings[entry.habit], lastMarkAt: entry.previousUnitMark };
+          saveUnitSettings();
+        }
         counterChangeLog[i] = {
           ...entry,
           undoneAt: Date.now()
         };
+        if (window.SstmUnitRecency && !Object.hasOwn(entry, 'previousUnitMark') && ['unit', 'counter', 'tap'].includes(entry.source)) {
+          unitSettings[entry.habit] = { ...unitSettings[entry.habit], lastMarkAt: window.SstmUnitRecency.lastMark({}, counterChangeLog, entry.habit) };
+          saveUnitSettings();
+        }
 
         saveWeekData();
         saveCounterLastUpdate();
@@ -3715,6 +3724,12 @@ function applyTheme() {
     }
 
     function handleUnitClick(habit) {
+      const recency = window.SstmUnitRecency;
+      if (recency && unitSettings[habit]?.confirmTap) {
+        const ru = window.SstmI18n?.language === 'ru';
+        const question = decreaseMode ? (ru ? 'Уменьшить число?' : 'Decrease the count?') : (ru ? 'Добавить отметку и начать отсчёт заново?' : 'Add a mark and restart the elapsed time?');
+        if (!window.confirm(`${habitLabels[habit] || habit}\n${question}`)) return;
+      }
       ensureWeekExists();
       const step = getUnitStep(habit);
       const previousValue = Number(weekData[currentWeekKey][habit] || 0);
@@ -3728,14 +3743,23 @@ function applyTheme() {
 
       const nextLastUpdate = Date.now();
       counterLastUpdate[habit] = nextLastUpdate;
+      if (recency && previousValue === weekData[currentWeekKey][habit]) {
+        if (previousLastUpdate) counterLastUpdate[habit] = previousLastUpdate; else delete counterLastUpdate[habit];
+        return;
+      }
+      const previousUnitMark = recency?.lastMark(unitSettings[habit], counterChangeLog, habit);
       recordCounterChange(habit, previousValue, weekData[currentWeekKey][habit], previousLastUpdate, nextLastUpdate, 'unit');
+      if (recency) {
+        counterChangeLog.at(-1).previousUnitMark = previousUnitMark;
+        unitSettings[habit] = { ...unitSettings[habit], lastMarkAt: decreaseMode ? previousUnitMark : nextLastUpdate };
+        saveUnitSettings();
+      }
       saveWeekData();
       saveCounterLastUpdate();
       saveCounterChangeLog();
 
       // Update display depending on total flag
-      const el = document.getElementById(`value-${habit}`);
-      if (el) el.innerHTML = getUnitDisplayMarkup(habit);
+      updateCellDisplay(habit);
       scheduleMathRefresh();
       animateButton(habit);
     }
@@ -3792,8 +3816,26 @@ function applyTheme() {
       return (weekObj && typeof weekObj === 'object') ? Number(weekObj[habit] || 0) : 0;
     }
 
+    function unitRecencyDisplay(habit) {
+      const adapter = window.SstmUnitRecency;
+      if (!adapter || unitSettings[habit]?.view !== 'elapsed' || previousWeekPreview) return null;
+      return adapter.display(adapter.lastMark(unitSettings[habit], counterChangeLog, habit), Date.now(), window.SstmI18n?.language || 'en');
+    }
+
     function getUnitDisplayMarkup(habit) {
-      return String(getUnitDisplayValue(habit));
+      const display = unitRecencyDisplay(habit);
+      return display ? formatValueWithSuffix(display.main, display.suffix) : String(getUnitDisplayValue(habit));
+    }
+
+    function getUnitBreakdown(habit) {
+      const display = unitRecencyDisplay(habit);
+      if (display) {
+        const ru = window.SstmI18n?.language === 'ru';
+        const total = unitSettings[habit]?.total ? (ru ? 'ВСЕГО' : 'TOTAL') : (ru ? 'ЗА НЕДЕЛЮ' : 'THIS WEEK');
+        return `${display.label} · ${total}: ${getUnitDisplayValue(habit)}`;
+      }
+      if (previousWeekPreview) return `previous week ${getDisplayWeekKey()}`;
+      return (getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '') || habitDescriptions[habit] || '';
     }
 
     function formatValueByFormat(value, fmt) {
@@ -4583,13 +4625,16 @@ function scheduleMathRefresh() {
       HABITS.forEach(habit => {
         const type = habitTypes[habit];
 
+        // Refresh elapsed UNIT faces without changing their count or history.
+        if (window.SstmUnitRecency && (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) && unitRecencyDisplay(habit)) {
+          const valueEl = document.getElementById(`value-${habit}`);
+          if (valueEl) valueEl.innerHTML = getUnitDisplayMarkup(habit);
+        }
         // Live update for simple counters: "X ago" label
         if (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) {
           const breakdownEl = document.getElementById(`breakdown-${habit}`);
           if (breakdownEl) {
-            const description = habitDescriptions[habit] || '';
-            const lastUpdateLabel = getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '';
-            breakdownEl.textContent = lastUpdateLabel || description;
+            breakdownEl.textContent = getUnitBreakdown(habit);
           }
         }
 
@@ -4895,11 +4940,7 @@ function scheduleMathRefresh() {
 
         if (type === CELL_TYPES.COUNTER || type === CELL_TYPES.UNIT) {
           const value = getUnitDisplayMarkup(habit);
-          const description = habitDescriptions[habit] || '';
-          const lastUpdateLabel = previousWeekPreview
-            ? `previous week ${getDisplayWeekKey()}`
-            : (getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '');
-          const breakdown = lastUpdateLabel || description;
+          const breakdown = getUnitBreakdown(habit);
           btn.innerHTML = `
             <span class="btn-label">${label}</span>
             <span class="btn-value" id="value-${habit}">${value}</span>
@@ -5216,9 +5257,7 @@ function scheduleMathRefresh() {
 
       const breakdownEl = document.getElementById(`breakdown-${habit}`);
       if (breakdownEl) {
-        const description = habitDescriptions[habit] || '';
-        const lastUpdateLabel = getCellFlag(habit, 'showLastUpdate') ? formatCounterLastUpdate(habit) : '';
-        breakdownEl.textContent = lastUpdateLabel || description;
+        breakdownEl.textContent = getUnitBreakdown(habit);
       }      scheduleMathRefresh();
 
 
@@ -6583,6 +6622,10 @@ function openCellEditModal(habit, index) {
       const uCfg = unitSettings[habit] || { step: 1, total: false };
       const uStep = document.getElementById('unitStep');
       const uTotal = document.getElementById('unitTotal');
+      const uView = document.getElementById('unitView');
+      const uConfirm = document.getElementById('unitConfirmTap');
+      if (uView) uView.value = uCfg.view === 'elapsed' ? 'elapsed' : 'count';
+      if (uConfirm) uConfirm.checked = uCfg.confirmTap === true;
       if (uStep) uStep.value = (uCfg.step != null) ? uCfg.step : 1;
       if (uTotal) uTotal.checked = uCfg.total === true;
 
@@ -6985,6 +7028,8 @@ function saveCellEditValues() {
       if (normalizedType === CELL_TYPES.UNIT) {
         const step = Number(document.getElementById('unitStep')?.value);
         unitSettings[editingHabit] = {
+          ...unitSettings[editingHabit],
+          ...(window.SstmUnitRecency ? { view: document.getElementById('unitView')?.value === 'elapsed' ? 'elapsed' : 'count', confirmTap: Boolean(document.getElementById('unitConfirmTap')?.checked) } : {}),
           step: (Number.isFinite(step) && step > 0) ? Math.floor(step) : 1,
           total: Boolean(document.getElementById('unitTotal')?.checked)
         };

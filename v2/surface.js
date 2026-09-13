@@ -157,7 +157,7 @@
   function setupUI() {
     const container = $('.container'), header = $('.header');
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.9.1</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.9.2</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -247,7 +247,7 @@
   async function boot() {
     window.TRCKNG_SURFACE = 'v2';
     await loadScript('../app-config.js');
-    await loadScript('./modules.js'); await loadScript('./state-catalog.js'); await loadScript('./moments.js'); await loadScript('./stopwatch.js'); await loadScript('./data.js');
+    await loadScript('./modules.js'); await loadScript('./state-catalog.js'); await loadScript('./moments.js'); await loadScript('./stopwatch.js'); await loadScript('./unit-recency.js'); await loadScript('./data.js');
     // Explicit demo links never initialize Auth or read an existing session.
     // For an ordinary first visit, the SDK decides whether this is a returning account.
     if (!demo) {
@@ -359,7 +359,7 @@
     await loadScript('./layout.js');
     await loadScript('./field.js');
     await loadScript('./creation.js');
-    await loadScript('./stopwatch-ui.js');
+    await loadScript('./stopwatch-ui.js'); await loadScript('./unit-ui.js');
     await loadScript('./chrome.js');
     await loadScript('./clocks.js');
     await loadScript('./readability.js');

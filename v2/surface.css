@@ -269,3 +269,8 @@ body:has(#cellEditModal.visible) .header>:not(.surface-head):not(#surfaceMenu){d
 .v2-surface .stopwatch-settings output span{font-size:11px;color:#b8bdaa}
 .v2-surface .stopwatch-settings p{grid-column:1/-1;margin:0;font-size:12px;line-height:1.5;color:#b9bdb0}
 .v2-surface #cellEditModal>div{scroll-padding-block:80px 90px}
+/* Unit display preferences share the existing type-specific editor. */
+#unitRecencySettings { margin-top: 12px; }
+#unitRecencySettings > label { display: flex; gap: 8px; min-height: 44px; }
+#unitRecencySettings > .cell-edit-field { flex-direction: column; }
+#unitRecencySettings .unit-confirm-option { align-items: center; font-size: 13px; cursor: pointer; }

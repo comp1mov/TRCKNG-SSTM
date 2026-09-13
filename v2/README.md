@@ -1,4 +1,4 @@
-# SSTM v2 / beta 0.9.1
+# SSTM v2 / beta 0.9.2
 
 [Personal entry](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account) · [Demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo) · [V1](https://comp1mov.github.io/TRCKNG-SSTM/)
 
@@ -29,6 +29,8 @@ Phones and short landscape screens start with compact panels: recording, current
 Account shows identity, save status, sign out and sync. Backup/recovery is collapsed and opens when a conflict needs attention. Legacy v1 source/recovery downloads appear only when those copies exist.
 
 ## Buttons and windows
+
+**Unit → Unit view → Time since last mark** shows elapsed hours/minutes until 48 hours, then full days, with the count below. **Confirm each tap** protects both additions and decreases. Decreases and zero-change taps do not restart elapsed time; numerical undo restores the preceding mark. Unknown older marks show **—**; retained positive counter history can supply a baseline. Preferences and the baseline travel with the existing PIN settings in sync and backups. The count view remains the default. Previous-week preview still shows historical counts.
 
 Tap a **+** in an empty field cell on any PIN to create there. These affordances are generated for the visible area and are not stored as buttons. Existing blank cells also open directly from the field. **ARRANGE** offers settings and module placement; free space and edge dragging grow the grid. Exact equal-size drops swap modules. Minimized panels retain drafts and appear in the window dock. Account always has a labelled return action.
 
