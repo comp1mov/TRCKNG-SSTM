@@ -7,6 +7,7 @@ const http = require('node:http');
 const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const v2Cache = fs.readFileSync(path.join(root, 'v2/service-worker.js'), 'utf8').match(/const CACHE = '([^']+)'/)[1];
+const v1Cache = fs.readFileSync(path.join(root, 'service-worker.js'), 'utf8').match(/const CACHE_NAME = '([^']+)'/)[1];
 const oldRef = '2622fa391a0e3b528025026d5f74181943a733dd';
 const oldFiles = new Map();
 let published = false;
@@ -65,16 +66,23 @@ const server = http.createServer((req, res) => {
     const oldKeys = await page.evaluate(() => caches.keys());
     assert.ok(oldKeys.includes(v2Cache));
     await old.evaluate(async () => (await navigator.serviceWorker.getRegistration('./')).update());
-    await until(() => old.evaluate(async () => (await caches.keys()).includes('trckng-sstm-v1.34.9') && !(await caches.keys()).includes('trckng-sstm-v1.33.23')));
+    await until(() => old.evaluate(async name => (await caches.keys()).includes(name) && !(await caches.keys()).includes('trckng-sstm-v1.33.23'), v1Cache));
     assert.ok((await page.evaluate(() => caches.keys())).includes(v2Cache), 'Root update preserves v2 cache');
-    await old.evaluate(async () => {
-      const cache = await caches.open('trckng-sstm-v1.34.9');
+    await old.evaluate(async name => {
+      const cache = await caches.open(name);
       for (const asset of ['app.js', 'style.css', 'history-matrix.js', 'icons/icon-192.png', 'icons/icon-512.png']) {
         if (!(await cache.match('/TRCKNG-SSTM/' + asset))) throw new Error('Missing precached asset: ' + asset + '; cached: ' + (await cache.keys()).map(r => r.url).join(', '));
       }
-    });
+    }, v1Cache);
+    await page.evaluate(async name => {
+      const cache = await caches.open(name);
+      for (const asset of ['medium.js','signals.js','signals-model.js','signals.css','typography.css','fonts/RobotoMono-Regular.ttf','fonts/RobotoMono-Medium.ttf','fonts/RobotoDigits-Regular.ttf','fonts/RobotoDigits-Medium.ttf']) {
+        if (!(await cache.match('/TRCKNG-SSTM/v2/' + asset))) throw new Error('Missing v2 visual asset: ' + asset);
+      }
+    }, v2Cache);
     await context.setOffline(true);
     await page.reload({ waitUntil: 'domcontentloaded' }); await page.locator('#btn-cell01').waitFor();
+    await page.locator('#signalSettings').waitFor({state:'attached'});
     assert.equal(await page.locator('body').getAttribute('data-mode'), 'demo');
     assert.equal(await page.evaluate(() => localStorage.getItem('trckng_sstm_data_pin0')), '{"fixture":"release-sentinel"}');
     assert.deepEqual(errors, []); assert.deepEqual(external, []);

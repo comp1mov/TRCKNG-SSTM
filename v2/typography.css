@@ -1,0 +1,7 @@
+@font-face{font-family:'SSTM Digits';src:url('./fonts/RobotoDigits-Regular.ttf') format('truetype');font-weight:400;font-display:swap;unicode-range:U+0030-0039}
+@font-face{font-family:'SSTM Digits';src:url('./fonts/RobotoDigits-Medium.ttf') format('truetype');font-weight:500 900;font-display:swap;unicode-range:U+0030-0039}
+@font-face{font-family:'SSTM Text';src:url('./fonts/RobotoMono-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'SSTM Text';src:url('./fonts/RobotoMono-Medium.ttf') format('truetype');font-weight:500 900;font-display:swap}
+:root{--surface-font:'SSTM Digits','SSTM Text',monospace;--surface-ink:#e5e5e9;--surface-line:#343438}
+body.v2-surface,body.v2-surface *{font-family:var(--surface-font);font-variant-numeric:tabular-nums;font-feature-settings:'zero' 0,'liga' 0,'calt' 0}
+body.v2-surface{background:#0c0c0f;--app-bg:#0c0c0f}

@@ -1,6 +1,49 @@
 'use strict';
 // UI copy only. User labels, tags, notes and stored observations are never translated.
 window.SstmTranslations = `
+Ранее использованные теги|Previously used tags
+Можно добавить новое слово или продолжить ввод.|Add a new word or keep typing.
+Пока нет прошлых тегов. Введи первый — он появится в подсказках.|No previous tags yet. Enter your first one to reuse it later.
+Свет и фактура|Light and texture
+ПРЕДПРОСМОТР|PREVIEW
+Мягкое течение|Soft flow
+Мелкое зерно|Fine grain
+Дым|Smoke
+Крупное зерно|Coarse grain
+Ленты|Ribbons
+Фактура|Texture
+Моя настройка|Custom
+Случайная фактура|Random texture
+Затухание отметки, мин|Mark fade, min
+Движение фактуры|Texture motion
+По настройке устройства|Follow device setting
+Включено|On
+Статичная фактура|Static texture
+Свет показывает работающий таймер или давность отметки. Оформление не меняет записи.|Light shows a running timer or how recent a mark is. Appearance does not change records.
+Настроить фактуру|Adjust texture
+Рисунок|Pattern
+Течения|Flow
+Зерно|Grain
+Без фактуры|No texture
+Эволюция|Evolution
+Со светом|With light
+Независимо|Independent
+Скорость|Speed
+Глубина|Depth
+Масштаб|Scale
+Размытие|Blur
+Ореол|Glow
+Ритм|Rhythm
+Удар|Beat
+Волна|Wave
+Показывать|Display
+мс|ms
+Полный цикл|Full cycle
+Полный цикл, мс|Full cycle, ms
+Затухание удара|Beat decay
+Это оформление создано в более новой версии. Оно сохранится без изменений.|This appearance was created in a newer version. It will be kept unchanged.
+Проверь параметры света и фактуры.|Check the light and texture settings.
+Укажи темп от 1 до 300 BPM или цикл от 200 до 60000 мс.|Enter 1–300 BPM or a cycle of 200–60000 ms.
 Вид секундомера|Stopwatch view
 Секундомер · как раньше|Stopwatch · classic
 Сумма времени|Total time

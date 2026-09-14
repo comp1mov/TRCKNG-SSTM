@@ -1,6 +1,26 @@
-# SSTM v2 / beta 0.9.2
+# SSTM v2 / beta 0.10.2
 
 [Personal entry](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account) · [Demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo) · [V1](https://comp1mov.github.io/TRCKNG-SSTM/)
+
+## Light continuity fix (0.10.1)
+
+Pulse now keeps its functional rhythm when the device requests reduced motion or the material is set to Static. The motion control explicitly applies to the texture only; tapping Pulse still starts/stops its light. Unchanged controls retain their canvas, current texture and brightness when neighbouring timers are started/stopped. Re-observing the same size no longer clears the backing canvas. Texture opacity is quieter and evolution is slower, independent of BPM, while ordinary timers keep a constant activity light.
+
+Verified with a reduced-motion browser: all four 4+4 phase samples, static-texture Pulse, preserved canvas/pixels/light over neighbour toggles, PIN isolation and stop. Existing visual settings/snapshot/layout, dense field and offline checks also pass.
+
+## Light and texture (0.10.0)
+
+In **ARRANGE → edit a button → Light and texture**, choose one of five materials or tune speed, scale, seed, blur and glow. The color picker above it controls the whole button. Running stopwatches, timers, points and work controls stay lit; stopped controls go dark. Positive counter marks fade over a configurable number of minutes (15 by default, 0 disables the tail). Decreases and undo use the original mark time.
+
+Pulse offers Beat, Wave, 4+4, 5+5 and 4+4+4+4. BPM and milliseconds describe the same full cycle. A saved start timestamp keeps the phase when the field is rebuilt or a snapshot is restored. Beat decay is adjustable; the named patterns have fixed lengths.
+
+Existing controls receive stable, deterministic defaults without a data write. Newly created controls choose one recipe once, then save its concrete values under `cellFlags[id].light`. These preferences travel through the existing v2 snapshot and sync path; there is no database migration. Unknown future visual versions are retained with a plain fallback. Texture animation follows the device preference by default, with explicit On and Static options. Pulse rhythm is controlled by the Pulse button independently.
+
+MEDIUM is a separate renderer (`medium.js`); it does not record events. One host loop limits texture painting to three visible buttons per frame and stops scheduling work in hidden tabs. Letters use self-hosted Roboto Mono, with plain Roboto digits and included OFL licenses, in both languages. These assets are included in the 0.10.2 release.
+
+## Interval tag suggestions (0.10.2)
+
+In **INTERVALS → + tag**, previous tags are visible before typing. Suggestions use the current account's existing moment and interval tags, filter by the word at the cursor, and exclude tags already selected. Tap a suggestion or press Arrow Down then Enter. Selection only updates the draft; Save commits it. Creating a new point starts with empty tags and never copies the prior interval's tags automatically.
 
 ## First recording
 

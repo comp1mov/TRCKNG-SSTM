@@ -4380,7 +4380,7 @@ function handleDurationClick(habit, type) {
         ledStates[habit] = { isActive: false };
       } else {
         startLedPulse(habit, settings);
-        ledStates[habit] = { isActive: true };
+        ledStates[habit] = { isActive: true, ...(window.TRCKNG_LIGHT ? { startedAt: Date.now() } : {}) };
       }
       saveLedStates();
       animateButton(habit);
@@ -4388,6 +4388,7 @@ function handleDurationClick(habit, type) {
 
     function startLedPulse(habit, settings) {
       stopLedPulse(habit);
+      if (window.TRCKNG_LIGHT) return;
       
       const btn = document.getElementById(`btn-${habit}`);
       if (!btn) return;
@@ -6864,10 +6865,11 @@ function saveCellEditValues() {
         if (!Number.isFinite(minutes) || minutes <= 0 || minutes > 525600) { fail('Укажи длительность таймера от доли минуты до года.'); return; }
         if (timerStates[editingHabit]?.isRunning && minutes !== timerSettings[editingHabit]?.duration) { fail('Останови таймер перед изменением длительности.'); return; }
       }
-      let moduleEdit, stopwatchView;
+      let moduleEdit, stopwatchView, lightSettings;
       try {
         moduleEdit = window.TRCKNG_MODULES?.prepareEdit?.({ habit: editingHabit, pin: currentPin, type: proposedType, label: document.getElementById('cellEditInput').value.trim() });
         stopwatchView = window.TRCKNG_STOPWATCH?.prepareEdit?.({ habit: editingHabit, type: proposedType });
+        lightSettings = window.TRCKNG_LIGHT?.prepareEdit?.({ habit: editingHabit, type: proposedType });
       }
       catch (error) { fail(error.message); return; }
       if (placement) Object.assign(cellLayout, placement);
@@ -7018,6 +7020,7 @@ function saveCellEditValues() {
 
       cellFlags[editingHabit] = {
         ...getCellFlags(editingHabit),
+        ...(lightSettings ? { light: lightSettings } : {}),
         showInHistory: Boolean(document.getElementById('cellFlagHistory')?.checked),
         showInTimeline: Boolean(document.getElementById('cellFlagTimeline')?.checked),
         showLastUpdate: Boolean(document.getElementById('cellFlagLastUpdate')?.checked)

@@ -139,6 +139,34 @@
       input.oninput = () => { drafts[key] = { original, originalTags, point: inputs.point.value, interval: inputs.interval.value, tags: inputs.tags.value }; saveDrafts(); };
       form.append(input);
     }
+    if (kind === 'tags') {
+      const input = inputs.tags, hints = make('div', 'cycle-tag-hints');
+      const caption = make('p', 'cycle-explanation', 'Ранее использованные теги');
+      const choices = make('div', 'cycle-tag-choices'); choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', 'Подсказки тегов');
+      choices.setAttribute('data-no-i18n', '');
+      const empty = make('p', 'cycle-explanation');
+      let composing = false, caret = input.value.length;
+      input.autocomplete = 'off';
+      function refreshHints() {
+        caret = input.selectionStart ?? input.value.length;
+        const words = composing ? [] : window.SstmTagInput?.suggest(read(), input.value, caret) || [];
+        choices.replaceChildren(...words.map(word => button(`#${word}`, () => {
+          const result = window.SstmTagInput.complete(input.value, caret, word);
+          input.value = result.text; input.focus({ preventScroll: true }); input.setSelectionRange(result.caret, result.caret);
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        })));
+        empty.textContent = window.SstmI18n.text(input.value.trim() ? 'Можно добавить новое слово или продолжить ввод.' : 'Пока нет прошлых тегов. Введи первый — он появится в подсказках.');
+        empty.hidden = words.length > 0 || composing; caption.hidden = !words.length;
+      }
+      input.addEventListener('input', refreshHints); input.addEventListener('click', refreshHints); input.addEventListener('focus', refreshHints);
+      input.addEventListener('compositionstart', () => { composing = true; refreshHints(); });
+      input.addEventListener('compositionend', () => { composing = false; refreshHints(); });
+      input.addEventListener('keydown', event => {
+        if (!event.isComposing && event.key === 'ArrowDown' && choices.firstElementChild) { event.preventDefault(); choices.firstElementChild.focus(); }
+      });
+      input.addEventListener('keyup', event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) refreshHints(); });
+      hints.append(caption, choices, empty); form.append(hints); refreshHints();
+    }
     form.prepend(make('label', 'cycle-explanation', kind === 'tags' ? 'Теги через пробел. Они помогают найти отрезок; время кнопкам пока не начисляют.' : kind === 'point' ? `Точка ${index + 1} · название необязательно` : `Отрезок ${index + 1} · название необязательно`));
     const error = make('p', 'cycle-edit-error'); error.setAttribute('role', 'alert');
     const save = button('СОХРАНИТЬ', () => saveNames());

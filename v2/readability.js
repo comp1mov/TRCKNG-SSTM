@@ -25,7 +25,7 @@
         baseline = Math.min(baseline, Number(document.body.dataset.cellSize || 128) * .27);
       }
       if (tile.classList.contains('module-work')) {
-        const siblings = [...tile.children].filter(n => n !== value && getComputedStyle(n).display !== 'none');
+        const siblings = [...tile.children].filter(n => n !== value && !n.matches('.sl-medium') && getComputedStyle(n).display !== 'none');
         const occupied = siblings.reduce((sum, n) => sum + n.getBoundingClientRect().height, 0) + (parseFloat(tileStyle.rowGap) || 0) * siblings.length + parseFloat(tileStyle.paddingTop) + parseFloat(tileStyle.paddingBottom);
         baseline = Math.min(baseline, Math.max(12, (tile.clientHeight - occupied - 2) / 1.05));
       }

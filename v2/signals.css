@@ -1,0 +1,37 @@
+/* The material and light never filter text or extend into neighbouring modules. */
+body.v2-surface #habitsGrid .btn-habit.signal-pad,body.v2-surface .signal-preview{
+  isolation:isolate;position:relative;overflow:hidden;--sl-light:0;--sl-source:var(--btn-color,#bfa6ec);
+  background:#0c0c0f;border:1px solid color-mix(in srgb,var(--sl-source) 26%,#343438);box-shadow:none;animation:none;color:var(--surface-ink)
+}
+body.v2-surface #habitsGrid .signal-pad::before,.v2-surface .signal-preview::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;opacity:var(--sl-light);animation:none;transform:none;
+  background:radial-gradient(ellipse at 8% 4%,color-mix(in srgb,var(--sl-source) 46%,transparent),transparent 68%),radial-gradient(ellipse at 90% 95%,color-mix(in srgb,var(--sl-source) 32%,transparent),transparent 72%),color-mix(in srgb,var(--sl-source) 12%,transparent);
+  box-shadow:inset 0 0 18px color-mix(in srgb,var(--sl-source) 28%,transparent)
+}
+body.v2-surface #habitsGrid .signal-pad:not(.module-work)::after{content:'';display:block;position:absolute;inset:auto 8px 8px auto;width:6px;height:6px;z-index:2;transform:none;animation:none;border:1px solid color-mix(in srgb,var(--sl-source) 35%,#5c5c66);background:color-mix(in srgb,var(--sl-source) calc(var(--sl-light)*100%),transparent);opacity:.85;pointer-events:none}
+.v2-surface .signal-pad> :not(.sl-medium),.v2-surface .signal-preview> :not(.sl-medium){position:relative;z-index:1}
+.v2-surface .signal-pad>.sl-medium,.v2-surface .signal-preview>.sl-medium{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;mix-blend-mode:screen;opacity:0}
+.v2-surface .sl-medium canvas{position:absolute;inset:-10%;width:120%;height:120%;display:block;pointer-events:none}
+.v2-surface .sl-medium .sl-noise{filter:blur(var(--sl-blur,5px));mix-blend-mode:screen}
+.v2-surface .sl-medium .sl-bloom{filter:blur(calc(var(--sl-blur,5px) + 18px)) brightness(2.2);opacity:var(--sl-bloom,.47);transform:scale(1.12)}
+body.v2-surface #habitsGrid .signal-pad .btn-value,body.v2-surface #habitsGrid .signal-pad .module-main,body.v2-surface .signal-preview strong{color:color-mix(in srgb,var(--sl-source) calc(var(--sl-light)*24%),#dfdfe6);text-shadow:0 0 7px color-mix(in srgb,var(--sl-source) calc(var(--sl-light)*35%),transparent),0 0 22px color-mix(in srgb,var(--sl-source) calc(var(--sl-light)*65%),transparent);-webkit-text-stroke:0;animation:none}
+body.v2-surface #habitsGrid .signal-pad .btn-breakdown{color:var(--surface-ink);opacity:.8}
+.v2-surface .signal-settings{border-top:1px solid var(--surface-line);padding:14px 0;margin-top:14px;min-width:0}
+.v2-surface .signal-settings summary{cursor:pointer;min-height:44px;display:list-item;align-content:center;font-size:14px}
+.v2-surface .signal-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px;margin:16px 0}
+.v2-surface .signal-controls label{display:flex;flex-direction:column;gap:8px;font-size:12px;min-width:0}
+.v2-surface .signal-controls :is(select,input,button){min-width:0;max-width:100%;width:100%;min-height:44px;box-sizing:border-box;font-size:14px}
+.v2-surface .signal-controls :is(select,input:not([type=range]),button){background:#111115;color:var(--surface-ink);border:1px solid #3d3d45;padding:10px;border-radius:0}
+.v2-surface .signal-controls button:hover{border-color:var(--btn-color,#bfa6ec)}
+.v2-surface .signal-controls :is(select,input,button):focus-visible{outline:2px solid var(--surface-accent);outline-offset:2px}
+.v2-surface .signal-controls input[type=range]{padding:0;accent-color:var(--btn-color,#bfa6ec)}
+.v2-surface .signal-controls output{font-size:12px;float:right;margin-left:6px;color:var(--surface-ink)}
+.v2-surface .signal-preview{height:146px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.v2-surface .signal-preview strong{font-weight:400;font-size:42px;line-height:1.1}
+.v2-surface .signal-preview span{font-size:11px;letter-spacing:.03em}
+.v2-surface .signal-settings p{font-size:12px;color:#aaaab5;line-height:1.55;margin:10px 0}
+.v2-surface .signal-pulse{padding-top:12px;border-top:1px solid var(--surface-line)}
+.v2-surface .signal-settings [hidden]{display:none!important}
+.v2-surface #ledBpm[readonly]{opacity:.65}
+.v2-surface #signalColor{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.v2-surface #signalColor input{width:64px;height:44px;cursor:pointer}

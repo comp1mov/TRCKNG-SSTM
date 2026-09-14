@@ -6,8 +6,9 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
   await ctx.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
   const page = await ctx.newPage(), errors=[]; page.on('pageerror',e=>errors.push(e.message));
   const url='http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru';
-  await page.goto(url); await page.locator('#unitView').waitFor({state:'attached'});
+  // Set the fixture date before loading: real Mondays must not select a different week.
   const now=Date.parse('2026-09-13T12:00:00Z'); await page.clock.setFixedTime(now);
+  await page.goto(url); await page.locator('#unitView').waitFor({state:'attached'});
   await page.evaluate(() => {
    habitTypes.cell01='unit'; habitLabels.cell01='Fixture'; unitSettings.cell01={step:1,total:false};
    weekData[currentWeekKey].cell01=4; counterChangeLog=[];counterLastUpdate.cell01=Date.now()-48*3600000;
@@ -33,7 +34,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
   assert.equal(await page.evaluate(()=>unitSettings.cell01.lastMarkAt),now+48*3600000);
   await page.evaluate(()=>undoLastCounterChange());assert.equal(await page.evaluate(()=>unitSettings.cell01.lastMarkAt),now);
   const snapshot=await page.evaluate(()=>buildCloudSnapshot());
-  const other=await ctx.newPage();await other.goto(url);await other.locator('#unitView').waitFor({state:'attached'});await other.evaluate(s=>applyCloudSnapshot(s),snapshot);
+  const other=await ctx.newPage();await other.clock.setFixedTime(now);await other.goto(url);await other.locator('#unitView').waitFor({state:'attached'});await other.evaluate(s=>applyCloudSnapshot(s),snapshot);
   assert.deepEqual(await other.evaluate(()=>unitSettings.cell01),await page.evaluate(()=>unitSettings.cell01));
   await other.clock.setFixedTime(now);
   await other.evaluate(()=>{currentWeekKey=getWeekKey();undoLastCounterChange();});assert.equal(await other.evaluate(()=>unitSettings.cell01.lastMarkAt),null);

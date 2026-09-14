@@ -1,4 +1,4 @@
-# TRCKNG SSTM — v1.34.9 / v2 beta 0.9.2
+# TRCKNG SSTM — v1.34.10 / v2 beta 0.10.2
 
 A modular tracking field for habits, time, words, states and personal metrics.
 
