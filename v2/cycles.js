@@ -27,7 +27,13 @@
   }
   function capture(end = false) {
     if (window.TRCKNG_ACCOUNT && !window.TRCKNG_ACCOUNT.ready) return;
-    try { write(data.point(read(), Date.now(), end)); }
+    try {
+      const journal = data.point(read(), Date.now(), end); write(journal);
+      let suggest = true; try { suggest = localStorage.getItem('sstm_v2_prompt_names') !== 'false'; } catch {}
+      if (!end && suggest) {
+        const cycle = active(journal); suggestName(cycle.id, cycle.points.at(-1).id);
+      }
+    }
     catch (error) { $('surfaceHint').textContent = error.message; }
   }
   function open(cycleId, pointId) {
@@ -35,6 +41,28 @@
     renderHistory(); $('cycleModal').classList.add('visible');
     if (pointId) requestAnimationFrame(() => document.getElementById(`record-${pointId}`)?.scrollIntoView({ block: 'center' }));
   }
+  const namePrompt = document.createElement('dialog'); namePrompt.id = 'cycleNamePrompt';
+  namePrompt.innerHTML = '<form><label for="cyclePromptName">Название текущего отрезка</label><input id="cyclePromptName" maxlength="160" autocomplete="off" placeholder="Необязательно"><label for="cyclePromptPoint">Название точки</label><input id="cyclePromptPoint" maxlength="160" autocomplete="off" placeholder="Необязательно"><p class="cycle-explanation">Точка уже записана. Новый отрезок идёт.</p><p role="alert" id="cyclePromptError"></p><div class="cycle-edit-actions"><button type="submit">СОХРАНИТЬ</button><button type="button" id="cyclePromptSkip">ПРОПУСТИТЬ</button></div></form>';
+  document.body.append(namePrompt);
+  let promptTarget = null;
+  function suggestName(cycleId, pointId) {
+    promptTarget = { cycleId, pointId }; $('cyclePromptName').value = ''; $('cyclePromptPoint').value = ''; $('cyclePromptError').textContent = '';
+    namePrompt.showModal(); $('cyclePromptName').focus();
+  }
+  $('cyclePromptSkip').onclick = () => namePrompt.close();
+  namePrompt.querySelector('form').onsubmit = event => {
+    event.preventDefault();
+    try {
+      const name = $('cyclePromptName').value.trim(), pointName = $('cyclePromptPoint').value.trim();
+      if ((name || pointName) && promptTarget) {
+        let journal = read();
+        if (name) journal = data.annotate(journal, promptTarget.cycleId, promptTarget.pointId, 'interval', name);
+        if (pointName) journal = data.annotate(journal, promptTarget.cycleId, promptTarget.pointId, 'point', pointName);
+        write(journal);
+      }
+      namePrompt.close();
+    } catch (error) { $('cyclePromptError').textContent = error.message; }
+  };
   const type = button('ТОЧКИ'); type.className = 'type-btn'; type.dataset.type = 'points';
   document.querySelector('#cellEditModal .type-selector').prepend(type);
   const typeHelp = make('p', 'cycle-explanation', 'Общая запись с верхней шкалой. Нажатие отмечает границу отрезка. Подходит и для короткого занятия, и для целого дня.'); typeHelp.hidden = true;
@@ -82,8 +110,8 @@
     if (!results.childElementCount) results.append(make('p', 'cycle-explanation', 'Совпадений пока нет.'));
   }
   $('cycleSearch').oninput = searchRecords;
-  function mode(value) { document.body.classList.toggle('personal-cycle', value === 'cycle'); store.setItem('sstm_v2_time_view', value); }
-  $('cycleCalendar').onclick = () => mode('calendar'); $('cycleReturn').onclick = () => mode('cycle');
+  function mode(value) { document.body.classList.toggle('personal-cycle', value === 'cycle'); store.setItem('sstm_v2_time_view', value); window.dispatchEvent(new Event('sstm-calendar-view')); }
+  $('cycleCalendar').onclick = () => mode(document.body.classList.contains('personal-cycle') ? 'calendar' : 'cycle'); $('cycleReturn').onclick = () => mode('cycle');
   mode(store.getItem('sstm_v2_time_view') || 'cycle');
   function segments(cycle, now = Date.now()) {
     if (!cycle) return [];
@@ -348,5 +376,6 @@
   new MutationObserver(render).observe($('habitsGrid'), { childList: true });
   window.addEventListener('sstm-v2-loaded', () => { render(); renderHistory(); });
   window.addEventListener('sstm-v2-moments-changed', () => { render(); renderHistory(); });
+  window.SstmRecordings = { read, segments, open };
   setInterval(render, 1000); render();
 })();

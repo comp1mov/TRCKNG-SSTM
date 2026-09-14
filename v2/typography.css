@@ -5,3 +5,25 @@
 :root{--surface-font:'SSTM Digits','SSTM Text',monospace;--surface-ink:#e5e5e9;--surface-line:#343438}
 body.v2-surface,body.v2-surface *{font-family:var(--surface-font);font-variant-numeric:tabular-nums;font-feature-settings:'zero' 0,'liga' 0,'calt' 0}
 body.v2-surface{background:#0c0c0f;--app-bg:#0c0c0f}
+body.v2-surface #cycleElapsed{font-size:clamp(24px,4vw,32px)}
+body.v2-surface.surface-night{background:#030304;--app-bg:#030304;--surface-line:#222225}
+/* Dim the resting surface, not the signal: the existing light envelope restores
+   full brightness on a mark, throughout a timer, and at each Pulse peak. */
+body.v2-surface.surface-night #habitsGrid .btn-habit{filter:brightness(.32)}
+body.v2-surface.surface-night #habitsGrid .btn-habit.signal-pad{filter:brightness(calc(.32 + var(--sl-light,0) * .68))}
+body.v2-surface.surface-night #habitsGrid .btn-habit:active,
+body.v2-surface.surface-night #habitsGrid .btn-habit:focus-visible{filter:brightness(1)}
+body.v2-surface.surface-night .header{filter:brightness(.55)}
+body.v2-surface.surface-night .surface-footer,body.v2-surface.surface-night #surfaceDock{filter:brightness(.55)}
+body.v2-surface.surface-night .modal{backdrop-filter:brightness(.45)}
+body.v2-surface.surface-night .modal>div{background:#080809;color:#b0b0b8}
+body.v2-surface #surfaceNight[aria-pressed=true]{border-color:var(--surface-accent);color:var(--surface-accent)}
+body.v2-surface #surfacePromptNames[aria-pressed=true]{border-color:var(--surface-accent);color:var(--surface-accent)}
+#cycleNamePrompt{width:min(360px,calc(100vw - 32px));box-sizing:border-box;background:#101012;color:var(--surface-ink);border:1px solid var(--surface-line);padding:18px}
+#cycleNamePrompt::backdrop{background:#000b}
+#cycleNamePrompt form{display:grid;gap:12px}
+#cycleNamePrompt :is(input,select,button){background:#171719;color:inherit;border:1px solid #444;padding:8px;min-width:0}
+#cycleNamePrompt input{width:100%;box-sizing:border-box}
+#cycleNamePrompt label{font-size:13px}
+.surface-prompt-setting{display:flex;align-items:center;gap:10px;min-height:44px;font-size:12px;cursor:pointer}
+body.v2-surface .surface-prompt-setting input{width:20px;height:20px;min-height:20px;flex:none;accent-color:var(--surface-accent)}

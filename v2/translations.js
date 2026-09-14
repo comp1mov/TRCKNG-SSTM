@@ -691,6 +691,16 @@ window.SstmTranslations += `
 Количество|Count
 Время с последней отметки|Time since last mark
 До 48 часов — часы и минуты, затем — полные дни. Количество остаётся под временем. Если отметка неизвестна, видно «—».|Until 48 hours: hours and minutes, then complete days. The count stays below the time. An unknown mark shows —.
+НОЧНОЙ РЕЖИМ|NIGHT MODE
+Название текущего отрезка|Current interval name
+Название точки|Point name
+Спрашивать названия после точки|Ask for names after a point
+ПРЕДЛАГАТЬ НАЗВАНИЕ ТОЧКИ|ASK FOR A NAME AFTER A POINT
+Что назвать?|What would you like to name?
+Точку|Point
+Название — необязательно|Name — optional
+Точка уже записана. Новый отрезок идёт.|Point recorded. The new interval is running.
+ПРОПУСТИТЬ|SKIP
 Подтверждать нажатие|Confirm each tap
 Случайное касание не изменит число и отсчёт без подтверждения.|An accidental tap cannot change the count or elapsed time without confirmation.
 `;

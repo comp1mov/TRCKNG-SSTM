@@ -157,7 +157,7 @@
   function setupUI() {
     const container = $('.container'), header = $('.header');
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.10.2</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.10.3</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -171,6 +171,18 @@
     menu.querySelector('#surfaceLanguage').value = window.SstmI18n.language;
     menu.querySelector('#surfaceLanguage').onchange = event => window.SstmI18n.setLanguage(event.target.value);
     header.append(menu);
+    const night = document.createElement('button'); night.id = 'surfaceNight'; night.type = 'button'; night.textContent = 'НОЧНОЙ РЕЖИМ';
+    const setNight = enabled => { document.body.classList.toggle('surface-night', enabled); night.setAttribute('aria-pressed', String(enabled)); };
+    try { setNight(localStorage.getItem('sstm_v2_night') === 'true'); } catch { setNight(false); }
+    night.onclick = () => { const enabled = !document.body.classList.contains('surface-night'); setNight(enabled); try { localStorage.setItem('sstm_v2_night', String(enabled)); } catch {} };
+    menu.prepend(night);
+    const promptNamesLabel = document.createElement('label'); promptNamesLabel.className = 'surface-prompt-setting';
+    const promptNames = document.createElement('input'); promptNames.id = 'surfacePromptNames'; promptNames.type = 'checkbox';
+    const promptNamesText = document.createElement('span'); promptNamesText.textContent = 'Спрашивать названия после точки';
+    let namesEnabled = true; try { namesEnabled = localStorage.getItem('sstm_v2_prompt_names') !== 'false'; } catch {}
+    promptNames.checked = namesEnabled;
+    promptNames.onchange = () => { namesEnabled = promptNames.checked; try { localStorage.setItem('sstm_v2_prompt_names', String(namesEnabled)); } catch {} };
+    promptNamesLabel.append(promptNames, promptNamesText); menu.append(promptNamesLabel);
     const bar = document.createElement('div'); bar.className = 'surface-tools'; bar.append($('.pins'), $('.view-tabs')); header.append(bar);
     const actions = $('.controls-edit');
     textButton('btnDecrease', '− РЕЖИМ');
@@ -199,7 +211,10 @@
     const dock = document.createElement('nav'); dock.id = 'surfaceDock'; dock.hidden = true; dock.setAttribute('aria-label', 'Свёрнутые окна'); container.insertBefore(dock, footer);
     $('#surfaceAccount').onclick = openAccount; $('#surfaceSignIn').onclick = openAccount; $('#surfaceStatus').onclick = openAccount;
     $('#surfaceMenuButton').onclick = () => { const open = menu.hidden; menu.hidden = !open; $('#surfaceMenuButton').setAttribute('aria-expanded', String(open)); };
-    $('#surfaceCalendar').onclick = () => { const open = document.body.classList.toggle('show-calendar'); if (open) $('#cycleCalendar').click(); $('#surfaceCalendar').setAttribute('aria-pressed', String(open)); closeMenu(); };
+    $('#surfaceCalendar').textContent = 'КАЛЕНДАРЬ';
+    $('#surfaceCalendar').onclick = () => { $('#cycleCalendar').click(); closeMenu(); };
+    const calendarState = () => $('#surfaceCalendar').setAttribute('aria-pressed', String(!document.body.classList.contains('personal-cycle')));
+    window.addEventListener('sstm-calendar-view', calendarState); calendarState();
     $('#surfaceHome').onclick = () => { document.querySelector('.view-panel:not([hidden])')?.scrollTo(0, 0); remember(); };
     const zoomBy = delta => { remember(); cameras[cameraId()] = { ...(cameras[cameraId()] || {}), size: Math.min(192, Math.max(96, step() + delta)) }; restore(); saveCameras(); };
     $('#surfaceZoomOut').onclick = () => zoomBy(-32); $('#surfaceZoomIn').onclick = () => zoomBy(32);
@@ -322,6 +337,8 @@
     document.body.replaceChildren(...[...source.body.children].map(node => document.importNode(node, true)));
     document.body.classList.add('v2-surface');
     await loadScript('./cycles.js');
+    await loadScript('./calendar-model.js');
+    await loadScript('./calendar.js');
     await loadScript('./scenarios.js');
     await loadScript('./tag-input.js');
     await loadScript('./marks.js');

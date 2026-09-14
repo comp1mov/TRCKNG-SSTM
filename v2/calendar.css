@@ -1,0 +1,21 @@
+.v2-surface:not(.personal-cycle) #cycleClock{display:block}
+.v2-surface .header>.progress-meta,.v2-surface .header>.progress-strip,.v2-surface .surface-time-ruler{display:none!important}
+.personal-cycle #recordingCalendar,.v2-surface:not(.personal-cycle) #cycleStrip,.v2-surface:not(.personal-cycle) #cycleRuler,.account-locked #recordingCalendar{display:none!important}
+#recordingCalendar{order:1;min-width:0;width:100%;background:#101012;border-bottom:1px solid #363638;text-align:left}
+#cycleReturn{order:2}
+.calendar-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px}
+.calendar-nav button,.calendar-nav select{min-height:44px;background:#171719;color:inherit;border:1px solid #444;padding:6px 12px;font:inherit}
+.calendar-nav strong{font-size:12px;font-weight:400;margin-left:auto}
+.calendar-scroll{overflow:auto;max-height:280px;padding:0 8px 8px}
+.calendar-axis{position:relative;min-width:560px;padding-top:8px}
+.calendar-caption{display:block;height:26px;color:#aaa;font-size:11px}
+.calendar-record-row{height:76px;position:relative;border-bottom:1px solid #303033}
+.calendar-record-label{position:relative;z-index:3;height:30px;font:inherit;font-size:11px;border:0;background:#101012;color:#bcbcbc;padding:4px}
+.calendar-part{position:absolute;top:30px;height:44px;min-width:0;padding:0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:color-mix(in srgb,var(--part-color) 25%,#111);border:1px solid var(--part-color);color:#eee;font:inherit;font-size:12px;z-index:2;text-align:left}
+.calendar-part:focus-visible{outline:2px solid white;outline-offset:-3px;z-index:4}
+.calendar-days{height:36px;position:relative}.calendar-day{position:absolute;top:0;padding:10px 4px;box-sizing:border-box;font-size:11px;overflow:hidden;white-space:nowrap}
+.calendar-midnight{position:absolute;top:32px;bottom:0;border-left:1px dashed #555;pointer-events:none}
+.calendar-now-marker{position:absolute;top:25px;bottom:0;border-left:1px solid #eff4d6;z-index:4;pointer-events:none}
+.calendar-now-marker span{position:absolute;top:-20px;right:3px;font-size:10px;white-space:nowrap;color:#eff4d6;background:#101012}
+.calendar-empty{font-size:12px;color:#aaa;padding:14px 0}
+@media(max-width:600px){.calendar-nav strong{width:100%;margin-left:0}.calendar-nav button{padding-inline:10px}}

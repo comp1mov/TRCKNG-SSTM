@@ -1,0 +1,14 @@
+const assert = require('node:assert/strict');
+process.env.TZ = 'America/New_York';
+const m = require('../v2/calendar-model.js');
+const from = new Date(2026, 2, 8).getTime(), to = new Date(2026, 2, 10).getTime();
+const days = m.days(from, to);
+assert.equal(days.length, 2); assert.equal(days[0].end - days[0].start, 23 * m.HOUR);
+assert.equal(days[1].end - days[1].start, 24 * m.HOUR);
+assert.equal(days.reduce((sum, d) => sum + d.width, 0), 100);
+assert.deepEqual(m.clip(-10, 30, 0, 20), {left:0,width:100});
+assert.equal(m.clip(20, 30, 0, 20), null);
+const now = new Date(2026, 2, 8, 15).getTime();
+const start = m.anchor(now, 72);
+assert.equal(start + 72 * m.HOUR, new Date(2026, 2, 9).getTime());
+console.log('PASS: exact windows, clipping and local DST day boundaries');

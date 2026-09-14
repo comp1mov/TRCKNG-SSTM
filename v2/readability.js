@@ -20,9 +20,9 @@
       const style = getComputedStyle(value);
       // One shared large size per zoom level, including three-digit counters.
       // Unit suffixes get their own small line and do not shrink the number.
-      let baseline = Math.min(86, Number(document.body.dataset.cellSize || 128) * .45);
+      let baseline = Math.min(60, Number(document.body.dataset.cellSize || 128) * .32);
       if (!tile.classList.contains('module-work') && /^\d+:\d{2}(?::\d{2})?$/.test(text)) {
-        baseline = Math.min(baseline, Number(document.body.dataset.cellSize || 128) * .27);
+        baseline = Math.min(baseline, Number(document.body.dataset.cellSize || 128) * .24);
       }
       if (tile.classList.contains('module-work')) {
         const siblings = [...tile.children].filter(n => n !== value && !n.matches('.sl-medium') && getComputedStyle(n).display !== 'none');
