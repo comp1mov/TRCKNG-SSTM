@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
   await context.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
   const page = await context.newPage(), errors=[]; page.on('pageerror', e => errors.push(e.message));
   await page.goto('http://127.0.0.1:5173/TRCKNG-SSTM/v2/?mode=demo&lang=ru');
-  await page.waitForFunction(() => window.SstmRecordings);
+  await page.waitForFunction(() => window.SstmRecordings && window.SstmReadability);
   await page.evaluate(() => {
    let j = SstmData.emptyJournal(); const now=Date.now();
    j=SstmData.point(j,now-30*3600000); j=SstmData.point(j,now-24*3600000); j=SstmData.point(j,now-22*3600000,true);

@@ -46,7 +46,7 @@
   function upgrade(journal) {
     const next = clone(journal);
     if (next.version === 1) { next.version = 2; next.moments = []; next.stateOptions = []; }
-    if (![2, 3, 4].includes(next.version)) fail('Обнови приложение для отметок.');
+    if (![2, 3, 4, 5].includes(next.version)) fail('Обнови приложение для отметок.');
     return validate(next);
   }
   function addOption(journal, label, id = crypto.randomUUID()) {

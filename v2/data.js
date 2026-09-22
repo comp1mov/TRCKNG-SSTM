@@ -5,7 +5,7 @@
   const object = value => value && typeof value === 'object' && !Array.isArray(value);
   function validateJournal(journal) {
     const fail = () => { throw new Error('Журнал циклов повреждён или создан другой версией.'); };
-    if (!object(journal) || ![1, 2, 3, 4].includes(journal.version) || !Array.isArray(journal.cycles)) fail();
+    if (!object(journal) || ![1, 2, 3, 4, 5].includes(journal.version) || !Array.isArray(journal.cycles)) fail();
     if (journal.version >= 2) {
       const moments = root.SstmMoments || (typeof require === 'function' ? require('./moments.js') : null);
       if (!moments) fail(); moments.validate(journal);
@@ -20,8 +20,17 @@
       for (const point of cycle.points) {
         if (!object(point) || typeof point.id !== 'string' || !point.id || points.has(point.id) || !Number.isFinite(point.at) || point.at <= last || typeof point.name !== 'string') fail();
         points.add(point.id); last = point.at;
+        if (point.tags !== undefined && (journal.version < 5 || !Array.isArray(point.tags) || point.tags.length > 12 || point.tags.some(t => typeof t !== 'string' || !t || t.length > 40))) fail();
       }
       if (cycle.points[0].at !== cycle.startedAt || Object.entries(cycle.names).some(([key, value]) => !points.has(key) || typeof value !== 'string')) fail();
+      if (cycle.checkpoints !== undefined) {
+        if (journal.version < 5 || !Array.isArray(cycle.checkpoints)) fail();
+        let prior = cycle.startedAt;
+        for (const mark of cycle.checkpoints) {
+          if (!object(mark) || typeof mark.id !== 'string' || !mark.id || points.has(mark.id) || !Number.isFinite(mark.at) || mark.at <= prior || mark.at >= (cycle.endedAt ?? Infinity) || typeof mark.name !== 'string' || mark.name.length > 160 || !Array.isArray(mark.tags) || mark.tags.length > 12 || mark.tags.some(t => typeof t !== 'string' || !t || t.length > 40)) fail();
+          points.add(mark.id); prior = mark.at;
+        }
+      }
       if (cycle.tags !== undefined && (!object(cycle.tags) || Object.entries(cycle.tags).some(([key, value]) => !points.has(key) || !Array.isArray(value) || value.length > 12 || value.some(tag => typeof tag !== 'string' || !tag || tag.length > 40)))) fail();
       if (cycle.endedAt === null) open.push(cycle.id);
       else if (cycle.endedAt !== last || cycle.points.length < 2) fail();
@@ -67,7 +76,7 @@
     }
     for (const pin of snapshot.pinData) for (const [cellId, type] of Object.entries(pin.habitTypes)) {
       if (type === 'modular' && !snapshot.moduleJournal?.bindings.some(b => b.pin === pin.pin && b.cellId === cellId)) throw new Error('В копии не хватает источника модульной кнопки.');
-      if (['tag', 'state'].includes(type) && ![2, 3, 4].includes(snapshot.cycleJournal?.version)) throw new Error('В копии не хватает журнала отметок.');
+      if (['tag', 'state'].includes(type) && ![2, 3, 4, 5].includes(snapshot.cycleJournal?.version)) throw new Error('В копии не хватает журнала отметок.');
     }
     return snapshot;
   }
@@ -85,7 +94,7 @@
       const raw = backing.getItem(key);
       if (!raw) return { version: 1, values: {} };
       const parsed = JSON.parse(raw);
-      if (![1, 2, 3, 4, 5, 6, 7].includes(parsed.version) || !parsed.values || typeof parsed.values !== 'object' || Array.isArray(parsed.values)) throw new Error('Локальная копия v2 не распознана. Она оставлена без изменений.');
+      if (![1, 2, 3, 4, 5, 6, 7, 8].includes(parsed.version) || !parsed.values || typeof parsed.values !== 'object' || Array.isArray(parsed.values)) throw new Error('Локальная копия v2 не распознана. Она оставлена без изменений.');
       return parsed;
     }
     const commit = value => {
@@ -93,6 +102,7 @@
       if (JSON.parse(value.values.sstm_v2_modules || 'null')?.tracks?.length) value.version = Math.max(value.version, 2);
       const journalVersion = JSON.parse(value.values.sstm_v2_cycles || 'null')?.version;
       if (journalVersion >= 2) value.version = Math.max(value.version, journalVersion + 1);
+      if (journalVersion >= 5) value.version = Math.max(value.version, 8);
       const stopwatchVersion = JSON.parse(value.values.sstm_v2_stopwatches || 'null')?.version;
       if (stopwatchVersion) value.version = Math.max(value.version, stopwatchVersion + 5);
       backing.setItem(key, JSON.stringify(value));
@@ -125,7 +135,7 @@
       cycle = { id: id(), startedAt: at, endedAt: null, points: [], names: {} };
       next.cycles.push(cycle); next.active = cycle.id;
     }
-    if (cycle.points.at(-1)?.at >= at) throw new Error('Точка должна быть позже предыдущей. Проверь часы устройства.');
+    if (Math.max(cycle.points.at(-1)?.at || 0, cycle.checkpoints?.at(-1)?.at || 0) >= at) throw new Error('Точка должна быть позже предыдущей. Проверь часы устройства.');
     cycle.points.push({ id: id(), at, name: '' });
     if (end) { cycle.endedAt = at; next.active = null; }
     return next;
@@ -162,6 +172,7 @@
     if ((n > 0 && at <= cycle.points[n - 1].at) || (n + 1 < cycle.points.length && at >= cycle.points[n + 1].at)) throw new Error('Точка должна оставаться между соседними точками.');
     if ((n === 0 && index > 0 && at < next.cycles[index - 1].endedAt) || (n === cycle.points.length - 1 && next.cycles[index + 1] && at > next.cycles[index + 1].startedAt)) throw new Error('Запись не может пересекаться с соседней записью.');
     if (p.at === at) return next;
+    if ((cycle.checkpoints || []).some(mark => mark.at >= Math.min(p.at, at) && mark.at <= Math.max(p.at, at))) throw Error('Граница не может пересечь внутреннюю точку.');
     (next.edits ||= []).push({ id: crypto.randomUUID(), type: 'time', at: now, cycleId, pointId, before: { at: p.at }, after: { at } });
     p.at = at;
     if (n === 0) cycle.startedAt = at;
@@ -174,6 +185,7 @@
     if (!cycle || cycle.id !== cycleId) throw new Error('Отменить можно последнюю точку последней записи.');
     unchanged(cycle, expected);
     if (cycle.deletedAt || Object.keys(cycle.deletedIntervals || {}).length) throw new Error('Сначала восстанови удалённые отрезки этой записи.');
+    if ((cycle.checkpoints || []).some(mark => mark.at >= cycle.points.at(-1).at)) throw Error('После границы есть внутренние точки. Отмена границы недоступна.');
     const p = cycle.points.pop();
     (next.edits ||= []).push({ id: crypto.randomUUID(), type: 'remove-last', at: now, cycleId, pointId: p.id,
       before: { point: clone(p), intervalName: cycle.names[p.id] || '', tags: cycle.tags?.[p.id] || [], startedAt: cycle.startedAt, endedAt: cycle.endedAt } });
@@ -206,8 +218,39 @@
     return validateJournal(next);
   }
   const visibleCycles = journal => journal.cycles.filter(c => !c.deletedAt);
+  function checkpoint(journal, at, id = crypto.randomUUID()) {
+    validateJournal(journal);
+    const next = clone(journal), cycle = next.cycles.find(c => c.id === next.active);
+    if (!cycle || at <= Math.max(cycle.points.at(-1).at, cycle.checkpoints?.at(-1)?.at || 0)) throw Error('Проверь время новой точки.');
+    if (next.version === 1) { next.moments = []; next.stateOptions = []; }
+    next.version = 5;
+    (cycle.checkpoints ||= []).push({ id, at, name: '', tags: [] });
+    return validateJournal(next);
+  }
+  function tagPoint(journal, cycleId, pointId, text) {
+    validateJournal(journal); const next = clone(journal), cycle = next.cycles.find(c => c.id === cycleId), point = cycle?.points.find(p => p.id === pointId);
+    if (!point || cycle.deletedAt) throw Error('Точка больше не существует.');
+    if (next.version === 1) { next.moments = []; next.stateOptions = []; } next.version = 5;
+    point.tags = [...new Set(String(text).normalize('NFKC').toLocaleLowerCase().split(/[\s,#]+/u).filter(Boolean))];
+    return validateJournal(next);
+  }
+  function saveCheckpoint(journal, cycleId, id, { name = '', tags = '', newInterval = false, intervalName = '' }) {
+    validateJournal(journal);
+    const next = clone(journal), cycle = next.cycles.find(c => c.id === cycleId), mark = cycle?.checkpoints?.find(p => p.id === id);
+    if (!mark || cycle.deletedAt) throw Error('Точка больше не существует.');
+    const owner = cycle.points.findLast(p => p.at <= mark.at);
+    if (cycle.deletedIntervals?.[owner.id]) throw Error('Сначала восстанови отрезок.');
+    mark.name = String(name).trim().slice(0, 160);
+    mark.tags = [...new Set(String(tags).normalize('NFKC').toLocaleLowerCase().split(/[\s,#]+/u).filter(Boolean))];
+    if (newInterval) {
+      if (cycle.endedAt !== null || cycle.points.at(-1).at >= mark.at) throw Error('Запись изменилась. Сохрани точку без нового отрезка.');
+      cycle.points.push({ id: crypto.randomUUID(), at: mark.at, name: mark.name });
+      cycle.names[cycle.points.at(-1).id] = String(intervalName).trim().slice(0, 160);
+    }
+    return validateJournal(next);
+  }
   const intervalDeleted = (cycle, pointId) => Boolean(cycle.deletedAt || cycle.deletedIntervals?.[pointId]);
-  const api = { validate, validateJournal, migrate, storage, emptyJournal, point, annotate, tagInterval, changeTime, removeLastPoint, setDeleted, visibleCycles, intervalDeleted };
+  const api = { validate, validateJournal, migrate, storage, emptyJournal, point, checkpoint, saveCheckpoint, tagPoint, annotate, tagInterval, changeTime, removeLastPoint, setDeleted, visibleCycles, intervalDeleted };
   if (typeof module !== 'undefined') module.exports = api;
   else root.SstmData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

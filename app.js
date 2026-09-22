@@ -4,7 +4,7 @@
     const trckngStorage = window.TRCKNG_STORAGE || window.localStorage;
 
     // ===== CONSTANTS =====
-    const APP_VERSION = '1.34.9';
+    const APP_VERSION = '1.34.10';
     const CLOUD_SNAPSHOT_SCHEMA_VERSION = 4;
     const CLOUD_SYNC_DEBOUNCE_MS = 8000;
     const CLOUD_PULL_COOLDOWN_MS = 15000;
@@ -83,8 +83,8 @@
     };
 
     const WEEKS_TO_KEEP = 52;
-    const COUNTER_CHANGE_LOG_LIMIT = 1000;
-    const DURATION_SESSION_LOG_LIMIT = 1000;
+    const COUNTER_CHANGE_LOG_LIMIT = window.TRCKNG_SURFACE === 'v2' ? Infinity : 1000;
+    const DURATION_SESSION_LOG_LIMIT = window.TRCKNG_SURFACE === 'v2' ? Infinity : 1000;
     const PIN_COUNT = 3;
     const GRID_COLUMNS = 3;
     const LAYOUT_SIZE_PRESETS = {
@@ -2129,7 +2129,7 @@
       if (!meta || !meta.updatedAt) return 'NO SNAPSHOT';
       const date = new Date(meta.updatedAt);
       const when = Number.isNaN(date.getTime()) ? meta.updatedAt : date.toLocaleString();
-      const device = meta.deviceId ? meta.deviceId.slice(0, 8).toUpperCase() : 'DEVICE';
+      const device = meta.deviceName || (meta.deviceId ? meta.deviceId.slice(0, 8).toUpperCase() : 'DEVICE');
       return `${when} / ${device}`;
     }
 

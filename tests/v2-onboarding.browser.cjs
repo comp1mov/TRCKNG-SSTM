@@ -11,6 +11,7 @@ async function until(test) { const end = Date.now() + 15000; while (!(await test
     const errors = [], calls = [], user = { id: '00000000-0000-4000-8000-000000000063', email: 'test@example.invalid', aud: 'authenticated', role: 'authenticated' };
     const token = [Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url'), Buffer.from(JSON.stringify({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600, role: 'authenticated' })).toString('base64url'), 'fixture'].join('.');
     let cloud = null, signups = 0;
+    const dailyBackups = new Map();
     await context.route('**/*', async route => {
       const req = route.request(), url = new URL(req.url());
       if (url.origin === new URL(base).origin) return route.continue();
@@ -20,31 +21,42 @@ async function until(test) { const end = Date.now() + 15000; while (!(await test
       if (url.pathname === '/auth/v1/token') return json({ access_token: token, refresh_token: 'fixture-only', expires_in: 3600, token_type: 'bearer', user });
       if (url.pathname === '/auth/v1/user') return json(user);
       if (url.pathname === '/rest/v1/trckng_v2_snapshots') return json(req.headers().accept?.includes('vnd.pgrst.object') ? cloud : cloud ? [cloud] : []);
+      if (url.pathname === '/rest/v1/trckng_v2_daily_backups') {
+        const rows = [...dailyBackups.values()].sort((a, b) => b.backup_date.localeCompare(a.backup_date));
+        if (req.method() === 'GET') return json(req.headers().accept?.includes('vnd.pgrst.object') ? rows[0] || null : rows);
+        if (req.method() === 'POST') {
+          const payload = req.postDataJSON();
+          if (!dailyBackups.has(payload.backup_date)) dailyBackups.set(payload.backup_date, { ...payload, created_at: new Date().toISOString() });
+          return json([dailyBackups.get(payload.backup_date)]);
+        }
+        if (req.method() === 'DELETE') return json([]);
+      }
       if (url.pathname === '/rest/v1/rpc/commit_trckng_v2') {
         const payload = req.postDataJSON(); assert.equal(payload.expected_revision, cloud?.revision || 0);
         assert.equal(payload.source, undefined, 'Fresh accounts do not import a v1 snapshot');
-        cloud = { app_state: payload.state, revision: (cloud?.revision || 0) + 1, updated_at: new Date().toISOString(), device_id: payload.device, write_id: payload.mutation_id };
+        cloud = { app_state: payload.state, revision: (cloud?.revision || 0) + 1, updated_at: new Date().toISOString(), device_id: payload.device, device_name: payload.device_name, write_id: payload.mutation_id };
         return json([cloud]);
       }
       return route.abort();
     });
+    await context.addInitScript(() => localStorage.setItem('sstm_v2_prompt_names', 'false'));
     const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
     await page.goto(base + '?mode=demo'); await page.locator('#btn-cell01').waitFor();
     assert.equal(await page.locator('html').getAttribute('lang'), 'en');
     await until(async () => await page.locator('#cycleCapture').innerText() === 'START');
     assert.deepEqual(calls, [], 'Demo requires no authentication');
     await page.evaluate(() => document.fonts.ready);
-    assert.equal(await page.evaluate(() => [...document.fonts].some(face => face.family === 'Sstm Mono' && face.status === 'loaded')), true);
+    assert.equal(await page.evaluate(() => [...document.fonts].some(face => face.family === 'SSTM Text' && face.status === 'loaded')), true);
     const face = await page.locator('#value-cell01').evaluate(el => ({ size: parseFloat(getComputedStyle(el).fontSize), font: getComputedStyle(el).fontFamily, width: el.scrollWidth, box: el.clientWidth }));
-    assert.ok(face.size >= 60 && face.size <= 90); assert.ok(face.font.includes('Sstm Mono')); assert.ok(face.width <= face.box + 1);
+    assert.ok(face.size >= 28 && face.size <= 60); assert.ok(face.font.includes('SSTM Text')); assert.ok(face.width <= face.box + 1);
     const originalValue = await page.locator('#value-cell01').innerText();
-    await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceLanguage').selectOption('ru');
+    await page.locator('#surfaceMenuButton').click(); if (!await page.locator('#surfaceAppearance').evaluate(el=>el.open)) await page.locator('#surfaceAppearance summary').click(); await page.locator('#surfaceLanguage').selectOption('ru');
     await until(async () => await page.locator('#cycleCapture').innerText() === 'НАЧАТЬ');
     assert.equal(await page.locator('#value-cell01').innerText(), originalValue);
-    await page.locator('#surfaceLanguage').selectOption('en'); await page.locator('#surfaceMenuButton').click();
+    if (!await page.locator('#surfaceAppearance').evaluate(el=>el.open)) await page.locator('#surfaceAppearance summary').click(); await page.locator('#surfaceLanguage').selectOption('en'); await page.locator('#surfaceMenuButton').click();
     await page.locator('#pin1').click(); await page.locator('#btn-cell08').click(); await page.locator('#momentWords').fill('МЕНЮ черновик');
-    await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceLanguage').selectOption('ru'); await page.locator('#surfaceMenuButton').click();
-    await page.locator('#btn-cell08').click(); assert.equal(await page.locator('#momentWords').inputValue(), 'МЕНЮ черновик');
+    await page.locator('#surfaceMenuButton').click(); if (!await page.locator('#surfaceAppearance').evaluate(el=>el.open)) await page.locator('#surfaceAppearance summary').click(); await page.locator('#surfaceLanguage').selectOption('ru'); await page.locator('#surfaceMenuButton').click();
+    await page.locator('#btn-cell08').click(); assert.equal(await page.locator('#momentWords').inputValue(), '#МЕНЮ #черновик');
     await page.locator('#tagCancel').click();
     await page.goto(base + '?mode=account&lang=en'); await page.locator('#accountEmail').waitFor();
     assert.ok(await page.locator('#accountSignUp').isVisible()); assert.equal(await page.locator('#accountAdvanced').isVisible(), false);
@@ -54,8 +66,9 @@ async function until(test) { const end = Date.now() + 15000; while (!(await test
     assert.equal(cloud, null, 'Email confirmation does not initialize private data');
     await page.locator('#accountPassword').fill('fictional-password'); await page.locator('#accountSignIn').click();
     await page.locator('#accountCreateField').waitFor();
-    assert.equal(await page.locator('#migrationAdvanced').getAttribute('open'), null);
+    assert.equal(await page.locator('#migrationAdvanced').count(), 0);
     await page.locator('#accountCreateField').click(); await until(() => cloud?.revision === 1);
+    assert.equal(dailyBackups.size, 0, 'Daily backups are not part of this release');
     await page.locator('#cycleCapture').waitFor();
     assert.ok(cloud.app_state.pinData.every(pin => Object.values(pin.habitLabels).every(v => v === '')));
     assert.deepEqual(cloud.app_state.cycleJournal.cycles, []);
@@ -70,8 +83,8 @@ async function until(test) { const end = Date.now() + 15000; while (!(await test
     await page.locator('#cellEditInput').fill('МЕНЮ'); await page.locator('#cellEditSave').click();
     await page.locator('#btnViewTrack').click();
     assert.ok(await page.locator('.btn-label').filter({ hasText: /^МЕНЮ$/ }).count());
-    await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceLanguage').selectOption('ru');
-    await page.locator('#surfaceLanguage').selectOption('en'); await page.locator('#surfaceMenuButton').click();
+    await page.locator('#surfaceMenuButton').click(); if (!await page.locator('#surfaceAppearance').evaluate(el=>el.open)) await page.locator('#surfaceAppearance summary').click(); await page.locator('#surfaceLanguage').selectOption('ru');
+    if (!await page.locator('#surfaceAppearance').evaluate(el=>el.open)) await page.locator('#surfaceAppearance summary').click(); await page.locator('#surfaceLanguage').selectOption('en'); await page.locator('#surfaceMenuButton').click();
     assert.ok(await page.locator('.btn-label').filter({ hasText: /^МЕНЮ$/ }).count());
     await until(() => cloud.app_state.pinData.some(pin => Object.values(pin.habitLabels).includes('МЕНЮ')));
     await page.reload(); await page.locator('#cycleCapture').waitFor();

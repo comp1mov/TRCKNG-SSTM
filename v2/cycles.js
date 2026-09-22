@@ -28,10 +28,11 @@
   function capture(end = false) {
     if (window.TRCKNG_ACCOUNT && !window.TRCKNG_ACCOUNT.ready) return;
     try {
-      const journal = data.point(read(), Date.now(), end); write(journal);
+      const prior = read(), inside = !end && Boolean(active(prior));
+      const journal = inside ? data.checkpoint(prior, Date.now()) : data.point(prior, Date.now(), end); write(journal);
       let suggest = true; try { suggest = localStorage.getItem('sstm_v2_prompt_names') !== 'false'; } catch {}
       if (!end && suggest) {
-        const cycle = active(journal); suggestName(cycle.id, cycle.points.at(-1).id);
+        const cycle = active(journal); suggestName(cycle.id, inside ? cycle.checkpoints.at(-1).id : cycle.points.at(-1).id, inside);
       }
     }
     catch (error) { $('surfaceHint').textContent = error.message; }
@@ -42,22 +43,61 @@
     if (pointId) requestAnimationFrame(() => document.getElementById(`record-${pointId}`)?.scrollIntoView({ block: 'center' }));
   }
   const namePrompt = document.createElement('dialog'); namePrompt.id = 'cycleNamePrompt';
-  namePrompt.innerHTML = '<form><label for="cyclePromptName">Название текущего отрезка</label><input id="cyclePromptName" maxlength="160" autocomplete="off" placeholder="Необязательно"><label for="cyclePromptPoint">Название точки</label><input id="cyclePromptPoint" maxlength="160" autocomplete="off" placeholder="Необязательно"><p class="cycle-explanation">Точка уже записана. Новый отрезок идёт.</p><p role="alert" id="cyclePromptError"></p><div class="cycle-edit-actions"><button type="submit">СОХРАНИТЬ</button><button type="button" id="cyclePromptSkip">ПРОПУСТИТЬ</button></div></form>';
+  namePrompt.innerHTML = '<form><label for="cyclePromptName">Название текущего отрезка</label><input id="cyclePromptName" maxlength="160" autocomplete="off" placeholder="Необязательно"><label for="cyclePromptPoint">Название точки</label><input id="cyclePromptPoint" maxlength="160" autocomplete="off" placeholder="Необязательно"><p class="cycle-explanation">Точка уже записана. Запись продолжается.</p><p role="alert" id="cyclePromptError"></p><div class="cycle-edit-actions"><button type="submit">СОХРАНИТЬ</button><button type="button" id="cyclePromptSkip">ПРОПУСТИТЬ</button></div></form>';
   document.body.append(namePrompt);
+  const nameForm = namePrompt.querySelector('form');
+  nameForm.prepend(nameForm.querySelector('label[for="cyclePromptPoint"]'), $('cyclePromptPoint'));
+  const newLabel = make('label', 'surface-prompt-setting'), newInterval = make('input'); newInterval.type = 'checkbox'; newInterval.id = 'cyclePromptNewInterval';
+  newInterval.setAttribute('aria-label', 'Начать новый отрезок'); newInterval.title = 'Начать новый отрезок';
+  newLabel.append(newInterval); $('cyclePromptPoint').after(newLabel);
+  const currentInfo = make('p', 'cycle-explanation'); newLabel.before(currentInfo);
+  function showIntervalField() { $('cyclePromptName').hidden = !newInterval.checked; nameForm.querySelector('label[for="cyclePromptName"]').hidden = !newInterval.checked; }
+  newInterval.onchange = showIntervalField;
+  const promptTagsLabel = make('label', '', 'Теги текущего отрезка'); promptTagsLabel.htmlFor = 'cyclePromptTags';
+  const promptTags = make('input'); promptTags.id = 'cyclePromptTags'; promptTags.maxLength = 500; promptTags.autocomplete = 'off'; promptTags.placeholder = '#тег';
+  const promptChoices = make('div', 'cycle-tag-choices'); promptChoices.id = 'cyclePromptChoices'; promptChoices.dataset.noI18n = '';
+  promptChoices.setAttribute('role', 'group'); promptChoices.setAttribute('aria-label', 'Подсказки тегов');
+  namePrompt.querySelector('.cycle-explanation').before(promptTagsLabel, promptTags, promptChoices);
+  let promptCaret = 0;
+  function refreshPromptTags() {
+    promptChoices.replaceChildren();
+    for (const word of window.SstmTagInput?.suggest(read(), promptTags.value, promptCaret) || []) {
+      const choice = button(`#${word}`, () => {
+        const result = window.SstmTagInput.complete(promptTags.value, promptCaret, word);
+        promptTags.value = result.text; promptCaret = result.caret; promptTags.focus(); promptTags.setSelectionRange(promptCaret, promptCaret); refreshPromptTags();
+      });
+      promptChoices.append(choice);
+    }
+  }
+  for (const event of ['input', 'click', 'keyup']) promptTags.addEventListener(event, () => { promptCaret = promptTags.selectionStart ?? promptTags.value.length; refreshPromptTags(); });
+  promptTags.addEventListener('keydown', event => { if (event.key === 'ArrowDown' && promptChoices.firstElementChild) { event.preventDefault(); promptChoices.firstElementChild.focus(); } });
   let promptTarget = null;
-  function suggestName(cycleId, pointId) {
-    promptTarget = { cycleId, pointId }; $('cyclePromptName').value = ''; $('cyclePromptPoint').value = ''; $('cyclePromptError').textContent = '';
-    namePrompt.showModal(); $('cyclePromptName').focus();
+  function suggestName(cycleId, pointId, inside = false) {
+    promptTarget = { cycleId, pointId, inside }; $('cyclePromptName').value = ''; $('cyclePromptPoint').value = ''; $('cyclePromptError').textContent = '';
+    const cycle = read().cycles.find(item => item.id === cycleId), index = cycle.points.findIndex(item => item.id === pointId) + 1;
+    const english = window.SstmI18n?.language === 'en';
+    newInterval.checked = !inside; newInterval.disabled = !inside; showIntervalField();
+    newInterval.hidden = false; newLabel.hidden = !inside;
+    const owner = cycle.points.at(-1);
+    currentInfo.textContent = inside ? `${english ? 'Current interval' : 'Текущий отрезок'}: ${cycle.names[owner.id] || '—'} · ${elapsed(Date.now() - owner.at)}` : '';
+    promptTagsLabel.textContent = english ? 'Point tags' : 'Теги точки';
+    $('cyclePromptPoint').placeholder = `${english ? 'Point' : 'Точка'} ${inside ? cycle.points.length + cycle.checkpoints.length : index}`;
+    $('cyclePromptName').placeholder = `${english ? 'Interval' : 'Отрезок'} ${inside ? cycle.points.length + 1 : index}`;
+    promptTags.value = ''; promptCaret = 0; refreshPromptTags();
+    namePrompt.showModal(); $('cyclePromptPoint').focus();
   }
   $('cyclePromptSkip').onclick = () => namePrompt.close();
   namePrompt.querySelector('form').onsubmit = event => {
     event.preventDefault();
     try {
       const name = $('cyclePromptName').value.trim(), pointName = $('cyclePromptPoint').value.trim();
-      if ((name || pointName) && promptTarget) {
+      if (promptTarget?.inside) {
+        write(data.saveCheckpoint(read(), promptTarget.cycleId, promptTarget.pointId, { name: pointName, tags: promptTags.value, newInterval: newInterval.checked, intervalName: name }));
+      } else if ((name || pointName || promptTags.value.trim()) && promptTarget) {
         let journal = read();
         if (name) journal = data.annotate(journal, promptTarget.cycleId, promptTarget.pointId, 'interval', name);
         if (pointName) journal = data.annotate(journal, promptTarget.cycleId, promptTarget.pointId, 'point', pointName);
+        if (promptTags.value.trim()) journal = data.tagPoint(journal, promptTarget.cycleId, promptTarget.pointId, promptTags.value);
         write(journal);
       }
       namePrompt.close();
@@ -75,9 +115,9 @@
   const modal = make('div', 'modal'); modal.id = 'cycleModal';
   modal.innerHTML = `<div>
     <div class="recording-summary"><strong id="cycleTitle"></strong><span id="cycleRange"></span><small id="cycleRecorded"></small></div>
-    <p class="cycle-explanation">Между точками — отрезок. Нажми на подпись, чтобы назвать; на время точки — чтобы исправить.</p>
+    <p class="cycle-explanation">Точки внутри отрезка не прерывают его. Новый отрезок начинается только по твоему выбору.</p>
     <details id="cycleArchive"><summary id="cycleArchiveTitle">Найти / другие записи</summary><input id="cycleSearch" type="search" aria-label="Поиск отрезков по названию или тегу" placeholder="Название или #тег"><div id="cycleSearchResults"></div><label class="cycle-select-label">Показать запись <select id="cycleSelect"></select></label><div id="cycleComparison"></div></details>
-    <div id="cycleRows"></div><p id="cycleEmpty" class="cycle-explanation">Нажми «НАЧАТЬ» на поле. Следующее нажатие поставит точку и начнёт следующий отрезок. Названия необязательны.</p>
+    <div id="cycleRows"></div><p id="cycleEmpty" class="cycle-explanation">Нажми «НАЧАТЬ» на поле. Следующее нажатие добавит точку внутри отрезка. Названия необязательны.</p>
     <div id="cycleStopArea"><button id="cycleEnd" class="modal-btn" type="button">ОСТАНОВИТЬ ЗАПИСЬ</button><p class="cycle-explanation">Последний отрезок сохранится. Следующее нажатие начнёт отдельную запись.</p></div>
     <button id="cycleDeleteRecord" type="button">Удалить всю запись…</button><div id="cycleDeleteReview" hidden></div>
     <details id="cycleTrash"><summary>Корзина записей</summary><div id="cycleTrashRows"></div></details>
@@ -101,6 +141,12 @@
     const results = $('cycleSearchResults'), query = $('cycleSearch').value.trim().toLocaleLowerCase(); results.replaceChildren();
     if (!query) return;
     for (const [index, c] of read().cycles.entries()) {
+      if (c.deletedAt) continue;
+      for (const mark of c.checkpoints || []) {
+        const owner = c.points.findLast(p => p.at <= mark.at);
+        if (data.intervalDeleted(c, owner.id)) continue;
+        if (`${mark.name} ${mark.tags.map(t => `#${t}`).join(' ')}`.toLocaleLowerCase().includes(query)) results.append(button(`${wallTime(mark.at)} · ${mark.name || '•'} ${mark.tags.map(t => `#${t}`).join(' ')}`, () => open(c.id, mark.id)));
+      }
       for (const [n, part] of segments(c).entries()) {
         const tags = (c.tags?.[part.point.id] || []).map(t => `#${t}`).join(' '), text = `${part.name} ${part.point.name} ${tags}`.toLocaleLowerCase();
         if (!text.includes(query)) continue;
@@ -334,6 +380,7 @@
       stamp.disabled = Boolean(cycle.deletedIntervals?.[point.id] || cycle.deletedIntervals?.[cycle.points[index - 1]?.id]);
       const name = button(point.name || `точка ${index + 1}`, () => startEdit(cycle, point, 'point'), `cycle-name${point.name ? '' : ' unnamed'}`); name.setAttribute('aria-label', `Переименовать точку ${index + 1}`);
       head.insertBefore(name, stamp); row.append(head);
+      if (point.tags?.length) { const labels = make('p', 'cycle-tags', point.tags.map(t => `#${t}`).join(' ')); labels.dataset.noI18n = ''; row.append(labels); }
       const end = cycle.points[index + 1]?.at ?? cycle.endedAt ?? now, live = cycle.endedAt === null && index === cycle.points.length - 1, hasInterval = live || index < cycle.points.length - 1;
       if (hasInterval && data.intervalDeleted(cycle, point.id)) {
         const gap = make('div', 'cycle-gap'); gap.append(make('span', '', `Удалённый отрезок · ${elapsed(end - point.at)}`), button('ВОССТАНОВИТЬ', () => restore(cycle, point.id))); row.append(gap);
@@ -343,6 +390,13 @@
         const duration = make('span', 'cycle-record-duration', `${elapsed(end - point.at)}${live ? ' · идёт' : ''}`); if (live) duration.dataset.liveStart = String(point.at);
         const tags = button((cycle.tags?.[point.id] || []).map(t => `#${t}`).join(' ') || '+ тег', () => startEdit(cycle, point, 'tags'), 'cycle-tags'); tags.setAttribute('aria-label', `Изменить теги отрезка ${index + 1}`);
         interval.append(title, duration, tags);
+        for (const mark of cycle.checkpoints || []) if (mark.at >= point.at && mark.at < end) {
+          const line = make('div', 'cycle-inner-point'); line.id = `record-${mark.id}`; line.dataset.noI18n = '';
+          if (mark.at !== point.at) line.append(make('span', '', `${wallTime(mark.at)} · +${elapsed(mark.at - point.at)}`), make('strong', '', mark.name || '•'));
+          line.append(make('span', '', mark.tags.map(t => `#${t}`).join(' ')));
+          const edit = button('✎', () => { suggestName(cycle.id, mark.id, true); newInterval.hidden = true; newLabel.hidden = true; $('cyclePromptPoint').value = mark.name; promptTags.value = mark.tags.map(t => `#${t}`).join(' '); refreshPromptTags(); }); edit.setAttribute('aria-label', 'Редактировать внутреннюю точку'); line.append(edit);
+          interval.append(line);
+        }
         const remove = button('×', () => reviewDelete(cycle, point.id), 'cycle-delete-interval'); remove.setAttribute('aria-label', `Удалить отрезок ${index + 1}`); interval.append(remove);
         const marks = (journal.moments || []).filter(m => !m.deletedAt && m.at >= point.at && m.at < end);
         if (marks.length) {

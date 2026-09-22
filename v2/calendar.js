@@ -48,6 +48,9 @@
           bar.title = `${name} · ${new Date(part.start).toLocaleString(locale)} → ${part.live ? t('сейчас', 'now') : new Date(part.end).toLocaleString(locale)}`;
           bar.setAttribute('aria-label', bar.title); bar.style.setProperty('--part-color', ['#b9c96e', '#65aeb9', '#a58bbc', '#be956a'][n % 4]);
           place(bar, geometry); row.append(bar); if (part.live) liveBars.push({ bar, start: part.start });
+          for (const mark of cycle.checkpoints || []) if (mark.at >= part.start && mark.at < part.end && mark.at >= from && mark.at < to) {
+            const dot = btn('•', () => recordings.open(cycle.id, mark.id)); dot.className = 'calendar-checkpoint'; dot.style.left = `${(mark.at - from) / (to - from) * 100}%`; dot.title = `${new Date(mark.at).toLocaleString(locale)} · ${mark.name} ${mark.tags.map(t => `#${t}`).join(' ')}`; dot.setAttribute('aria-label',dot.title); row.append(dot);
+          }
         }
         axis.append(row);
       }

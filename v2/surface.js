@@ -156,8 +156,13 @@
   }
   function setupUI() {
     const container = $('.container'), header = $('.header');
+    $('#infoModal .info-version').textContent = 'V2 / 0.11.0';
+    $('#infoModal').querySelectorAll('.info-section').forEach(section => section.remove());
+    const about = document.createElement('p'); about.className = 'info-text';
+    about.textContent = 'Точки, кнопки и состояния — в одном логе. История → Лог / Статистика. Аккаунт → выбор копии и перенос файла v2.';
+    $('#infoModal .info-header').after(about);
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.10.3</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.11.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -322,7 +327,7 @@
         return { dataset: 'sstm-v2', dataVersion: modern || stopwatchJournal ? 2 : 1, ...(modern || stopwatchJournal ? { moduleJournal: modules } : {}),
           ...(stopwatchJournal ? { schemaVersion: 5, stopwatchJournal } : {}), migration: JSON.parse(viewStorage.getItem('sstm_v2_migration') || 'null'), cycleJournal: journal };
       },
-      validate: snapshot => { window.SstmData.validate(snapshot); if (snapshot.dataset !== 'sstm-v2') throw new Error('Используй перенос v1 через аккаунт.'); },
+      validate: snapshot => { window.SstmData.validate(snapshot); if (snapshot.dataset !== 'sstm-v2') throw new Error('Выбери файл, сохранённый из v2.'); },
       apply: snapshot => {
         viewStorage.setItem('sstm_v2_cycles', JSON.stringify(snapshot.cycleJournal || window.SstmData.emptyJournal())); viewStorage.setItem('sstm_v2_modules', JSON.stringify(snapshot.moduleJournal || window.SstmModules.empty())); viewStorage.setItem('sstm_v2_migration', JSON.stringify(snapshot.migration || null));
         if (snapshot.stopwatchJournal) viewStorage.setItem('sstm_v2_stopwatches', JSON.stringify(snapshot.stopwatchJournal)); else viewStorage.removeItem('sstm_v2_stopwatches');
@@ -345,6 +350,7 @@
     setupUI();
     window.TRCKNG_MODULES.installNavigation();
     await loadScript('../history-matrix.js'); await loadScript('../app.js');
+    await loadScript('./log-model.js'); await loadScript('./log.js');
     window.TRCKNG_RESUME_CELL_EDITOR = () => {
       const saved = parked.get('cellEditModal');
       if (saved) {
@@ -396,6 +402,6 @@
   }
   boot().catch(error => {
     const message = document.createElement('p'); message.id = 'surfaceLoadError'; message.setAttribute('role', 'alert'); message.textContent = error.message;
-    const back = document.createElement('a'); back.href = '../'; back.textContent = 'ОТКРЫТЬ v1'; document.body.append(message, back);
+    const reload = document.createElement('button'); reload.type = 'button'; reload.textContent = 'ОБНОВИТЬ V2'; reload.onclick = () => location.reload(); document.body.append(message, reload);
   });
 })();

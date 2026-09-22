@@ -5,7 +5,30 @@
 (() => {
   const $ = selector => document.querySelector(selector);
   const header = $('.header'), menu = $('#surfaceMenu'), toggle = $('#surfacePanelToggle');
-  const small = matchMedia('(max-width:600px), (max-height:560px)');
+  const small = matchMedia('(max-width:800px), (max-height:560px)');
+  const section = (label, id) => {
+    const details = document.createElement('details'); details.className = 'surface-menu-section'; details.id = id;
+    const summary = document.createElement('summary'); summary.textContent = label;
+    const body = document.createElement('div'); details.append(summary, body); menu.append(details); return body;
+  };
+  const settings = section('Вид и настройки', 'surfaceAppearance');
+  for (const selector of ['#surfaceNight', '.surface-language', '.surface-prompt-setting', '#surfaceDemoLink']) {
+    const item = menu.querySelector(selector); if (item) settings.append(item);
+  }
+  const fieldSettings = section('Управление полем', 'surfaceFieldSettings');
+  const controls = menu.querySelector('.controls'); if (controls) fieldSettings.append(controls);
+  const hint = menu.querySelector(':scope > p'); if (hint) fieldSettings.append(hint);
+  // Account owns file transfer; do not duplicate these actions among field tools.
+  for (const id of ['btnExport', 'btnImport']) { const button = $('#' + id); if (button) button.hidden = true; }
+  const heading = document.createElement('div'); heading.className = 'surface-menu-heading';
+  const version = document.createElement('span'); version.textContent = 'SSTM v2 · 0.11.0';
+  const reload = document.createElement('button'); reload.type = 'button'; reload.textContent = 'ОБНОВИТЬ'; reload.id = 'surfaceReload';
+  reload.onclick = async () => {
+    if (!confirm(window.SstmI18n.language === 'en' ? 'Reload the app? Saved records stay on this device. Unsaved text in open forms will be lost.' : 'Обновить приложение? Сохранённые записи останутся на устройстве. Несохранённый текст в открытых формах будет потерян.')) return;
+    try { await (await navigator.serviceWorker?.getRegistration())?.update(); } catch (_) {}
+    location.reload();
+  };
+  heading.append(version, reload); menu.prepend(heading);
   const groups = [$('.view-tabs'), $('.controls-edit'), $('#surfaceWelcome')].map((element, i) => {
     const home = document.createComment('expanded panel position'); element.before(home);
     if (!element.id) element.id = `surfacePanelGroup${i}`;
@@ -18,16 +41,16 @@
     const key = preferenceKey();
     let saved = preferences.get(key);
     if (saved === undefined) { try { saved = localStorage.getItem(key); } catch (_) {} }
-    return saved === 'compact' || saved !== 'expanded' && small.matches;
+    return small.matches || saved === 'compact';
   }
   function apply(compact) {
     const focused = document.activeElement;
     menu.hidden = true; $('#surfaceMenuButton').setAttribute('aria-expanded', 'false');
     document.body.classList.toggle('surface-compact', compact);
     for (const { element, home } of groups) {
-      if (compact) menu.append(element); else home.after(element);
+      if (compact) (element.classList.contains('controls-edit') ? fieldSettings : menu).append(element); else home.after(element);
     }
-    if (compact) menu.prepend(groups[0].element, groups[1].element);
+    if (compact) heading.after(groups[0].element);
     toggle.textContent = compact ? '⌄' : '⌃';
     toggle.setAttribute('aria-expanded', String(!compact));
     toggle.setAttribute('aria-label', compact ? 'Показать панели' : 'Свернуть панели');
@@ -66,7 +89,7 @@
     const rect = $('.surface-head').getBoundingClientRect(), parent = header.getBoundingClientRect();
     const viewport = window.visualViewport;
     const bottom = viewport ? viewport.offsetTop + viewport.height : innerHeight;
-    menu.style.top = `${rect.bottom - parent.top}px`;
+    menu.style.top = `${small.matches ? rect.bottom : rect.bottom - parent.top}px`;
     menu.style.maxHeight = `${Math.max(44, bottom - rect.bottom - 12)}px`;
   }
   small.addEventListener('change', () => apply(preferred()));

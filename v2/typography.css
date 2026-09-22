@@ -23,7 +23,20 @@ body.v2-surface #surfacePromptNames[aria-pressed=true]{border-color:var(--surfac
 #cycleNamePrompt::backdrop{background:#000b}
 #cycleNamePrompt form{display:grid;gap:12px}
 #cycleNamePrompt :is(input,select,button){background:#171719;color:inherit;border:1px solid #444;padding:8px;min-width:0}
-#cycleNamePrompt input{width:100%;box-sizing:border-box}
+#cycleNamePrompt input:not([type=checkbox]){width:100%;box-sizing:border-box}
+#cycleNamePrompt form{grid-template-columns:minmax(0,1fr);min-width:0}
+#cycleNamePrompt .surface-prompt-setting{display:flex;align-items:center;gap:10px;width:100%;min-width:0;margin:0;padding:4px 0;box-sizing:border-box}
+#cycleNamePrompt #cyclePromptNewInterval{appearance:auto;display:block;flex:0 0 18px;width:18px;height:18px;min-height:18px;max-width:18px;margin:0;padding:0;border:0;accent-color:var(--surface-accent)}
+#cycleNamePrompt .surface-prompt-setting span{display:block;min-width:0;white-space:normal;line-height:1.4;color:var(--surface-ink)}
 #cycleNamePrompt label{font-size:13px}
+#cycleNamePrompt [hidden]{display:none!important}
+.cycle-inner-point{grid-column:1/-1;display:grid;gap:4px;border-left:2px solid #74785d;margin:6px 0;padding:6px 10px;font-size:12px}
+.cycle-inner-point strong{font-weight:400;color:var(--surface-ink)}
+#cycleNamePrompt{max-height:calc(100dvh - 24px);overflow:auto}
+#cyclePromptChoices{display:flex;gap:6px;flex-wrap:wrap}
+#cyclePromptChoices:empty{display:none}
+body.v2-surface #habitsGrid .btn-habit .btn-label{line-height:1.25;overflow-wrap:anywhere;text-wrap:pretty}
+body.v2-surface #habitsGrid .btn-habit .btn-value{line-height:1.08;letter-spacing:-.025em}
+body.v2-surface #habitsGrid .btn-habit .btn-breakdown{line-height:1.35;letter-spacing:0}
 .surface-prompt-setting{display:flex;align-items:center;gap:10px;min-height:44px;font-size:12px;cursor:pointer}
 body.v2-surface .surface-prompt-setting input{width:20px;height:20px;min-height:20px;flex:none;accent-color:var(--surface-accent)}

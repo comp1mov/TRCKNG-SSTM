@@ -692,6 +692,14 @@ window.SstmTranslations += `
 Время с последней отметки|Time since last mark
 До 48 часов — часы и минуты, затем — полные дни. Количество остаётся под временем. Если отметка неизвестна, видно «—».|Until 48 hours: hours and minutes, then complete days. The count stays below the time. An unknown mark shows —.
 НОЧНОЙ РЕЖИМ|NIGHT MODE
+Точка уже записана. Запись продолжается.|Point recorded. Recording continues.
+Точки внутри отрезка не прерывают его. Новый отрезок начинается только по твоему выбору.|Points inside an interval do not interrupt it. Start a new interval explicitly.
+Граница не может пересечь внутреннюю точку.|A boundary cannot cross an inner point.
+После границы есть внутренние точки. Отмена границы недоступна.|There are inner points after this boundary. The boundary cannot be undone.
+Начать новый отрезок|Start a new interval
+Теги точки|Point tags
+Редактировать внутреннюю точку|Edit inner point
+Теги текущего отрезка|Current interval tags
 Название текущего отрезка|Current interval name
 Название точки|Point name
 Спрашивать названия после точки|Ask for names after a point
@@ -703,4 +711,29 @@ window.SstmTranslations += `
 ПРОПУСТИТЬ|SKIP
 Подтверждать нажатие|Confirm each tap
 Случайное касание не изменит число и отсчёт без подтверждения.|An accidental tap cannot change the count or elapsed time without confirmation.
+
+С ЭТОГО УСТРОЙСТВА|USE THIS DEVICE
+ИЗ ОБЛАКА|USE CLOUD COPY
+СКАЧАТЬ ФАЙЛ V2|DOWNLOAD V2 FILE
+ЗАГРУЗИТЬ ФАЙЛ V2|IMPORT V2 FILE
+СКАЧАТЬ КОПИЮ ДО ЗАМЕНЫ|DOWNLOAD PREVIOUS COPY
+СОХРАНИТЬ ИМЯ|SAVE NAME
+Это устройство|This device
+Имя устройства|Device name
+ЛОГ|LOG
+СТАТИСТИКА|STATISTICS
+Поиск в логе|Search the log
+События|Events
+Все события|All events
+Точки / этапы|Points / stages
+Кнопки|Buttons
+Время цикла|Cycle time
+Событие|Event
+Время|Time
+ПОКАЗАТЬ РАНЬШЕ|SHOW EARLIER
+Вид и настройки|Appearance and settings
+Управление полем|Field controls
+ОБНОВИТЬ|RELOAD
+
+Точки, кнопки и состояния — в одном логе. История → Лог / Статистика. Аккаунт → выбор копии и перенос файла v2.|Points, buttons and states in one log. History → Log / Statistics. Account → choose a copy and transfer a v2 file.
 `;

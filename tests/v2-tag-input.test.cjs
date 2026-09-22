@@ -11,5 +11,5 @@ test('prefix completion searches all word/interval tags, case folds, skips repea
 test('completion replaces only the token under the caret, preserving adjacent words and separators', () => {
  assert.deepEqual(T.complete('#пр', 3, 'прогулка'), { text: '#прогулка ', caret: 10 });
  assert.deepEqual(T.complete('один, #проб, два', 9, 'проект'), { text: 'один, #проект, два', caret: 13 });
- assert.deepEqual(T.complete('', 0, 'проект'), { text: 'проект ', caret: 7 });
+ assert.deepEqual(T.complete('', 0, 'проект'), { text: '#проект ', caret: 8 });
 });

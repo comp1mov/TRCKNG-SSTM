@@ -16,10 +16,13 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     const user = { id: '00000000-0000-4000-8000-000000000001', email: 'fixture@example.invalid', aud: 'authenticated', role: 'authenticated' };
     const token = [Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'), Buffer.from(JSON.stringify({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600, role: 'authenticated' })).toString('base64url'), 'fixture'].join('.');
     let cloud, source, sourceBaseline, dropNextReply = false, holdReply = null;
+    const dailyBackups = new Map();
     const routeAccount = async route => {
       const request = route.request(), target = new URL(request.url());
       if (target.hostname === '127.0.0.1') return route.continue();
       const json = value => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(value) });
+      const objectResponse = () => request.headers().accept?.includes('vnd.pgrst.object');
+      const backupRows = () => [...dailyBackups.values()].sort((a, b) => b.backup_date.localeCompare(a.backup_date));
       if (target.pathname === '/auth/v1/token') return json({ access_token: token, refresh_token: 'fixture-only', expires_in: 3600, token_type: 'bearer', user });
       if (target.pathname === '/auth/v1/user') return json(user);
       if (target.pathname === '/auth/v1/logout') return json({});
@@ -27,13 +30,34 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
         assert.equal(request.method(), 'GET', 'V2 must never write to v1');
         return json(source ? [source] : []);
       }
-      if (target.pathname === '/rest/v1/trckng_v2_snapshots') return json(request.headers().accept?.includes('vnd.pgrst.object') ? cloud : cloud ? [cloud] : []);
+      if (target.pathname === '/rest/v1/trckng_v2_snapshots') return json(objectResponse() ? cloud : cloud ? [cloud] : []);
+      if (target.pathname === '/rest/v1/trckng_v2_daily_backups') {
+        if (request.method() === 'GET') {
+          const filter = target.searchParams.get('backup_date');
+          let rows = backupRows();
+          if (filter?.startsWith('eq.')) rows = rows.filter(row => row.backup_date === filter.slice(3));
+          const limited = target.searchParams.get('limit');
+          if (limited) rows = rows.slice(0, Number(limited));
+          return json(objectResponse() ? rows[0] || null : rows);
+        }
+        if (request.method() === 'POST') {
+          const payload = request.postDataJSON();
+          if (!dailyBackups.has(payload.backup_date)) dailyBackups.set(payload.backup_date, { ...payload, created_at: new Date().toISOString() });
+          const row = dailyBackups.get(payload.backup_date);
+          return json(objectResponse() ? row : [row]);
+        }
+        if (request.method() === 'DELETE') {
+          const filter = target.searchParams.get('backup_date');
+          if (filter?.startsWith('in.(')) filter.slice(4, -1).split(',').forEach(date => dailyBackups.delete(date));
+          return json([]);
+        }
+      }
       if (target.pathname === '/rest/v1/rpc/commit_trckng_v2') {
         const payload = request.postDataJSON();
         if (cloud?.write_id === payload.mutation_id) return json([cloud]);
         if ((cloud?.revision || 0) !== payload.expected_revision) return route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ code: '40001', message: 'V2 revision conflict' }) });
         cloud = { user_id: user.id, revision: (cloud?.revision || 0) + 1, app_state: payload.state, source_state: cloud?.source_state || payload.source,
-          source_updated_at: cloud?.source_updated_at || payload.source_at, write_id: payload.mutation_id, device_id: payload.device, updated_at: new Date().toISOString() };
+          source_updated_at: cloud?.source_updated_at || payload.source_at, write_id: payload.mutation_id, device_id: payload.device, device_name: payload.device_name, updated_at: new Date().toISOString() };
         writes.push(structuredClone(cloud));
         if (dropNextReply) { dropNextReply = false; return route.abort(); }
         if (holdReply) { const hold = holdReply; holdReply = null; hold.arrived(); await hold.wait; }
@@ -41,6 +65,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
       }
       return route.abort();
     };
+    await context.addInitScript(() => localStorage.setItem('sstm_v2_prompt_names', 'false'));
     await context.route('**/*', routeAccount);
     const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
     const field = async () => { if (!await page.locator('#btnViewTrack').isVisible()) await page.locator('#surfaceMenuButton').click(); await page.locator('#btnViewTrack').click(); };
@@ -79,16 +104,21 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator('#accountBackToField').click();
     assert.equal(await page.locator('#migrationGate').isVisible(), true);
     assert.equal(writes.length, 0, 'Login does not create or upload default v2 data');
-    await page.locator('#migrationAdvanced summary').click();
-    await page.locator('#migrationPreview').click(); await page.locator('#migrationApply').waitFor();
-    assert.equal(writes.length, 0, 'Preview does not write anything');
-    await page.locator('#migrationApply').click();
-    await page.waitForFunction(() => document.querySelector('#pin0')?.textContent === 'FIELD A');
-    assert.equal(writes.length, 1, 'The confirmed migration creates v2 once');
-    assert.equal(JSON.stringify(source), sourceBaseline, 'V1 cloud data is byte-unchanged');
-    assert.deepEqual(cloud.app_state.pinData, source.app_state.pinData);
-    assert.deepEqual(cloud.source_state, source.app_state);
-    await page.locator('#cycleCapture').click(); await page.locator('#cycleCapture').click();
+    assert.equal(await page.locator('#migrationAdvanced').count(),0);
+    const fixture = await page.evaluate(source => SstmData.migrate(source.app_state, source.updated_at), source);
+    const chooser = page.waitForEvent('filechooser'); await page.locator('#v2FirstImport').click();
+    page.once('dialog', dialog=>dialog.accept());
+    await (await chooser).setFiles({name:'fixture.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});
+    await page.waitForFunction(()=>document.querySelector('#pin0').textContent==='FIELD A');
+    page.once('dialog',dialog=>dialog.accept()); await page.locator('#accountUpload').click();
+    await page.waitForFunction(()=>!document.querySelector('#v2CopyChoice').classList.contains('has-conflict'));
+    assert.equal(writes.length,1); assert.equal(dailyBackups.size,0);
+    assert.equal(JSON.stringify(source),sourceBaseline);
+    await page.locator('#accountAdvanced summary').click();
+    await page.locator('#v2DeviceName').fill('Fixture laptop'); await page.locator('#v2DeviceNameSave').click();
+    assert.match(await page.locator('#v2LocalMeta').innerText(),/Fixture laptop/);
+    await page.locator('#accountBackToField').click();
+    await page.locator('#cycleCapture').click(); await page.evaluate(()=>{const j=SstmData.point(SstmRecordings.read(),Date.now()); TRCKNG_STORAGE.setItem('sstm_v2_cycles',JSON.stringify(j)); markCloudDirty('fixture boundary'); dispatchEvent(new Event('sstm-v2-loaded'));});
     assert.equal(await page.locator('#surfaceWelcome').isVisible(), false);
     assert.equal(await page.locator('#habitsGrid .btn-habit').count(), 9);
     assert.equal(await page.locator('#btn-cell01 .btn-value').innerText(), '7');
@@ -117,7 +147,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator('#pin2').click(); await page.locator('#btn-cell09').click();
     await page.locator('#cellEditModal.visible').waitFor();
     assert.equal(await page.locator('#cellEditModal .type-btn[data-type]').count(), 17);
-    await page.locator('#cellEditInput').fill('New counter');
+    await page.waitForFunction(()=>document.activeElement?.id==='cellEditInput'); await page.locator('#cellEditInput').fill('New counter');
     await page.locator('#cellEditModal [data-type=unit]').click();
     await page.locator('#unitStep').fill('2'); await page.locator('#cellEditSave').click();
     await page.locator('#btnViewTrack').click();
@@ -125,7 +155,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator('#pin0').click();
     // A minimized editor must keep its source PIN and draft.
     await page.locator('#btnViewLayout').click(); await page.locator('#layout-cell01 .layout-action').nth(1).click();
-    await page.locator('#cellEditInput').fill('Renamed A');
+    await page.waitForFunction(()=>document.activeElement?.id==='cellEditInput'); await page.locator('#cellEditInput').fill('Renamed A');
     await page.locator('#cellEditModal .surface-panel-head button').first().click();
     await page.locator('#pin1').click();
     await page.locator('#surfaceDock button').click();
@@ -138,7 +168,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(await page.evaluate(() => localStorage.getItem('trckng_sstm_labels_pin0')), '{"cell01":"V1 sentinel"}');
     // Extra controls use exactly the same account path, including their free position.
     await page.locator('#btnViewLayout').click(); await page.locator('#surfaceAddCell').click();
-    await page.locator('#cellEditInput').fill('Account extra'); await page.locator('#unitStep').fill('2');
+    await page.waitForFunction(()=>document.activeElement?.id==='cellEditInput'); await page.locator('#cellEditInput').fill('Account extra'); await page.locator('#unitStep').fill('2');
     await page.locator('#cellEditSave').click();
     const extraId = await page.evaluate(() => HABITS.find(id => id.startsWith('cell-')));
     await page.locator(`#layout-${extraId} .field-grip`).focus();
@@ -148,7 +178,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(cloud.app_state.pinData[0].habitLabels[extraId], 'Account extra');
     assert.equal(cloud.app_state.pinData[0].cellLayout[extraId].col, 6);
     await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true });
-    await page.locator('#btnViewHistory').click(); await page.locator('#historyMatrix').waitFor();
+    await page.locator('#btnViewHistory').click(); await page.locator('#logStatsTab').click(); await page.locator('#historyMatrix').waitFor();
     await page.screenshot({ path: path.join(output, 'history.png'), fullPage: true });
     await page.locator('#btnViewTrack').click();
     for (const width of [768, 390, 320]) {
@@ -183,7 +213,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     });
     // A modular source/control commits together and travels with the same account.
     await page.locator('#pin2').click(); await page.locator('#surfaceMenuButton').click(); await page.locator('#surfaceScenarios').click();
-    await page.locator('[data-recipe="work-pay"] button').click(); await page.locator('#cellEditInput').fill('Synced work fixture');
+    await page.locator('[data-recipe="work-pay"] button').click(); await page.waitForFunction(()=>document.activeElement?.id==='cellEditInput'); await page.locator('#cellEditInput').fill('Synced work fixture');
     await page.locator('#cellEditSave').click(); await field();
     const workId = await page.evaluate(() => HABITS.find(id => habitTypes[id] === 'modular'));
     await page.locator(`#btn-${workId}`).click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
@@ -203,6 +233,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(TRCKNG_STORAGE.keyName)).version), 7);
     await page.locator('#pin0').click();
     const device = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', isMobile: true, hasTouch: true });
+    await device.addInitScript(() => localStorage.setItem('sstm_v2_prompt_names', 'false'));
     await device.route('**/*', routeAccount);
     const phone = await device.newPage(); phone.on('pageerror', e => errors.push(e.message));
     await phone.goto(url); await phone.locator('#surfaceAccount').tap();
@@ -252,12 +283,13 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.evaluate(() => TRCKNG_ACCOUNT.sync());
     assert.equal(await page.locator('#pin0').innerText(), 'FIELD A', 'Later v1 edits do not flow into the independent v2 copy');
     await device.close();
+    await page.locator('#accountBackToField').click();
     dropNextReply = true;
     await page.locator('#cycleCapture').click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
     assert.ok(await page.evaluate(() => TRCKNG_STORAGE.getItem('sstm_v2_pending')), 'An unacknowledged write remains durable');
-    const afterLostReply = cloud.app_state.cycleJournal.cycles[0].points.length, lostRevision = cloud.revision;
+    const afterLostReply = cloud.app_state.cycleJournal.cycles[0].checkpoints.length, lostRevision = cloud.revision;
     await page.locator('#cycleCapture').click(); await page.evaluate(() => TRCKNG_ACCOUNT.sync());
-    assert.equal(cloud.app_state.cycleJournal.cycles[0].points.length, afterLostReply + 1);
+    assert.equal(cloud.app_state.cycleJournal.cycles[0].checkpoints.length, afterLostReply + 1);
     assert.equal(cloud.revision, lostRevision + 1, 'Retry did not add another revision; only the later edit did');
     let releaseReply, signalArrival;
     const arrived = new Promise(resolve => { signalArrival = resolve; });
@@ -267,7 +299,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await page.locator('#cycleCapture').click(); releaseReply(); await page.evaluate(() => window.fixturePendingSync);
     assert.equal(await page.evaluate(() => managedAccountDirty()), true, 'Edits made during upload stay pending');
     await page.evaluate(() => TRCKNG_ACCOUNT.sync());
-    assert.equal(cloud.app_state.cycleJournal.cycles[0].points.length, afterLostReply + 3);
+    assert.equal(cloud.app_state.cycleJournal.cycles[0].checkpoints.length, afterLostReply + 3);
     await page.locator('#btnViewLayout').click(); await page.locator('#layout-cell01 .layout-action').nth(1).click();
     await page.locator('#unitStep').fill('99');
     await page.evaluate(() => {
@@ -286,39 +318,35 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     };
     await page.locator('#surfaceAccount').click();
     if (!(await page.locator('#accountAdvanced').evaluate(el => el.open))) await page.locator('#accountAdvanced summary').click();
-    const originalCopy = await downloadJson(() => page.locator('#v2SourceBackup').click(), 'source-fixture.json');
-    assert.deepEqual(originalCopy.value, JSON.parse(sourceBaseline).app_state, 'Source backup remains the original despite subsequent v1 edits');
-    await page.locator('#accountBackToField').click();
-    await page.locator('#surfaceMenuButton').click();
-    const exported = await downloadJson(() => page.locator('#btnExport').click(), 'v2-fixture.json');
+    const exported = await downloadJson(() => page.locator('#v2Export').click(), 'v2-fixture.json');
     assert.equal(exported.value.dataset, 'sstm-v2'); assert.equal(exported.value.pinData.length, 3);
     assert.equal(exported.value.schemaVersion, 5); assert.equal(exported.value.stopwatchJournal.views.find(v => v.pin === 0 && v.cellId === 'cell03').preset, 'clock');
     assert.equal(exported.value.dataVersion, 2); assert.equal(exported.value.moduleJournal.tracks[0].sessions.length, 1);
     assert.equal(exported.value.cycleJournal.moments.length, 4); assert.equal(exported.value.cycleJournal.stateOptions[0].label, 'Fixture flow');
-    assert.equal(exported.value.cycleJournal.cycles[0].points.length, afterLostReply + 3);
+    assert.equal(exported.value.cycleJournal.cycles[0].checkpoints.length, afterLostReply + 3);
     assert.equal(exported.value.cycleJournal.edits[0].before.at, repairedFirstTime + 60000, 'Export includes original observations');
     const restored = structuredClone(exported.value); restored.pinData[2].habitLabels.cell09 = 'Restored fixture';
     const importPath = path.join(output, 'restore-fixture.json'); fs.writeFileSync(importPath, JSON.stringify(restored));
-    if (!await page.locator('#btnImport').isVisible()) await page.locator('#surfaceMenuButton').click();
-    const choosing = page.waitForEvent('filechooser'); await page.locator('#btnImport').click();
+    const choosing = page.waitForEvent('filechooser'); await page.locator('#v2Import').click();
     page.once('dialog', dialog => dialog.accept()); await (await choosing).setFiles(importPath);
     await page.waitForFunction(() => JSON.parse(TRCKNG_STORAGE.getItem('trckng_sstm_labels_pin2')).cell09 === 'Restored fixture');
     await page.locator('#surfaceAccount').click();
-    const recoveryCopy = await downloadJson(() => page.getByRole('button', { name: 'СКАЧАТЬ КОПИЮ ДО ВОССТАНОВЛЕНИЯ', exact: true }).click(), 'recovery-fixture.json');
+    const recoveryCopy = await downloadJson(() => page.locator('#v2Recovery').click(), 'recovery-fixture.json');
     assert.equal(recoveryCopy.value.pinData[2].habitLabels.cell09, 'New counter');
     assert.deepEqual(recoveryCopy.value.cycleJournal, exported.value.cycleJournal, 'Restore retains previous cycle records in recovery');
     await page.locator('#accountBackToField').click();
-    await page.evaluate(() => TRCKNG_ACCOUNT.sync());
+    page.once('dialog',dialog=>dialog.accept()); await page.evaluate(() => TRCKNG_ACCOUNT.upload());
     const savedBeforeLogout = await page.evaluate(() => localStorage.getItem('trckng_sstm_data_pin0'));
     await page.goto(url.replace('?mode=account&lang=ru', '')); await page.locator('#surfaceMenuButton').waitFor(); await field(); await page.locator('#btn-cell01').waitFor();
     assert.equal(await page.locator('body').getAttribute('data-mode'), 'account', 'A returning signed-in visitor resumes their own account');
-    await page.locator('#surfaceAccount').click(); await page.locator('#accountSignOut').click();
+    await page.locator('#surfaceAccount').click(); if (!await page.locator('#accountAdvanced').evaluate(e=>e.open)) await page.locator('#accountAdvanced summary').click(); await page.locator('#accountSignOut').click();
     await page.waitForURL('**mode=demo'); await page.locator('#btn-cell01').waitFor();
     assert.equal(await page.locator('#pin0').innerText(), 'EXAMPLES', 'A bare URL uses English by default');
     assert.equal(await page.evaluate(() => localStorage.getItem('trckng_sstm_data_pin0')), savedBeforeLogout, 'Logout/demo preserves private records');
     assert.deepEqual(errors, []);
     await context.close();
     const offline = await browser.newContext({ serviceWorkers: 'allow' });
+    await offline.addInitScript(() => localStorage.setItem('sstm_v2_prompt_names', 'false'));
     let networkOff = false;
     await offline.route('**/*', route => networkOff && new URL(route.request().url()).hostname !== '127.0.0.1' ? route.abort() : routeAccount(route));
     const local = await offline.newPage(); local.on('pageerror', e => errors.push(e.message));
@@ -347,7 +375,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     await local.locator('#pin2').click(); await local.locator(`#btn-${tagId}`).click(); await local.locator('#momentWords').fill('offline draft');
     const wordDraftAt = await local.evaluate(id => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_tag_drafts'))[`2/${id}`].at, tagId);
     await local.reload(); await local.locator('#cycleCapture').waitFor(); await local.locator('#pin2').click(); await local.locator(`#btn-${tagId}`).click();
-    assert.equal(await local.locator('#momentWords').inputValue(), 'offline draft', 'Account word draft survives offline reload');
+    assert.equal(await local.locator('#momentWords').inputValue(), '#offline #draft', 'Account word draft survives offline reload');
     assert.equal(await local.evaluate(id => JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_tag_drafts'))[`2/${id}`].at, tagId), wordDraftAt);
     await local.locator('#tagCancel').click();
     await local.locator('#pin0').click();
@@ -369,7 +397,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.deepEqual(await local.evaluate(() => { const c = JSON.parse(TRCKNG_STORAGE.getItem('sstm_v2_cycles')).cycles[0]; return c.tags[c.points[0].id]; }), ['offline', 'example']);
     await offline.close();
     assert.deepEqual(errors, []);
-    console.log('PASS: checked v1 copy with immutable source; independent account store, 17 palette choices; work and timestamped words/states/custom menu across devices; journal sync/export/restore/offline; cycle points, tab lock, conflict/recovery, v1 independence, responsive field, logout isolation.');
+    console.log('PASS: v2 file import and checked cloud selection; independent account store, 17 palette choices; work and timestamped words/states/custom menu across devices; journal sync/export/restore/offline; cycle points, tab lock, conflict/recovery, v1 independence, responsive field, logout isolation.');
     console.log(`Synthetic screenshots: ${output}`);
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
