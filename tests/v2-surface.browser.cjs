@@ -178,7 +178,7 @@ const kinds = ['unit', 'value', 'duration_sec', 'duration_min', 'sleep', 'durati
     assert.equal(cloud.app_state.pinData[0].habitLabels[extraId], 'Account extra');
     assert.equal(cloud.app_state.pinData[0].cellLayout[extraId].col, 6);
     await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true });
-    await page.locator('#btnViewHistory').click(); await page.locator('#logStatsTab').click(); await page.locator('#historyMatrix').waitFor();
+    await page.locator('#btnViewHistory').click(); await page.locator('#logStatsTab').click(); await page.locator('#logAdvancedStats>summary').click(); await page.locator('#historyMatrix').waitFor();
     await page.screenshot({ path: path.join(output, 'history.png'), fullPage: true });
     await page.locator('#btnViewTrack').click();
     for (const width of [768, 390, 320]) {

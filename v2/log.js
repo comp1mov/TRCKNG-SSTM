@@ -3,13 +3,18 @@
   const history = document.getElementById('historyView'), model = window.SstmLog;
   const t = (ru, en) => window.SstmI18n.language === 'en' ? en : ru;
   const el = (tag, text, className) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (className) n.className = className; return n; };
-  const stats = el('div', undefined, 'log-statistics'); stats.id = 'logStatistics'; stats.append(...history.children); stats.hidden = true;
+  const stats = el('div', undefined, 'log-statistics'); stats.id = 'logStatistics';
+  const advanced = el('details'); advanced.id = 'logAdvancedStats';
+  advanced.append(el('summary', 'Подробные таблицы и исправления'), ...history.children);
+  stats.append(advanced); stats.hidden = true;
   const tabs = el('nav', undefined, 'log-tabs'); tabs.setAttribute('aria-label', 'History');
-  const logTab = el('button', 'ЛОГ'), statsTab = el('button', 'СТАТИСТИКА'); logTab.id = 'logTab'; statsTab.id = 'logStatsTab';
-  logTab.type = statsTab.type = 'button'; tabs.append(logTab, statsTab);
+  const logTab = el('button', 'ЛОГ'), timelineTab = el('button', 'ТАЙМЛИНИЯ'), statsTab = el('button', 'СТАТИСТИКА');
+  logTab.id = 'logTab'; timelineTab.id = 'logTimelineTab'; statsTab.id = 'logStatsTab';
+  logTab.type = timelineTab.type = statsTab.type = 'button'; tabs.append(logTab, timelineTab, statsTab);
+  const timeline = document.getElementById('recordingCalendar'); timeline.hidden = true;
   const log = el('section'); log.id = 'eventLog';
   log.innerHTML = '<div class="log-controls"><input id="logSearch" type="search" placeholder="Поиск в логе" aria-label="Поиск в логе"><select id="logFilter" aria-label="События"><option value="all">Все события</option><option value="points">Точки / этапы</option><option value="buttons">Кнопки</option></select></div><div class="log-column-labels"><span>Время цикла</span><span>Событие</span><span>Время</span></div><div id="logRows" data-no-i18n></div><p id="logEmpty"></p><button id="logMore" type="button">ПОКАЗАТЬ РАНЬШЕ</button>';
-  history.append(tabs, log, stats);
+  history.append(tabs, log, timeline, stats);
   const rows = log.querySelector('#logRows'), search = log.querySelector('#logSearch'), filter = log.querySelector('#logFilter'), more = log.querySelector('#logMore');
   let limit = 100, lastSignature = '', lastLanguage = '', shown = [];
   const labels = {
@@ -56,16 +61,36 @@
     log.querySelector('#logEmpty').textContent = selected.length ? '' : t('Пока пусто. Добавь точку или нажми кнопку на поле.', 'Nothing here yet. Add a point or use a field button.');
     if (preserve && anchorId) { const replacement = [...rows.children].find(n => n.dataset.entry === anchorId); if (replacement) history.scrollTop += replacement.getBoundingClientRect().top - anchorTop; }
   }
-  function select(statistics) {
-    stats.hidden = !statistics; log.hidden = statistics;
-    logTab.setAttribute('aria-pressed', String(!statistics)); statsTab.setAttribute('aria-pressed', String(statistics));
-    history.scrollTop = 0; refresh(true);
+  let selectedView = 'log';
+  const positions = { log: 0, timeline: 0, stats: 0 };
+  function select(view = 'log') {
+    positions[selectedView] = history.scrollTop; selectedView = view;
+    stats.hidden = view !== 'stats'; log.hidden = view !== 'log'; timeline.hidden = view !== 'timeline';
+    document.body.dataset.historyPanel = view;
+    for (const [tab, name] of [[logTab, 'log'], [timelineTab, 'timeline'], [statsTab, 'stats']]) tab.setAttribute('aria-pressed', String(view === name));
+    history.scrollTop = positions[view]; refresh(true);
+    if (view === 'timeline') window.dispatchEvent(new Event('sstm-calendar-view'));
+    if (view === 'stats') window.SstmSimpleStats?.refresh();
   }
-  logTab.onclick = () => select(false); statsTab.onclick = () => select(true);
+  function open(view = 'log') {
+    window.TRCKNG_NAVIGATION.dismissPanels(); window.setView('history'); select(view);
+  }
+  logTab.onclick = () => select('log'); timelineTab.onclick = () => select('timeline'); statsTab.onclick = () => select('stats');
+  window.SstmLogView = { open, select };
+  document.getElementById('btnViewHistory').addEventListener('click', event => {
+    event.preventDefault(); event.stopImmediatePropagation(); open();
+  }, true);
+  // All former calendar entry points now lead to the same visible tab.
+  document.body.classList.add('personal-cycle');
+  for (const id of ['cycleCalendar', 'surfaceCalendar']) {
+    const button = document.getElementById(id); button.textContent = 'ТАЙМЛИНИЯ';
+    button.setAttribute('aria-label', 'Открыть таймлинию'); button.onclick = () => open('timeline');
+    button.removeAttribute('aria-pressed');
+  }
   for (const control of [search, filter]) control.addEventListener('input', () => { limit = 100; refresh(true); });
   more.onclick = () => { limit += 100; refresh(true); };
   new MutationObserver(() => refresh()).observe(history, { attributes: true, attributeFilter: ['hidden'] });
   window.addEventListener('sstm-language-changed', () => refresh(true));
   window.addEventListener('sstm-v2-loaded', () => refresh(true));
-  setInterval(refresh, 1000); select(false);
+  setInterval(refresh, 1000); select('log');
 })();

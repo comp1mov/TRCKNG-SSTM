@@ -11,18 +11,21 @@
   const btn = (text, action) => { const node = el('button', text); node.type = 'button'; node.onclick = action; return node; };
   const nav = el('div', undefined, 'calendar-nav');
   const prev = btn('←', () => move(-1)), next = btn('→', () => move(1));
-  const nowButton = btn('', () => { from = model.anchor(Date.now(), hours); refresh(true); });
+  let followingNow = true;
+  const nowButton = btn('', () => { followingNow = true; from = model.anchor(Date.now(), hours); refresh(true); });
   const range = el('strong'), size = el('select'); size.id = 'calendarHours';
   for (const n of [48, 72]) { const option = el('option', String(n)); option.value = n; size.append(option); }
-  size.onchange = () => { hours = Number(size.value); from = model.anchor(Date.now(), hours); refresh(true); };
+  size.onchange = () => { followingNow = true; hours = Number(size.value); from = model.anchor(Date.now(), hours); refresh(true); };
   nav.append(prev, size, next, nowButton, range);
   const scroll = el('div', undefined, 'calendar-scroll'), axis = el('div', undefined, 'calendar-axis');
   scroll.append(axis); host.append(nav, scroll);
-  function move(direction) { from += direction * hours * model.HOUR; refresh(true); }
+  function move(direction) { followingNow = false; from += direction * hours * model.HOUR; refresh(true); }
   function place(node, geometry) { node.style.left = `${geometry.left}%`; node.style.width = `${geometry.width}%`; }
   function refresh(force = false) {
-    if (document.body.classList.contains('personal-cycle')) return;
-    const journal = recordings.read(), now = Date.now(), to = from + hours * model.HOUR;
+    if (host.hidden || document.getElementById('historyView')?.hidden) return;
+    const journal = recordings.read(), now = Date.now();
+    if (followingNow) { const anchor = model.anchor(now, hours); if (anchor !== from) { from = anchor; force = true; } }
+    const to = from + hours * model.HOUR;
     const locale = window.SstmI18n?.locale || 'ru-RU';
     const key = JSON.stringify([journal.cycles, from, hours, locale]);
     if (force || key !== signature) {

@@ -37,7 +37,7 @@
     const size = [96, 128, 160, 192].includes(c.size) ? c.size : innerWidth < 600 ? 128 : 160;
     document.body.dataset.cellSize = String(size);
     document.body.style.setProperty('--module-size', `${size}px`);
-    view?.scrollTo(c.x || 0, c.y || 0);
+    if (visibleView() !== 'history') view?.scrollTo(c.x || 0, c.y || 0);
     $('#surfaceZoom').textContent = `${Math.round(size / 128 * 100)}%`;
     $('#surfaceZoomOut').disabled = size === 96; $('#surfaceZoomIn').disabled = size === 192;
   }
@@ -78,7 +78,7 @@
     }
     window.setView('track'); (document.body.classList.contains('surface-compact') ? $('#surfaceMenuButton') : $('#btnViewTrack')).focus();
   }
-  window.TRCKNG_NAVIGATION = { fromAccount: goToField };
+  window.TRCKNG_NAVIGATION = { fromAccount: goToField, dismissPanels: dismissPanelsForNavigation };
   function closeMenu() { $('#surfaceMenu').hidden = true; $('#surfaceMenuButton').setAttribute('aria-expanded', 'false'); }
   function arrangeCell(id) {
     closeMenu(); window.setView('layout');
@@ -156,13 +156,13 @@
   }
   function setupUI() {
     const container = $('.container'), header = $('.header');
-    $('#infoModal .info-version').textContent = 'V2 / 0.11.0';
+    $('#infoModal .info-version').textContent = 'V2 / 0.11.1';
     $('#infoModal').querySelectorAll('.info-section').forEach(section => section.remove());
     const about = document.createElement('p'); about.className = 'info-text';
-    about.textContent = 'Точки, кнопки и состояния — в одном логе. История → Лог / Статистика. Аккаунт → выбор копии и перенос файла v2.';
+    about.textContent = 'Лог внизу экрана открывает события, таймлинию и статистику. Рядом находится отмена числового изменения. Аккаунт: выбор копии и перенос файла v2.';
     $('#infoModal .info-header').after(about);
     const head = document.createElement('div'); head.className = 'surface-head';
-    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.11.0</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
+    head.innerHTML = '<a class="surface-brand" href="../">SSTM <small>v2 / 0.11.1</small></a><span class="surface-time">ТВОЁ ПОЛЕ</span><button id="surfaceAccount" type="button">ВОЙТИ</button><button id="surfaceMenuButton" type="button" aria-expanded="false" aria-controls="surfaceMenu">МЕНЮ</button><button id="surfacePanelToggle" type="button" aria-expanded="true" aria-label="Свернуть панели">⌃</button>';
     header.prepend(head);
     $('.surface-brand').href = demo ? demoUrl() : accountUrl();
     $('.surface-brand').addEventListener('click', event => {
@@ -193,7 +193,7 @@
     textButton('btnDecrease', '− РЕЖИМ');
     const undoNumber = textButton('btnUndo', '↶ ЧИСЛО');
     undoNumber.title = 'Отменить последнее изменение числовой кнопки'; undoNumber.setAttribute('aria-label', undoNumber.title);
-    textButton('btnViewTrack', 'ПОЛЕ'); textButton('btnViewLayout', 'РАССТАВИТЬ'); textButton('btnViewHistory', 'ИСТОРИЯ');
+    textButton('btnViewTrack', 'ПОЛЕ'); textButton('btnViewLayout', 'РАССТАВИТЬ'); textButton('btnViewHistory', 'ЛОГ');
     $('#btnAccount').hidden = true;
     const zoom = document.createElement('div'); zoom.className = 'surface-zoom';
     zoom.innerHTML = '<button id="surfaceHome" type="button">К КНОПКАМ</button><button id="surfaceZoomOut" aria-label="Уменьшить масштаб" type="button">−</button><output id="surfaceZoom">100%</output><button id="surfaceZoomIn" aria-label="Увеличить масштаб" type="button">+</button>';
@@ -351,6 +351,7 @@
     window.TRCKNG_MODULES.installNavigation();
     await loadScript('../history-matrix.js'); await loadScript('../app.js');
     await loadScript('./log-model.js'); await loadScript('./log.js');
+    await loadScript('./simple-stats.js');
     window.TRCKNG_RESUME_CELL_EDITOR = () => {
       const saved = parked.get('cellEditModal');
       if (saved) {
@@ -384,6 +385,7 @@
     await loadScript('./creation.js');
     await loadScript('./stopwatch-ui.js'); await loadScript('./unit-ui.js');
     await loadScript('./chrome.js');
+    await loadScript('./quick-actions.js');
     await loadScript('./clocks.js');
     await loadScript('./readability.js');
     await loadScript('./medium.js'); await loadScript('./signals-model.js'); await loadScript('./signals.js');

@@ -45,6 +45,7 @@ async function until(test) { const end = Date.now() + 15000; while (!(await test
     assert.equal(await page.locator('html').getAttribute('lang'), 'en');
     await until(async () => await page.locator('#cycleCapture').innerText() === 'START');
     assert.deepEqual(calls, [], 'Demo requires no authentication');
+    await page.waitForFunction(() => window.SstmReadability && parseFloat(document.querySelector('#value-cell01').style.fontSize) >= 28);
     await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.evaluate(() => [...document.fonts].some(face => face.family === 'SSTM Text' && face.status === 'loaded')), true);
     const face = await page.locator('#value-cell01').evaluate(el => ({ size: parseFloat(getComputedStyle(el).fontSize), font: getComputedStyle(el).fontFamily, width: el.scrollWidth, box: el.clientWidth }));

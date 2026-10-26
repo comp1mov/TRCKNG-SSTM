@@ -1,4 +1,4 @@
-# SSTM v2 / beta 0.11.0
+# SSTM v2 / beta 0.11.1
 
 [Current app](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=account) · [Demo](https://comp1mov.github.io/TRCKNG-SSTM/v2/?mode=demo)
 
@@ -16,15 +16,19 @@ V1 import and daily cloud backup controls have been removed. Existing v1 records
 
 START begins a cycle. + POINT immediately stores an inner point. Add an optional thought/name and tags; select New interval to start a stage at that timestamp. Skipping keeps the point. Stop recording is explicit in the intervals panel. Closing the app and midnight do not reset the clock.
 
-History opens Log. Rows show elapsed time since the containing cycle began, the event/note, and actual local time. Dates separate days; events outside cycles show a dash on the left. Newest events come first, across all PINs. Search and filters do not mutate journals. Show earlier loads more rows. A point promoted to a stage appears once, retaining its note and tags.
+The bottom Log button opens events directly. Rows show elapsed time since the containing cycle began, the event/note, and actual local time. Dates separate days; events outside cycles show a dash on the left. Newest events come first, across all PINs. Search and filters do not mutate journals. Show earlier loads more rows. A point promoted to a stage appears once, retaining its note and tags.
 
-Click a point row to reach its existing editor in the intervals panel. Statistics is a separate tab. Timer starts/stops, value changes and undo, words and states use their original records. Visual generators do not invent events. Historical totals without retained timestamps cannot be reconstructed. V2 no longer trims future counter/duration records at 1,000; already-discarded detail cannot be recovered.
+Click a point row to reach its existing editor in the intervals panel. Timeline is a visible adjacent tab with 48/72-hour windows and Now; it follows the current date until a previous/next window is selected. Recording labels remain visible during horizontal scrolling. Statistics shows the current PIN's weekly totals with a week and button selector. Running time is separate. Shared modular tracks appear once; their sessions are clipped to the chosen week. Detailed tables and corrections are collapsed below.
+
+Timer starts/stops, value changes and undo, words and states use their original records. Visual generators do not invent events. Historical totals without retained timestamps cannot be reconstructed. V2 no longer trims future counter/duration records at 1,000; already-discarded detail cannot be recovered.
 
 ## Phone navigation
 
 Phones use compact panels regardless of an old expanded preference. Open panels hide the large timer/PIN header and retain a clear return action. Menu groups Appearance/settings and Field controls into expandable sections. Module sizes, tracking actions and light settings remain available.
 
-Menu shows 0.11.0 and Reload. Reload preserves stored records and pending sync but warns about unsaved form text. Appearance/settings contains language, Night mode and the optional point prompt. Private labels and notes are not translated. V1 has only its separate legacy URL.
+Field, Log and Undo are always reachable at the bottom of the main screens. The undo caption names the number change and shows the current and restored values. It uses the existing numeric history in the selected PIN/week; it is not a general point or timer undo. Switching PIN or replacing a record invalidates a stale click. Reading the log hides field controls, leaving space for events; switching between its tabs preserves the reading position.
+
+Menu shows 0.11.1 and Reload. Reload preserves stored records and pending sync but warns about unsaved form text. Appearance/settings contains language, Night mode and the optional point prompt. Private labels and notes are not translated. V1 has only its separate legacy URL.
 
 ## Data and verification
 

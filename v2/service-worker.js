@@ -1,7 +1,7 @@
 'use strict';
-const CACHE = 'trckng-sstm-v2-alpha-0.11.0';
+const CACHE = 'trckng-sstm-v2-alpha-0.11.1';
 const assets = ['./', './index.html', './surface.css', './surface.js', './mobile-log.css', './log-model.js', './log.js', './field.js', './layout.js', './creation.js', './stopwatch.js', './stopwatch-ui.js', './unit-recency.js', './unit-ui.js', './clocks.js', './data.js', './modules.js', './moments.js', './tag-input.js', './marks.js', './scenarios.js', './account.js', './cycles.js', './demo-data.js', './vendor/supabase-2.116.0.js',
-  './calendar-model.js', './calendar.js', './calendar.css', './translations.js', './i18n.js', './state-catalog.js', './readability.js', './chrome.js', './fonts/JetBrainsMono-Regular.woff2',
+  './calendar-model.js', './calendar.js', './calendar.css', './translations.js', './i18n.js', './state-catalog.js', './readability.js', './chrome.js', './quick-actions.js', './simple-stats.js', './fonts/JetBrainsMono-Regular.woff2',
   './typography.css', './signals.css', './medium.js', './signals-model.js', './signals.js',
   './fonts/RobotoMono-Regular.ttf', './fonts/RobotoMono-Medium.ttf', './fonts/RobotoDigits-Regular.ttf', './fonts/RobotoDigits-Medium.ttf', './fonts/RobotoMono-OFL.txt', './fonts/Roboto-OFL.txt',
   './points-lab.html', './style.css', './model.js', './store.js', './app.js',

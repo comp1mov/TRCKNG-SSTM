@@ -21,7 +21,7 @@
   // Account owns file transfer; do not duplicate these actions among field tools.
   for (const id of ['btnExport', 'btnImport']) { const button = $('#' + id); if (button) button.hidden = true; }
   const heading = document.createElement('div'); heading.className = 'surface-menu-heading';
-  const version = document.createElement('span'); version.textContent = 'SSTM v2 · 0.11.0';
+  const version = document.createElement('span'); version.textContent = 'SSTM v2 · 0.11.1';
   const reload = document.createElement('button'); reload.type = 'button'; reload.textContent = 'ОБНОВИТЬ'; reload.id = 'surfaceReload';
   reload.onclick = async () => {
     if (!confirm(window.SstmI18n.language === 'en' ? 'Reload the app? Saved records stay on this device. Unsaved text in open forms will be lost.' : 'Обновить приложение? Сохранённые записи останутся на устройстве. Несохранённый текст в открытых формах будет потерян.')) return;

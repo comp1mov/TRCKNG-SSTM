@@ -89,7 +89,9 @@ const base = process.env.SSTM_TEST_URL || 'http://127.0.0.1:5173/TRCKNG-SSTM/v2/
     assert.equal(await p.locator('#logStatistics').isVisible(),false);
     assert.ok(await p.locator('.log-elapsed').allTextContents().then(v=>v.some(x=>x!=='—')));
     await p.screenshot({path:path.join(output,'phone-log.png')});
-    await p.locator('#logStatsTab').click(); assert.equal(await p.locator('#historyMatrix').isVisible(),true); await p.locator('#logTab').click();
+    await p.locator('#logStatsTab').click(); assert.equal(await p.locator('#simpleStats').isVisible(),true);
+    assert.equal(await p.locator('#historyMatrix').isVisible(),false);
+    await p.locator('#logAdvancedStats>summary').click(); assert.equal(await p.locator('#historyMatrix').isVisible(),true); await p.locator('#logTab').click();
     const journalBefore = await p.evaluate(()=>JSON.stringify(buildCloudSnapshot().cycleJournal));
     await p.locator('#logSearch').fill('never-matches'); assert.equal(await p.locator('.log-row').count(),0); await p.locator('#logSearch').fill('');
     assert.equal(await p.evaluate(()=>JSON.stringify(buildCloudSnapshot().cycleJournal)),journalBefore,'Reading and filtering never mutate records');

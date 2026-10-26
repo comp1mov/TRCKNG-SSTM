@@ -734,6 +734,14 @@ window.SstmTranslations += `
 Вид и настройки|Appearance and settings
 Управление полем|Field controls
 ОБНОВИТЬ|RELOAD
+ТАЙМЛИНИЯ|TIMELINE
+Открыть таймлинию|Open timeline
+Основная навигация|Main navigation
+↶ ОТМЕНИТЬ|↶ UNDO
+Неделя|Week
+Кнопка|Button
+Подробные таблицы и исправления|Detailed tables and corrections
+Сохранённые итоги за неделю. Текущие таймеры показаны отдельно.|Saved weekly totals. Running timers are shown separately.
 
-Точки, кнопки и состояния — в одном логе. История → Лог / Статистика. Аккаунт → выбор копии и перенос файла v2.|Points, buttons and states in one log. History → Log / Statistics. Account → choose a copy and transfer a v2 file.
+Лог внизу экрана открывает события, таймлинию и статистику. Рядом находится отмена числового изменения. Аккаунт: выбор копии и перенос файла v2.|Log at the bottom opens events, timeline and statistics. Undo a number change beside it. Account: choose a copy and transfer a v2 file.
 `;

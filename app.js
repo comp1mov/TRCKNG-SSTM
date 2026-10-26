@@ -2727,6 +2727,7 @@ function applyTheme() {
       const key = `${STORAGE_KEYS.COUNTER_CHANGE_LOG}_pin${currentPin}`;
       trckngStorage.setItem(key, JSON.stringify(counterChangeLog));
       markCloudDirty('counter change log');
+      window.dispatchEvent(new Event('sstm-counter-changed'));
     }
 
     function recordCounterChange(habit, previousValue, nextValue, previousLastUpdate, nextLastUpdate, source = 'tap') {
@@ -2753,7 +2754,22 @@ function applyTheme() {
       }
     }
 
-    function undoLastCounterChange() {
+    function getUndoCounterChange() {
+      const entry = counterChangeLog.findLast(item => !item.undoneAt && item.week === currentWeekKey);
+      const numeric = entry && ['counter', 'unit', 'value', 'money_income', 'money_budget'].includes(habitTypes[entry.habit]);
+      return numeric && Number(weekData[currentWeekKey]?.[entry.habit] || 0) === entry.nextValue ? { ...entry, pin: currentPin } : null;
+    }
+
+    function undoLastCounterChange(expected) {
+      // The visible v2 action names a specific change. A PIN switch or cloud
+      // replacement must never make that button undo a different record.
+      if (expected?.id) {
+        const candidate = getUndoCounterChange();
+        if (!candidate || candidate.id !== expected.id || candidate.pin !== expected.pin ||
+            candidate.week !== expected.week || candidate.nextValue !== expected.nextValue ||
+            candidate.previousValue !== expected.previousValue ||
+            Number(weekData[currentWeekKey]?.[candidate.habit] || 0) !== candidate.nextValue) return false;
+      }
       ensureWeekExists();
 
       for (let i = counterChangeLog.length - 1; i >= 0; i--) {
@@ -2789,7 +2805,7 @@ function applyTheme() {
         renderHabits();
         scheduleMathRefresh();
         animateButton(entry.habit);
-        return;
+        return true;
       }
 
       alert('Nothing to undo for this week');
@@ -2925,6 +2941,7 @@ function applyTheme() {
 
     function getHistoryWeekKeys() {
       const keys = new Set([currentWeekKey, ...Object.keys(weekData || {})]);
+      for (const week of window.SstmExtraHistoryWeeks?.(currentPin) || []) keys.add(week);
       counterChangeLog.forEach(entry => keys.add(entry.week));
       durationSessions.forEach(session => {
         keys.add(session.week);
